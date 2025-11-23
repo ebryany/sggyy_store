@@ -1,0 +1,377 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source "../**/*.blade.php";
+@source "../**/*.js";
+@source "../**/*.vue";
+
+@theme {
+    --font-sans: 'Poppins', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    
+    --color-primary: #E11D48;
+    --color-primary-dark: #BE123C;
+    --color-primary-light: #F43F5E;
+    --color-dark: #0E0E10;
+    --color-dark-light: #1A1A1C;
+    --color-dark-lighter: #262628;
+}
+
+@layer base {
+    * {
+        border-color: theme(colors.white / 0.1);
+    }
+    
+    body {
+        @apply bg-dark text-white antialiased;
+        font-family: 'Poppins', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    }
+    
+    html {
+        scroll-behavior: smooth;
+    }
+    
+    /* Alpine.js x-cloak - hide elements until Alpine is loaded */
+    [x-cloak] {
+        display: none !important;
+    }
+    
+    /* Dark theme select dropdown styling - Match profile dropdown background */
+    select {
+        @apply bg-white/5 text-white border-white/10;
+        background-color: rgba(14, 14, 16, 0.98) !important;
+        color: white !important;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1em 1em;
+        padding-right: 2.5rem;
+    }
+    
+    select:focus {
+        @apply outline-none border-primary;
+        background-color: rgba(14, 14, 16, 0.98) !important;
+        border-color: rgba(99, 102, 241, 0.5) !important;
+    }
+    
+    select:hover {
+        background-color: rgba(14, 14, 16, 0.98) !important;
+    }
+    
+    /* Option styling - Match profile dropdown background */
+    select option {
+        background-color: rgba(14, 14, 16, 0.98) !important;
+        background: rgba(14, 14, 16, 0.98) !important;
+        color: white !important;
+        padding: 0.75rem;
+    }
+    
+    select option:checked {
+        background-color: rgba(99, 102, 241, 0.2) !important;
+        background: rgba(99, 102, 241, 0.2) !important;
+        color: white !important;
+    }
+    
+    select option:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
+    
+    /* Disabled option styling */
+    select option:disabled {
+        color: rgba(255, 255, 255, 0.4) !important;
+        background-color: rgba(14, 14, 16, 0.5) !important;
+        background: rgba(14, 14, 16, 0.5) !important;
+    }
+    
+    /* Ensure select text is white */
+    select,
+    select * {
+        color: white !important;
+    }
+    
+    /* Chrome/Safari/Edge - Dropdown list background */
+    select::-ms-expand {
+        display: none;
+    }
+    
+    /* Firefox specific */
+    @-moz-document url-prefix() {
+        select {
+            background-color: rgba(14, 14, 16, 0.98) !important;
+            color: white !important;
+        }
+        select option {
+            background-color: rgba(14, 14, 16, 0.98) !important;
+            background: rgba(14, 14, 16, 0.98) !important;
+            color: white !important;
+        }
+        
+        /* Firefox dropdown list */
+        select:-moz-focusring {
+            color: transparent;
+            text-shadow: 0 0 0 white;
+        }
+    }
+    
+    /* Chrome/Safari/Edge specific - Force dark background on dropdown */
+    select option {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+    
+    /* Ensure dropdown list container has dark background */
+    select:focus option {
+        background-color: rgba(14, 14, 16, 0.98) !important;
+    }
+    
+    /* WebKit (Chrome/Safari) specific - Dark dropdown list */
+    @media screen and (-webkit-min-device-pixel-ratio: 0) {
+        select {
+            background-color: rgba(14, 14, 16, 0.98) !important;
+        }
+        select option {
+            background-color: rgba(14, 14, 16, 0.98) !important;
+            background: rgba(14, 14, 16, 0.98) !important;
+            color: white !important;
+        }
+        
+        /* Force dark background for dropdown list container */
+        select:focus {
+            background-color: rgba(14, 14, 16, 0.98) !important;
+        }
+    }
+    
+    /* Additional fix for all browsers - Force dark option background */
+    select optgroup,
+    select optgroup option {
+        background-color: rgba(14, 14, 16, 0.98) !important;
+        color: white !important;
+    }
+    
+    /* Override any white background */
+    select,
+    select:active,
+    select:hover,
+    select:focus {
+        background-color: rgba(14, 14, 16, 0.98) !important;
+        background: rgba(14, 14, 16, 0.98) !important;
+    }
+    
+    /* Force all options to have dark background - Match profile dropdown */
+    option {
+        background-color: rgba(14, 14, 16, 0.98) !important;
+        background: rgba(14, 14, 16, 0.98) !important;
+        color: white !important;
+    }
+}
+
+@layer utilities {
+    /* Glassmorphism Effects */
+    .glass {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+    
+    .glass-hover {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .glass-hover:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    /* Glow Effects */
+    .glow {
+        text-shadow: 0 0 20px rgba(225, 29, 72, 0.3);
+        box-shadow: 0 0 20px rgba(225, 29, 72, 0.3);
+    }
+    
+    .glow-sm {
+        text-shadow: 0 0 10px rgba(225, 29, 72, 0.2);
+        box-shadow: 0 0 10px rgba(225, 29, 72, 0.2);
+    }
+    
+    /* Safe Area Insets for Notch/Punch-hole Support */
+    .pt-safe {
+        padding-top: max(1rem, env(safe-area-inset-top));
+    }
+    
+    .pb-safe {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+    
+    .pl-safe {
+        padding-left: env(safe-area-inset-left, 0);
+    }
+    
+    .pr-safe {
+        padding-right: env(safe-area-inset-right, 0);
+    }
+    
+    /* Touch-friendly minimum sizes */
+    .touch-target {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Line clamp utilities */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    /* Smooth scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: rgba(225, 29, 72, 0.5);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(225, 29, 72, 0.7);
+    }
+    
+    /* ===== ENHANCED BUTTON INTERACTIONS ===== */
+    /* Base button styles with smooth transitions */
+    button, .btn, [role="button"], a[class*="bg-primary"], a[class*="glass"] {
+        user-select: none;
+        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+    
+    /* Active/Click state - Scale down effect for tactile feedback */
+    button:active:not(:disabled), 
+    .btn:active:not(:disabled),
+    [role="button"]:active:not(:disabled),
+    a[class*="bg-primary"]:active,
+    a[class*="glass"]:active {
+        transform: scale(0.97);
+    }
+    
+    /* Primary button - Enhanced pressed state */
+    .bg-primary:active:not(:disabled),
+    button.bg-primary:active:not(:disabled) {
+        transform: scale(0.97);
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+        filter: brightness(0.9);
+    }
+    
+    /* Glass button - Enhanced pressed state */
+    .glass-hover:active:not(:disabled) {
+        transform: scale(0.97);
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.12);
+    }
+    
+    /* Disabled state - Clear visual feedback */
+    button:disabled, 
+    .btn:disabled,
+    button[disabled],
+    .btn[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    /* Loading state */
+    .btn-loading {
+        position: relative;
+        pointer-events: none;
+        opacity: 0.8;
+    }
+    
+    .btn-loading::after {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid transparent;
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: spinner 0.6s linear infinite;
+    }
+    
+    @keyframes spinner {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Mobile Bottom Navigation - Always visible on mobile */
+    @media (max-width: 1023px) {
+        .mobile-bottom-nav {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        body.mobile-nav-active {
+            padding-bottom: 80px !important;
+        }
+    }
+    
+    /* Hide bottom nav on desktop */
+    @media (min-width: 1024px) {
+        .mobile-bottom-nav {
+            display: none !important;
+        }
+    }
+    
+    /* Pulse animation for primary actions */
+    @keyframes pulse-primary {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7);
+        }
+        50% {
+            box-shadow: 0 0 0 8px rgba(225, 29, 72, 0);
+        }
+    }
+    
+    /* Ripple effect container */
+    .btn-ripple {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-ripple::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .btn-ripple:active::before {
+        width: 300px;
+        height: 300px;
+        transition: width 0s, height 0s;
+    }
+}
