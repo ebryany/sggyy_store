@@ -25,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Exclude webhook routes from CSRF protection
         $middleware->validateCsrfTokens(except: [
             'webhook/*',
+            'webhooks/xendit',
+            'webhooks/xendit/*',
             'quota.webhook',
             'quota.webhook.get',
         ]);
