@@ -1248,7 +1248,7 @@
                                 API key ini digunakan untuk integrasi dengan Khfy Store (pembelian kuota XL).
                                 Dapatkan API key di <strong>Profile → Pengaturan</strong> di panel.khfy-store.com
                             </p>
-                        </div>
+                        </div>  
 
                         <div class="glass p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10">
                             <div class="flex items-start gap-3">
@@ -1450,11 +1450,11 @@
                                 <div class="flex items-center gap-2">
                                     <input type="text" 
                                            readonly
-                                           value="{{ route('xendit.webhook') }}"
+                                           value="{{ route('webhooks.xendit') }}"
                                            class="flex-1 glass border border-white/10 rounded-lg px-4 py-2 bg-white/5 font-mono text-xs sm:text-sm"
                                            id="xendit-webhook-url">
                                     <button type="button" 
-                                            onclick="navigator.clipboard.writeText('{{ route('xendit.webhook') }}').then(() => window.dispatchEvent(new CustomEvent('toast', {detail: {message: 'Webhook URL berhasil disalin!', type: 'success'}})))"
+                                            onclick="navigator.clipboard.writeText('{{ route('webhooks.xendit') }}').then(() => window.dispatchEvent(new CustomEvent('toast', {detail: {message: 'Webhook URL berhasil disalin!', type: 'success'}})))"
                                             class="px-4 py-2 glass glass-hover rounded-lg text-sm font-semibold flex items-center gap-2 touch-target">
                                         <x-icon name="copy" class="w-4 h-4" />
                                         <span>Salin</span>
