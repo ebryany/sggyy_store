@@ -383,6 +383,31 @@
 <?php endif; ?>
                 API Settings
             </button>
+            <button @click="activeTab = 'xendit'" 
+                    :class="activeTab === 'xendit' ? 'bg-primary/20 text-primary border-primary' : 'text-white/60 hover:text-white border-transparent'"
+                    class="px-4 sm:px-6 py-2.5 sm:py-3 rounded-t-lg border-b-2 transition-all font-semibold text-sm sm:text-base whitespace-nowrap flex items-center gap-2">
+                <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'credit-card','class' => 'w-4 h-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'credit-card','class' => 'w-4 h-4']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+                Xendit & Escrow
+            </button>
         </div>
     </div>
 
@@ -2498,6 +2523,307 @@ function syncProducts() {
     });
 }
 </script>
+
+        <!-- Xendit & Escrow Settings Tab -->
+        <div x-show="activeTab === 'xendit'" 
+             x-cloak
+             class="glass p-6 sm:p-8 rounded-xl border border-white/10">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'credit-card','class' => 'w-6 h-6 text-primary']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'credit-card','class' => 'w-6 h-6 text-primary']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+                    Konfigurasi Xendit & Escrow
+                </h2>
+                <p class="text-white/60 text-sm">Kelola integrasi payment gateway Xendit dan sistem escrow/rekber</p>
+            </div>
+
+            <form action="<?php echo e(route('admin.settings.xendit')); ?>" method="POST" class="space-y-6">
+                <?php echo csrf_field(); ?>
+
+                <!-- Xendit Configuration -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'credit-card','class' => 'w-5 h-5 text-primary']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'credit-card','class' => 'w-5 h-5 text-primary']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+                        Xendit API Configuration
+                    </h3>
+
+                    <!-- Secret Key -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-white">
+                            Secret Key <span class="text-red-400">*</span>
+                        </label>
+                        <input type="password" 
+                               name="xendit_secret_key" 
+                               value="<?php echo e($xenditSettings['secret_key'] ?? ''); ?>"
+                               class="w-full border rounded-lg px-4 py-2.5 bg-white/5 focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed <?php $__errorArgs = ['xendit_secret_key'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500/50 <?php else: ?> border-white/10 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                               placeholder="xnd_development_..."
+                               required>
+                        <?php $__errorArgs = ['xendit_secret_key'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-1 text-sm text-red-400"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        <p class="mt-1 text-xs text-white/60">Dapatkan dari Xendit Dashboard > Settings > API Keys</p>
+                    </div>
+
+                    <!-- Public Key (Optional) -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-white">
+                            Public Key (Optional)
+                        </label>
+                        <input type="text" 
+                               name="xendit_public_key" 
+                               value="<?php echo e($xenditSettings['public_key'] ?? ''); ?>"
+                               class="w-full border rounded-lg px-4 py-2.5 bg-white/5 focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed <?php $__errorArgs = ['xendit_public_key'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500/50 <?php else: ?> border-white/10 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                               placeholder="xnd_public_...">
+                        <?php $__errorArgs = ['xendit_public_key'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-1 text-sm text-red-400"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                    </div>
+
+                    <!-- Webhook Token -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-white">
+                            Webhook Token <span class="text-red-400">*</span>
+                        </label>
+                        <input type="password" 
+                               name="xendit_webhook_token" 
+                               value="<?php echo e($xenditSettings['webhook_token'] ?? ''); ?>"
+                               class="w-full border rounded-lg px-4 py-2.5 bg-white/5 focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed <?php $__errorArgs = ['xendit_webhook_token'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500/50 <?php else: ?> border-white/10 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                               placeholder="xnd_webhook_..."
+                               required>
+                        <?php $__errorArgs = ['xendit_webhook_token'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-1 text-sm text-red-400"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        <p class="mt-1 text-xs text-white/60">Dapatkan dari Xendit Dashboard > Settings > Webhooks</p>
+                    </div>
+
+                    <!-- API URL -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-white">
+                            API URL
+                        </label>
+                        <input type="url" 
+                               name="xendit_api_url" 
+                               value="<?php echo e($xenditSettings['api_url'] ?? 'https://api.xendit.co'); ?>"
+                               class="w-full border rounded-lg px-4 py-2.5 bg-white/5 focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed <?php $__errorArgs = ['xendit_api_url'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500/50 <?php else: ?> border-white/10 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                               placeholder="https://api.xendit.co">
+                        <?php $__errorArgs = ['xendit_api_url'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-1 text-sm text-red-400"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        <p class="mt-1 text-xs text-white/60">Default: https://api.xendit.co (untuk production) atau https://api.xendit.co (untuk sandbox)</p>
+                    </div>
+
+                    <!-- Production Mode -->
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" 
+                               name="xendit_production" 
+                               value="1"
+                               <?php echo e(($xenditSettings['production'] ?? false) ? 'checked' : ''); ?>
+
+                               id="xendit_production"
+                               class="w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary focus:ring-2">
+                        <label for="xendit_production" class="text-sm font-medium text-white cursor-pointer">
+                            Production Mode
+                        </label>
+                    </div>
+                    <p class="text-xs text-white/60 ml-7">Centang jika menggunakan production keys (untuk transaksi real)</p>
+                </div>
+
+                <!-- Escrow Configuration -->
+                <div class="space-y-4 pt-6 border-t border-white/10">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'shield','class' => 'w-5 h-5 text-primary']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'shield','class' => 'w-5 h-5 text-primary']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+                        Escrow / Rekber Configuration
+                    </h3>
+
+                    <!-- Hold Period -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-white">
+                            Hold Period (Hari) <span class="text-red-400">*</span>
+                        </label>
+                        <input type="number" 
+                               name="escrow_hold_period_days" 
+                               value="<?php echo e($xenditSettings['escrow_hold_period_days'] ?? 7); ?>"
+                               min="1"
+                               max="30"
+                               class="w-full border rounded-lg px-4 py-2.5 bg-white/5 focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed <?php $__errorArgs = ['escrow_hold_period_days'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500/50 <?php else: ?> border-white/10 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                               required>
+                        <?php $__errorArgs = ['escrow_hold_period_days'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <p class="mt-1 text-sm text-red-400"><?php echo e($message); ?></p>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        <p class="mt-1 text-xs text-white/60">Lama waktu dana ditahan di escrow sebelum auto-release (1-30 hari). Default: 7 hari</p>
+                    </div>
+
+                    <!-- Info Box -->
+                    <div class="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                        <div class="flex items-start gap-3">
+                            <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'info','class' => 'w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'info','class' => 'w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+                            <div class="text-sm text-white/90">
+                                <p class="font-semibold mb-1">Cara Kerja Escrow:</p>
+                                <ul class="list-disc list-inside space-y-1 text-white/70">
+                                    <li>Dana ditahan di escrow setelah payment verified</li>
+                                    <li>Early release: Buyer confirm completion → release immediately</li>
+                                    <li>Auto release: Release otomatis setelah hold period selesai</li>
+                                    <li>Dispute: Freeze escrow sampai admin resolve</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button type="submit" 
+                            class="px-6 py-3 bg-primary hover:bg-primary-dark rounded-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-primary/20">
+                        Simpan Pengaturan
+                    </button>
+                </div>
+            </form>
+        </div>
 <?php $__env->stopSection(); ?>
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\febry\Documents\my_jasa\resources\views/settings/index.blade.php ENDPATH**/ ?>

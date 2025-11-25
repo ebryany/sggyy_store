@@ -1372,6 +1372,12 @@ function syncProducts() {
                 </h2>
                 <p class="text-white/60 text-sm">Kelola integrasi payment gateway Xendit dan sistem escrow/rekber</p>
             </div>
+            
+            @if(!isset($xenditSettings))
+            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg mb-4">
+                <p class="text-red-400 text-sm">⚠️ Warning: $xenditSettings tidak terdefinisi. Silakan refresh halaman atau clear cache.</p>
+            </div>
+            @endif
 
             <form action="{{ route('admin.settings.xendit') }}" method="POST" class="space-y-6">
                 @csrf
