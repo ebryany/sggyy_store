@@ -161,6 +161,10 @@ Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
 Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 
+// Xendit Webhook (public, no auth required - uses signature verification)
+Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
+Route::get('/webhooks/xendit/health', [\App\Http\Controllers\XenditWebhookController::class, 'health'])->name('webhooks.xendit.health');
+
 // Protected Routes (Buyer Actions)
 Route::middleware(['auth'])->group(function () {
     // Dashboard
@@ -246,10 +250,6 @@ Route::middleware(['auth'])->group(function () {
     
     // API endpoint for real-time notifications
     Route::get('/api/notifications/unread', [NotificationController::class, 'getUnreadNotifications'])->name('api.notifications.unread');
-    
-    // Xendit Webhook (public, no auth required - uses signature verification)
-    Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
-    Route::get('/webhooks/xendit/health', [\App\Http\Controllers\XenditWebhookController::class, 'health'])->name('webhooks.xendit.health');
     
     // Logout
     Route::post('/logout', function () {
