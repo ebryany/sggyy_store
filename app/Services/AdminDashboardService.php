@@ -23,7 +23,9 @@ class AdminDashboardService
      */
     public function getStats(): array
     {
-        return Cache::remember('admin.dashboard.stats', 600, function () {
+        // Reduce cache TTL in development for real-time updates
+        $ttl = app()->environment('production') ? 600 : 30; // 10 min in production, 30 sec in development
+        return Cache::remember('admin.dashboard.stats', $ttl, function () {
             $today = today();
             $thisMonth = now()->month;
             $thisYear = now()->year;
@@ -107,7 +109,9 @@ class AdminDashboardService
      */
     public function getAlerts(): array
     {
-        return Cache::remember('admin.dashboard.alerts', 300, function () {
+        // Reduce cache TTL in development for real-time updates
+        $ttl = app()->environment('production') ? 300 : 10; // 5 min in production, 10 sec in development
+        return Cache::remember('admin.dashboard.alerts', $ttl, function () {
             // Optimized: Single query for all alerts using subqueries
             // Use Laravel query builder for database compatibility
             $alerts = [

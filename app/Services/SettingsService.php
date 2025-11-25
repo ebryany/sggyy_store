@@ -59,7 +59,9 @@ class SettingsService
 
     public function get(string $key, $default = null)
     {
-        return Cache::remember("setting.{$key}", 3600, function () use ($key, $default) {
+        // Reduce cache TTL in development for real-time updates
+        $ttl = app()->environment('production') ? 3600 : 60; // 1 hour in production, 1 minute in development
+        return Cache::remember("setting.{$key}", $ttl, function () use ($key, $default) {
             return Setting::getValue($key, $default);
         });
     }
@@ -74,7 +76,9 @@ class SettingsService
 
     public function getAll(): array
     {
-        return Cache::remember('settings.all', 3600, function () {
+        // Reduce cache TTL in development for real-time updates
+        $ttl = app()->environment('production') ? 3600 : 60; // 1 hour in production, 1 minute in development
+        return Cache::remember('settings.all', $ttl, function () {
             return Setting::pluck('value', 'key')->toArray();
         });
     }

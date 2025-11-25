@@ -19,6 +19,11 @@ php artisan migrate --force
 
 # Clear and cache
 echo "🧹 Clearing and caching..."
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan event:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
@@ -33,6 +38,10 @@ echo "🔐 Setting permissions..."
 chown -R www-data:www-data /var/www/ebrystoree
 chmod -R 755 /var/www/ebrystoree
 chmod -R 775 storage bootstrap/cache
+
+# Clear all caches (including service caches)
+echo "🧹 Clearing all application caches..."
+php artisan cache:clear-all
 
 # Restart services
 echo "🔄 Restarting services..."
