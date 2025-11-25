@@ -30,38 +30,31 @@
                              }">
                             <template x-if="notification.type === 'order_created' || notification.type === 'new_order'">
                                 <x-icon name="shopping-bag" 
-                                        class="w-5 h-5"
-                                        :class="notification.is_read ? 'text-white/60' : 'text-primary'" />
+                                        x-bind:class="notification.is_read ? 'w-5 h-5 text-white/60' : 'w-5 h-5 text-primary'" />
                             </template>
                             <template x-if="notification.type === 'payment_verified'">
                                 <x-icon name="check" 
-                                        class="w-5 h-5"
-                                        :class="notification.is_read ? 'text-white/60' : 'text-primary'" />
+                                        x-bind:class="notification.is_read ? 'w-5 h-5 text-white/60' : 'w-5 h-5 text-primary'" />
                             </template>
                             <template x-if="notification.type === 'order_message' || notification.type === 'chat_message'">
                                 <x-icon name="message-square" 
-                                        class="w-5 h-5"
-                                        :class="notification.is_read ? 'text-white/60' : 'text-primary'" />
+                                        x-bind:class="notification.is_read ? 'w-5 h-5 text-white/60' : 'w-5 h-5 text-primary'" />
                             </template>
                             <template x-if="notification.type === 'progress_milestone'">
                                 <x-icon name="chart" 
-                                        class="w-5 h-5"
-                                        :class="notification.is_read ? 'text-white/60' : 'text-primary'" />
+                                        x-bind:class="notification.is_read ? 'w-5 h-5 text-white/60' : 'w-5 h-5 text-primary'" />
                             </template>
                             <template x-if="notification.type === 'deadline_passed'">
                                 <x-icon name="clock" 
-                                        class="w-5 h-5"
-                                        :class="notification.is_read ? 'text-white/60' : 'text-primary'" />
+                                        x-bind:class="notification.is_read ? 'w-5 h-5 text-white/60' : 'w-5 h-5 text-primary'" />
                             </template>
                             <template x-if="notification.type === 'seller_verified'">
                                 <x-icon name="shield" 
-                                        class="w-5 h-5"
-                                        :class="notification.is_read ? 'text-white/60' : 'text-primary'" />
+                                        x-bind:class="notification.is_read ? 'w-5 h-5 text-white/60' : 'w-5 h-5 text-primary'" />
                             </template>
                             <template x-if="!['order_created', 'new_order', 'payment_verified', 'order_message', 'chat_message', 'progress_milestone', 'deadline_passed', 'seller_verified'].includes(notification.type)">
                                 <x-icon name="bell" 
-                                        class="w-5 h-5"
-                                        :class="notification.is_read ? 'text-white/60' : 'text-primary'" />
+                                        x-bind:class="notification.is_read ? 'w-5 h-5 text-white/60' : 'w-5 h-5 text-primary'" />
                             </template>
                         </div>
                         
