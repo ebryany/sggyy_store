@@ -339,7 +339,10 @@
 <?php endif; ?>
                                 Transaksi
                             </a>
-                            <a href="<?php echo e(route('notifications.index')); ?>" class="block px-4 py-3 hover:bg-white/10 touch-target text-sm sm:text-base relative flex items-center gap-2">
+                            <a href="<?php echo e(route('notifications.index')); ?>" 
+                               class="block px-4 py-3 hover:bg-white/10 touch-target text-sm sm:text-base relative flex items-center gap-2"
+                               x-data="{ unreadCount: <?php echo e(\App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->count()); ?> }"
+                               @notification-count-updated.window="unreadCount = $event.detail.count">
                                 <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'bell','class' => 'w-4 h-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -361,12 +364,9 @@
 <?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
 <?php endif; ?>
                                 <span>Notifikasi</span>
-                                <?php
-                                    $unreadCount = \App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->count();
-                                ?>
-                                <?php if($unreadCount > 0): ?>
-                                <span class="absolute top-2 right-4 bg-primary text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold border-2 border-dark"><?php echo e($unreadCount > 99 ? '99+' : $unreadCount); ?></span>
-                                <?php endif; ?>
+                                <template x-if="unreadCount > 0">
+                                    <span class="absolute top-2 right-4 bg-primary text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold border-2 border-dark" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
+                                </template>
                             </a>
                             <?php if(auth()->user()->isAdmin()): ?>
                             <a href="<?php echo e(route('admin.settings.index')); ?>" class="block px-4 py-3 hover:bg-white/10 touch-target text-sm sm:text-base flex items-center gap-2">

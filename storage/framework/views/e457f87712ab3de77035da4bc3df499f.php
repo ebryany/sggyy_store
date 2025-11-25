@@ -34,6 +34,7 @@
 </head>
 <body class="bg-dark text-white min-h-screen">
     <?php echo $__env->make('components.navbar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <?php echo $__env->make('components.notification-toast', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     <?php echo $__env->make('components.system-announcement', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     <?php echo $__env->make('components.maintenance-banner', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     
@@ -42,6 +43,39 @@
         <?php echo $__env->make('components.alert', ['type' => 'error'], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
         <?php echo $__env->yieldContent('content'); ?>
     </main>
+    
+    <script>
+    // Integrate session flash messages with notification toast
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if(session('success')): ?>
+            window.dispatchEvent(new CustomEvent('notification-received', {
+                detail: {
+                    id: 'flash-' + Date.now(),
+                    type: 'success',
+                    message: '<?php echo e(session('success')); ?>',
+                    is_read: false,
+                    created_at: new Date().toISOString(),
+                    action_url: null,
+                    action_text: null
+                }
+            }));
+        <?php endif; ?>
+        
+        <?php if(session('error')): ?>
+            window.dispatchEvent(new CustomEvent('notification-received', {
+                detail: {
+                    id: 'flash-' + Date.now(),
+                    type: 'error',
+                    message: '<?php echo e(session('error')); ?>',
+                    is_read: false,
+                    created_at: new Date().toISOString(),
+                    action_url: null,
+                    action_text: null
+                }
+            }));
+        <?php endif; ?>
+    });
+    </script>
     
     <?php echo $__env->make('components.toast', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     

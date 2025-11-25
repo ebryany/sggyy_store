@@ -1362,7 +1362,9 @@ function syncProducts() {
 </script>
 
         <!-- Xendit & Escrow Settings Tab -->
-        <div x-show="activeTab === 'xendit'" x-cloak class="glass p-6 sm:p-8 rounded-xl border border-white/10">
+        <div x-show="activeTab === 'xendit'" 
+             x-cloak
+             class="glass p-6 sm:p-8 rounded-xl border border-white/10">
             <div class="mb-6">
                 <h2 class="text-2xl font-bold mb-2 flex items-center gap-2">
                     <x-icon name="credit-card" class="w-6 h-6 text-primary" />
