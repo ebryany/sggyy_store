@@ -124,7 +124,15 @@ class SellerVerificationService
                 $user = $verification->user;
                 if (!$user->isSeller() && !$user->isAdmin()) {
                     $user->update(['role' => 'seller']);
+                    // Refresh user to clear any cached data
+                    $user->refresh();
                 }
+
+                // Refresh verification to ensure latest data
+                $verification->refresh();
+                
+                // Clear any cached relationships
+                $user->unsetRelation('sellerVerification');
 
                 Log::info('Seller verification approved', [
                     'verification_id' => $verification->id,

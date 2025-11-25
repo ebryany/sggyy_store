@@ -69,6 +69,8 @@ Route::middleware('guest')->group(function () {
             if ($user->isAdmin()) {
                 return redirect('/admin/dashboard');
             } elseif ($user->isSeller()) {
+                // Refresh user to get latest verification status (important for cloud)
+                $user->refresh();
                 // Check if seller is verified
                 if ($user->isVerifiedSeller()) {
                     return redirect('/seller/dashboard');
@@ -130,6 +132,8 @@ Route::middleware('guest')->group(function () {
         if ($user->isAdmin()) {
             return redirect('/admin/dashboard');
         } elseif ($user->isSeller()) {
+            // Refresh user to get latest verification status (important for cloud)
+            $user->refresh();
             // Check if seller is verified
             if ($user->isVerifiedSeller()) {
                 return redirect('/seller/dashboard');

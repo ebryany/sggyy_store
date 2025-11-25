@@ -166,6 +166,8 @@ class User extends Authenticatable
             return false;
         }
 
+        // Refresh relationship to get latest data (important for cloud deployment)
+        $this->load('sellerVerification');
         $verification = $this->sellerVerification;
         
         return $verification && $verification->status === 'verified';

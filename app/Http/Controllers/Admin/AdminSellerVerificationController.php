@@ -63,6 +63,13 @@ class AdminSellerVerificationController extends Controller
 
         try {
             $this->verificationService->verify($verification, auth()->id());
+            
+            // Refresh verification to get latest data
+            $verification->refresh();
+            
+            // Clear cache for the user (if any)
+            $user = $verification->user;
+            $user->unsetRelation('sellerVerification');
 
             // Create notification for user
             \App\Models\Notification::create([
