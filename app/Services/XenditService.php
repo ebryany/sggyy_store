@@ -491,16 +491,17 @@ class XenditService
                 'normalized_payload' => $normalizedPayload,
             ]);
             
-            // For E-Wallet or other webhooks that might not have payment record yet,
+            // For E-Wallet webhooks that might not have payment record yet,
             // we should handle gracefully (maybe it's a different webhook type)
             if (isset($normalizedPayload['_event_type']) && str_contains($normalizedPayload['_event_type'], 'ewallet')) {
-                Log::info('Xendit webhook: E-Wallet webhook received but payment not found - might be test or different flow', [
+                Log::info('Xendit webhook: E-Wallet webhook received but payment not found - might be different flow', [
                     'external_id' => $externalId,
                     'invoice_id' => $invoiceId,
                 ]);
-                return ['status' => 'ignored', 'message' => 'E-Wallet webhook - payment not found, might be test'];
+                return ['status' => 'ignored', 'message' => 'E-Wallet webhook - payment not found, might be different flow'];
             }
             
+            // Payment not found - this is an error for production webhooks
             throw new \Exception('Payment not found for external_id: ' . $externalId . ' or invoice_id: ' . $invoiceId);
         }
 

@@ -62,7 +62,17 @@ class XenditWebhookController extends Controller
             // Process webhook (idempotent)
             $result = $this->xenditService->handleWebhook($payload);
 
-            // Return success
+            // Handle different result statuses
+            if (isset($result['status']) && $result['status'] === 'ignored') {
+                // E-Wallet webhook that doesn't need processing
+                return response()->json([
+                    'status' => 'success',
+                    'message' => $result['message'] ?? 'Webhook received but ignored (no payment record)',
+                    'result' => $result,
+                ], 200);
+            }
+
+            // Return success for processed webhooks
             return response()->json([
                 'status' => 'success',
                 'message' => 'Webhook processed',
