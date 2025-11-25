@@ -116,6 +116,13 @@
     </div>
     @endif
     
+    <!-- Escrow Status Card (if escrow exists) -->
+    @if($order->escrow)
+    <div class="mb-4 sm:mb-6">
+        <x-escrow-status-card :escrow="$order->escrow" :order="$order" />
+    </div>
+    @endif
+    
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-4 sm:space-y-6">
@@ -364,13 +371,43 @@
                     <div class="flex justify-between">
                         <span class="text-white/60">Status Pembayaran</span>
                         @if($order->payment->status === 'verified')
-                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Verified</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">Verified</span>
                         @elseif($order->payment->status === 'pending')
-                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">Pending</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Pending</span>
                         @else
-                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400">Rejected</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">Rejected</span>
                         @endif
                     </div>
+                    
+                    <!-- Xendit Invoice Link -->
+                    @if($order->payment->isXenditPayment() && $order->payment->xendit_metadata)
+                        @php
+                            $invoiceUrl = $order->payment->xendit_metadata['invoice_url'] ?? null;
+                            $xenditStatus = $order->payment->xendit_metadata['status'] ?? 'PENDING';
+                        @endphp
+                        @if($invoiceUrl && $order->payment->status === 'pending')
+                        <div class="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                            <div class="flex items-center gap-2 mb-3">
+                                <x-icon name="external-link" class="w-5 h-5 text-blue-400" />
+                                <h3 class="font-semibold text-blue-400">Pembayaran via Xendit</h3>
+                            </div>
+                            <p class="text-sm text-white/70 mb-3">
+                                Klik tombol di bawah untuk melakukan pembayaran. Verifikasi akan dilakukan otomatis setelah pembayaran berhasil.
+                            </p>
+                            <a href="{{ $invoiceUrl }}" 
+                               target="_blank"
+                               class="block w-full px-4 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg text-center font-semibold transition-all hover:scale-105 shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2">
+                                <x-icon name="external-link" class="w-5 h-5" />
+                                <span>Bayar Sekarang</span>
+                            </a>
+                            @if($xenditStatus === 'PENDING')
+                            <p class="text-xs text-white/60 mt-2 text-center">
+                                Status: <span class="text-yellow-400">Menunggu Pembayaran</span>
+                            </p>
+                            @endif
+                        </div>
+                        @endif
+                    @endif
                     
                     <!-- Bank Account Info untuk Bank Transfer -->
                     @if($order->payment->method === 'bank_transfer' && $bankAccountInfo && $bankAccountInfo['bank_account_number'])

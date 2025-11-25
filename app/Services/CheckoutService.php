@@ -36,8 +36,11 @@ class CheckoutService
             // Process payment based on method
             if ($paymentMethod === 'wallet') {
                 $this->processWalletPayment($order, $payment);
+            } elseif (in_array($paymentMethod, ['xendit_va', 'xendit_qris'])) {
+                // Xendit payment methods - create invoice immediately
+                $this->createXenditInvoice($order, $payment, $paymentMethod);
             } elseif (in_array($paymentMethod, ['bank_transfer', 'qris', 'e_wallet'])) {
-                // Check if Xendit is enabled
+                // Manual payment methods - check if Xendit is enabled
                 $settingsService = app(\App\Services\SettingsService::class);
                 $featureFlags = $settingsService->getFeatureFlags();
                 
@@ -118,11 +121,21 @@ class CheckoutService
             
             // Map payment method to Xendit format
             $xenditMethod = match($paymentMethod) {
-                'bank_transfer' => 'VA',
-                'qris' => 'QRIS',
+                'xendit_va', 'bank_transfer' => 'VA',
+                'xendit_qris', 'qris' => 'QRIS',
                 'e_wallet' => 'E_WALLET',
                 default => 'VA',
             };
+            
+            // Normalize payment method for database
+            $normalizedMethod = match($paymentMethod) {
+                'xendit_va' => 'bank_transfer',
+                'xendit_qris' => 'qris',
+                default => $paymentMethod,
+            };
+            
+            // Update payment method to normalized value
+            $payment->update(['method' => $normalizedMethod]);
             
             $invoice = $xenditService->createInvoice($order, $xenditMethod);
             

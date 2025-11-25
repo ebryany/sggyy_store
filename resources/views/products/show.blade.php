@@ -19,13 +19,13 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                 <!-- Image Section -->
                 <div class="relative">
-                    @if($product->image)
+            @if($product->image)
                     <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 border border-primary/30">
-                        <img src="{{ asset('storage/' . $product->image) }}" 
-                             alt="{{ $product->title }}" 
+            <img src="{{ asset('storage/' . $product->image) }}" 
+                 alt="{{ $product->title }}" 
                              class="w-full h-64 sm:h-80 lg:h-96 object-cover">
                     </div>
-                    @else
+            @else
                     <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 border border-primary/30 h-64 sm:h-80 lg:h-96 flex items-center justify-center">
                         <div class="text-center">
                             <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-primary/20 flex items-center justify-center mx-auto mb-4 border border-primary/30">
@@ -35,8 +35,8 @@
                                 {{ Str::limit($product->title, 3) }}
                             </p>
                         </div>
-                    </div>
-                    @endif
+            </div>
+            @endif
                     
                     <!-- Stock Badge -->
                     @if(!$product->isInStock())
@@ -68,9 +68,9 @@
                                 </div>
                                 <span class="text-white/60 text-sm">({{ $product->ratings->count() }} ulasan)</span>
                             </div>
-                            @endif
-                        </div>
-                        
+                    @endif
+                </div>
+                
                         <!-- Badges -->
                         <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-6">
                             <span class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2 text-sm">
@@ -121,15 +121,15 @@
                 </div>
             </div>
         </div>
-    </div>
-    
+                </div>
+                
     <!-- Main Content -->
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <!-- Left Column: Order Form -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- Order Form Card -->
-                @if($product->isInStock())
+                    @if($product->isInStock())
                 <div class="rounded-2xl bg-gradient-to-br from-white/5 via-white/5 to-white/5 border border-white/10 p-6 sm:p-8">
                     <h2 class="text-2xl font-bold mb-6 text-white">Beli Produk Ini</h2>
                     
@@ -174,44 +174,96 @@
                             <label class="block text-sm font-semibold mb-3 text-white">Metode Pembayaran</label>
                             <div class="space-y-3">
                                 @if(isset($featureFlags) && $featureFlags['enable_wallet'])
-                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all"
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
                                        :class="paymentMethod === 'wallet' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
                                     <input type="radio" name="payment_method" value="wallet" x-model="paymentMethod" class="mr-3 accent-primary">
                                     <div class="flex-1">
                                         <div class="font-semibold flex items-center gap-2 text-white mb-1">
                                             <x-icon name="dollar" class="w-5 h-5 text-primary" />
                                             Saldo Wallet
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">Instant</span>
                                         </div>
-                                        <div class="text-xs text-white/60">Bayar langsung dari saldo</div>
+                                        <div class="text-xs text-white/60">Bayar langsung dari saldo, verifikasi otomatis</div>
                                     </div>
                                 </label>
                                 @endif
-                                @if(isset($featureFlags) && $featureFlags['enable_bank_transfer'])
-                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all"
+                                
+                                @if(isset($featureFlags) && $featureFlags['enable_xendit'])
+                                <!-- Xendit VA -->
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
+                                       :class="paymentMethod === 'xendit_va' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
+                                    <input type="radio" name="payment_method" value="xendit_va" x-model="paymentMethod" class="mr-3 accent-primary">
+                                    <div class="flex-1">
+                                        <div class="font-semibold flex items-center gap-2 text-white mb-1">
+                                            <x-icon name="bank" class="w-5 h-5 text-primary" />
+                                            Virtual Account (Xendit)
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">Auto Verify</span>
+                                        </div>
+                                        <div class="text-xs text-white/60">Bayar via VA, verifikasi otomatis setelah transfer</div>
+                                    </div>
+                                </label>
+                                
+                                <!-- Xendit QRIS -->
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
+                                       :class="paymentMethod === 'xendit_qris' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
+                                    <input type="radio" name="payment_method" value="xendit_qris" x-model="paymentMethod" class="mr-3 accent-primary">
+                                    <div class="flex-1">
+                                        <div class="font-semibold flex items-center gap-2 text-white mb-1">
+                                            <x-icon name="mobile" class="w-5 h-5 text-primary" />
+                                            QRIS (Xendit)
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">Auto Verify</span>
+                                        </div>
+                                        <div class="text-xs text-white/60">Scan QR code, verifikasi otomatis setelah bayar</div>
+                                    </div>
+                                </label>
+                                @endif
+                                
+                                @if(isset($featureFlags) && $featureFlags['enable_bank_transfer'] && (!isset($featureFlags['enable_xendit']) || !$featureFlags['enable_xendit']))
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
                                        :class="paymentMethod === 'bank_transfer' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
                                     <input type="radio" name="payment_method" value="bank_transfer" x-model="paymentMethod" class="mr-3 accent-primary">
                                     <div class="flex-1">
                                         <div class="font-semibold flex items-center gap-2 text-white mb-1">
                                             <x-icon name="bank" class="w-5 h-5 text-primary" />
-                                            Transfer Bank
+                                            Transfer Bank Manual
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Manual</span>
                                         </div>
-                                        <div class="text-xs text-white/60">Upload bukti transfer</div>
+                                        <div class="text-xs text-white/60">Upload bukti transfer, verifikasi oleh admin</div>
                                     </div>
                                 </label>
                                 @endif
-                                @if(isset($featureFlags) && $featureFlags['enable_qris'])
-                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all"
+                                
+                                @if(isset($featureFlags) && $featureFlags['enable_qris'] && (!isset($featureFlags['enable_xendit']) || !$featureFlags['enable_xendit']))
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
                                        :class="paymentMethod === 'qris' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
                                     <input type="radio" name="payment_method" value="qris" x-model="paymentMethod" class="mr-3 accent-primary">
                                     <div class="flex-1">
                                         <div class="font-semibold flex items-center gap-2 text-white mb-1">
                                             <x-icon name="mobile" class="w-5 h-5 text-primary" />
-                                            QRIS
+                                            QRIS Manual
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Manual</span>
                                         </div>
-                                        <div class="text-xs text-white/60">Scan QR code untuk bayar</div>
+                                        <div class="text-xs text-white/60">Scan QR code, verifikasi oleh admin</div>
                                     </div>
                                 </label>
                                 @endif
+                            </div>
+                        </div>
+                        
+                        <!-- Xendit Payment Info -->
+                        <div x-show="paymentMethod === 'xendit_va' || paymentMethod === 'xendit_qris'" 
+                             x-transition
+                             class="mb-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                            <div class="flex items-start gap-3">
+                                <x-icon name="info" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                                <div class="text-sm text-white/90">
+                                    <p class="font-semibold text-blue-400 mb-1">Pembayaran Otomatis via Xendit</p>
+                                    <ul class="list-disc list-inside space-y-1 text-white/70 text-xs">
+                                        <li>Verifikasi pembayaran otomatis setelah transfer</li>
+                                        <li>Dana ditahan di escrow untuk keamanan transaksi</li>
+                                        <li>Tidak perlu upload bukti pembayaran</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         
@@ -310,14 +362,14 @@
                         </button>
                     </form>
                 </div>
-                @else
+                    @else
                 <div class="rounded-2xl bg-gradient-to-br from-white/5 via-white/5 to-white/5 border border-white/10 p-6 sm:p-8 text-center">
                     <x-icon name="x" class="w-16 h-16 text-white/40 mx-auto mb-4" />
                     <h3 class="text-xl font-semibold mb-2 text-white">Produk Tidak Tersedia</h3>
                     <p class="text-white/60">Stok produk ini sedang habis.</p>
                 </div>
-                @endif
-                
+                    @endif
+                    
                 <!-- Reviews Section -->
                 @if($product->ratings->count() > 0)
                 <div class="rounded-2xl bg-gradient-to-br from-white/5 via-white/5 to-white/5 border border-white/10 p-6 sm:p-8">
@@ -338,13 +390,13 @@
                                                 <x-icon name="star" class="w-4 h-4 {{ $i <= $rating->rating ? 'text-yellow-400 fill-yellow-400' : 'text-white/20' }}" />
                                                 @endfor
                                             </div>
-                                        </div>
+                            </div>
                                         <span class="text-white/60 text-sm">{{ $rating->created_at->format('d M Y') }}</span>
-                                    </div>
+                            </div>
                                     @if($rating->comment)
                                     <p class="text-white/70 mt-2 leading-relaxed">{{ $rating->comment }}</p>
                                     @endif
-                                </div>
+                            </div>
                             </div>
                         </div>
                         @endforeach
@@ -422,7 +474,7 @@
                         <div class="flex justify-between items-center">
                             <span class="text-white/60">Produk</span>
                             <span class="font-semibold text-white">{{ $product->user->products()->count() }}</span>
-                        </div>
+                            </div>
                         <div class="flex justify-between items-center">
                             <span class="text-white/60">Bergabung</span>
                             <span class="font-semibold text-white">{{ $product->user->created_at->format('d M Y') }}</span>
@@ -440,7 +492,7 @@
                 </div>
                 
                 <!-- Edit/Delete Actions -->
-                @if(auth()->check() && (auth()->id() === $product->user_id || auth()->user()->isAdmin()))
+                    @if(auth()->check() && (auth()->id() === $product->user_id || auth()->user()->isAdmin()))
                 <div class="rounded-2xl bg-gradient-to-br from-white/5 via-white/5 to-white/5 border border-white/10 p-6">
                     <h3 class="font-semibold mb-4 text-white">Kelola Produk</h3>
                     <div class="space-y-3">

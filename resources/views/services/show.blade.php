@@ -177,44 +177,96 @@
                             <label class="block text-sm font-semibold mb-3 text-white">Metode Pembayaran</label>
                             <div class="space-y-3">
                                 @if(isset($featureFlags) && $featureFlags['enable_wallet'])
-                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all"
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
                                        :class="paymentMethod === 'wallet' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
                                     <input type="radio" name="payment_method" value="wallet" x-model="paymentMethod" class="mr-3 accent-primary">
                                     <div class="flex-1">
                                         <div class="font-semibold flex items-center gap-2 text-white mb-1">
                                             <x-icon name="dollar" class="w-5 h-5 text-primary" />
                                             Saldo Wallet
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">Instant</span>
                                         </div>
-                                        <div class="text-xs text-white/60">Bayar langsung dari saldo</div>
+                                        <div class="text-xs text-white/60">Bayar langsung dari saldo, verifikasi otomatis</div>
                                     </div>
                                 </label>
                                 @endif
-                                @if(isset($featureFlags) && $featureFlags['enable_bank_transfer'])
-                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all"
+                                
+                                @if(isset($featureFlags) && $featureFlags['enable_xendit'])
+                                <!-- Xendit VA -->
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
+                                       :class="paymentMethod === 'xendit_va' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
+                                    <input type="radio" name="payment_method" value="xendit_va" x-model="paymentMethod" class="mr-3 accent-primary">
+                                    <div class="flex-1">
+                                        <div class="font-semibold flex items-center gap-2 text-white mb-1">
+                                            <x-icon name="bank" class="w-5 h-5 text-primary" />
+                                            Virtual Account (Xendit)
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">Auto Verify</span>
+                                        </div>
+                                        <div class="text-xs text-white/60">Bayar via VA, verifikasi otomatis setelah transfer</div>
+                                    </div>
+                                </label>
+                                
+                                <!-- Xendit QRIS -->
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
+                                       :class="paymentMethod === 'xendit_qris' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
+                                    <input type="radio" name="payment_method" value="xendit_qris" x-model="paymentMethod" class="mr-3 accent-primary">
+                                    <div class="flex-1">
+                                        <div class="font-semibold flex items-center gap-2 text-white mb-1">
+                                            <x-icon name="mobile" class="w-5 h-5 text-primary" />
+                                            QRIS (Xendit)
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">Auto Verify</span>
+                                        </div>
+                                        <div class="text-xs text-white/60">Scan QR code, verifikasi otomatis setelah bayar</div>
+                                    </div>
+                                </label>
+                                @endif
+                                
+                                @if(isset($featureFlags) && $featureFlags['enable_bank_transfer'] && (!isset($featureFlags['enable_xendit']) || !$featureFlags['enable_xendit']))
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
                                        :class="paymentMethod === 'bank_transfer' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
                                     <input type="radio" name="payment_method" value="bank_transfer" x-model="paymentMethod" class="mr-3 accent-primary">
                                     <div class="flex-1">
                                         <div class="font-semibold flex items-center gap-2 text-white mb-1">
                                             <x-icon name="bank" class="w-5 h-5 text-primary" />
-                                            Transfer Bank
+                                            Transfer Bank Manual
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Manual</span>
                                         </div>
-                                        <div class="text-xs text-white/60">Upload bukti transfer</div>
+                                        <div class="text-xs text-white/60">Upload bukti transfer, verifikasi oleh admin</div>
                                     </div>
                                 </label>
                                 @endif
-                                @if(isset($featureFlags) && $featureFlags['enable_qris'])
-                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all"
+                                
+                                @if(isset($featureFlags) && $featureFlags['enable_qris'] && (!isset($featureFlags['enable_xendit']) || !$featureFlags['enable_xendit']))
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
                                        :class="paymentMethod === 'qris' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
                                     <input type="radio" name="payment_method" value="qris" x-model="paymentMethod" class="mr-3 accent-primary">
                                     <div class="flex-1">
                                         <div class="font-semibold flex items-center gap-2 text-white mb-1">
                                             <x-icon name="mobile" class="w-5 h-5 text-primary" />
-                                            QRIS
+                                            QRIS Manual
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Manual</span>
                                         </div>
-                                        <div class="text-xs text-white/60">Scan QR code untuk bayar</div>
+                                        <div class="text-xs text-white/60">Scan QR code, verifikasi oleh admin</div>
                                     </div>
                                 </label>
                                 @endif
+                            </div>
+                        </div>
+                        
+                        <!-- Xendit Payment Info -->
+                        <div x-show="paymentMethod === 'xendit_va' || paymentMethod === 'xendit_qris'" 
+                             x-transition
+                             class="mb-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                            <div class="flex items-start gap-3">
+                                <x-icon name="info" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                                <div class="text-sm text-white/90">
+                                    <p class="font-semibold text-blue-400 mb-1">Pembayaran Otomatis via Xendit</p>
+                                    <ul class="list-disc list-inside space-y-1 text-white/70 text-xs">
+                                        <li>Verifikasi pembayaran otomatis setelah transfer</li>
+                                        <li>Dana ditahan di escrow untuk keamanan transaksi</li>
+                                        <li>Tidak perlu upload bukti pembayaran</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         

@@ -55,6 +55,11 @@ class CheckoutController extends Controller
             if ($paymentMethod === 'qris' && !$featureFlags['enable_qris']) {
                 throw new \Exception('Metode pembayaran QRIS tidak tersedia saat ini');
             }
+            
+            // Check Xendit feature flag for Xendit payment methods
+            if (in_array($paymentMethod, ['xendit_va', 'xendit_qris']) && !($featureFlags['enable_xendit'] ?? false)) {
+                throw new \Exception('Metode pembayaran Xendit tidak tersedia saat ini');
+            }
 
             if ($validated['type'] === 'product') {
                 $product = Product::findOrFail($validated['product_id']);
@@ -65,11 +70,39 @@ class CheckoutController extends Controller
                 $order = $this->checkoutService->checkoutService($service, $validated, $taskFile);
             }
 
-            // Determine message based on payment method
+            // Determine message and redirect based on payment method
             $paymentMethod = $validated['payment_method'] ?? 'wallet';
             $message = 'Pesanan berhasil dibuat';
             
-            if (in_array($paymentMethod, ['bank_transfer', 'qris'])) {
+            // Reload order to get latest payment data (including Xendit invoice)
+            $order->refresh();
+            $order->load('payment');
+            
+            // Check if payment is via Xendit and has invoice URL
+            $xenditInvoiceUrl = null;
+            if ($order->payment && $order->payment->isXenditPayment() && $order->payment->xendit_metadata) {
+                $xenditInvoiceUrl = $order->payment->xendit_metadata['invoice_url'] ?? null;
+            }
+            
+            if (in_array($paymentMethod, ['xendit_va', 'xendit_qris']) && $xenditInvoiceUrl) {
+                $message = 'Pesanan berhasil dibuat! Anda akan diarahkan ke halaman pembayaran Xendit.';
+                
+                // If AJAX request, return JSON with Xendit redirect
+                if ($request->wantsJson() || $request->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $message,
+                        'redirect' => $xenditInvoiceUrl,
+                        'xendit_redirect' => true,
+                    ]);
+                }
+                
+                // Redirect to Xendit invoice URL
+                return redirect($xenditInvoiceUrl)
+                    ->with('success', $message);
+            }
+            
+            if (in_array($paymentMethod, ['bank_transfer', 'qris']) && !$xenditInvoiceUrl) {
                 $message = 'Pesanan berhasil dibuat! Silakan upload bukti pembayaran Anda.';
             }
 
@@ -85,7 +118,7 @@ class CheckoutController extends Controller
             return redirect()
                 ->route('orders.show', $order)
                 ->with('success', $message)
-                ->with('upload_proof_required', in_array($paymentMethod, ['bank_transfer', 'qris']));
+                ->with('upload_proof_required', in_array($paymentMethod, ['bank_transfer', 'qris']) && !$xenditInvoiceUrl);
         } catch (\Exception $e) {
             // Log error with full context for debugging
             \Illuminate\Support\Facades\Log::error('Checkout failed', [

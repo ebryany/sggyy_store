@@ -167,7 +167,7 @@ class OrderController extends Controller
         );
         $isAdmin = $user->isAdmin();
 
-        $order->load(['product', 'service', 'payment.verifier', 'rating', 'history.creator']);
+        $order->load(['product', 'service', 'payment.verifier', 'rating', 'history.creator', 'escrow']);
         
         // Refresh order to ensure deliverable_path is up-to-date
         $order->refresh();
