@@ -160,7 +160,7 @@ Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
 Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
-
+    
 // Xendit Webhook (public, no auth required - uses signature verification)
 Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 Route::get('/webhooks/xendit/health', [\App\Http\Controllers\XenditWebhookController::class, 'health'])->name('webhooks.xendit.health');
@@ -245,7 +245,12 @@ Route::middleware(['auth'])->group(function () {
     
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-git
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+
+    // API endpoint for real-time notifications
+    Route::get('/api/notifications/unread', [NotificationController::class, 'getUnreadNotifications'])->name('api.notifications.unread');
+    
     // Logout
     Route::post('/logout', function () {
         auth()->logout();
