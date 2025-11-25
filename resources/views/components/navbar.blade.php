@@ -149,15 +149,15 @@
                                 <x-icon name="shopping-bag" class="w-4 h-4" />
                                 Transaksi
                             </a>
-                            <a href="{{ route('notifications.index') }}" class="block px-4 py-3 hover:bg-white/10 touch-target text-sm sm:text-base relative flex items-center gap-2">
+                            <a href="{{ route('notifications.index') }}" 
+                               class="block px-4 py-3 hover:bg-white/10 touch-target text-sm sm:text-base relative flex items-center gap-2"
+                               x-data="{ unreadCount: {{ \App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->count() }} }"
+                               @notification-count-updated.window="unreadCount = $event.detail.count">
                                 <x-icon name="bell" class="w-4 h-4" />
                                 <span>Notifikasi</span>
-                                @php
-                                    $unreadCount = \App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->count();
-                                @endphp
-                                @if($unreadCount > 0)
-                                <span class="absolute top-2 right-4 bg-primary text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold border-2 border-dark">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
-                                @endif
+                                <template x-if="unreadCount > 0">
+                                    <span class="absolute top-2 right-4 bg-primary text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold border-2 border-dark" x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
+                                </template>
                             </a>
                             @if(auth()->user()->isAdmin())
                             <a href="{{ route('admin.settings.index') }}" class="block px-4 py-3 hover:bg-white/10 touch-target text-sm sm:text-base flex items-center gap-2">

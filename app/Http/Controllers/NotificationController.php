@@ -43,4 +43,69 @@ class NotificationController extends Controller
         
         return back()->with('success', 'Semua notifikasi ditandai sebagai sudah dibaca');
     }
+
+    /**
+     * API endpoint to get unread notifications (for real-time polling)
+     */
+    public function getUnreadNotifications(Request $request)
+    {
+        $user = auth()->user();
+        $notifications = $this->notificationService->getUnreadNotifications($user, 5);
+        
+        return response()->json([
+            'success' => true,
+            'notifications' => $notifications->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'type' => $notification->type,
+                    'message' => $notification->message,
+                    'is_read' => $notification->is_read,
+                    'created_at' => $notification->created_at->toISOString(),
+                    'action_url' => $this->getActionUrl($notification),
+                    'action_text' => $this->getActionText($notification),
+                ];
+            }),
+            'unread_count' => $this->notificationService->getUnreadCount($user),
+        ]);
+    }
+
+    /**
+     * Get action URL for notification
+     */
+    private function getActionUrl(Notification $notification): ?string
+    {
+        if (!$notification->notifiable_type || !$notification->notifiable_id) {
+            return null;
+        }
+
+        try {
+            return match($notification->notifiable_type) {
+                'App\Models\Order' => route('orders.show', $notification->notifiable_id),
+                'App\Models\Chat' => $notification->notifiable 
+                    ? route('chat.show', $notification->notifiable->getOtherUser()?->id ?? $notification->notifiable_id)
+                    : null,
+                'App\Models\SellerVerification' => route('seller.verification.index'),
+                default => null,
+            };
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get action text for notification
+     */
+    private function getActionText(Notification $notification): ?string
+    {
+        if (!$notification->notifiable_type) {
+            return null;
+        }
+
+        return match($notification->notifiable_type) {
+            'App\Models\Order' => 'Lihat Pesanan',
+            'App\Models\Chat' => 'Buka Chat',
+            'App\Models\SellerVerification' => 'Lihat Status',
+            default => 'Lihat Detail',
+        };
+    }
 }

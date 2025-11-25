@@ -244,6 +244,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
     
+    // API endpoint for real-time notifications
+    Route::get('/api/notifications/unread', [NotificationController::class, 'getUnreadNotifications'])->name('api.notifications.unread');
+    
     // Logout
     Route::post('/logout', function () {
         auth()->logout();

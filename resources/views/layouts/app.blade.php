@@ -34,6 +34,7 @@
 </head>
 <body class="bg-dark text-white min-h-screen">
     @include('components.navbar')
+    @include('components.notification-toast')
     @include('components.system-announcement')
     @include('components.maintenance-banner')
     
@@ -42,6 +43,39 @@
         @include('components.alert', ['type' => 'error'])
         @yield('content')
     </main>
+    
+    <script>
+    // Integrate session flash messages with notification toast
+    document.addEventListener('DOMContentLoaded', function() {
+        @if(session('success'))
+            window.dispatchEvent(new CustomEvent('notification-received', {
+                detail: {
+                    id: 'flash-' + Date.now(),
+                    type: 'success',
+                    message: '{{ session('success') }}',
+                    is_read: false,
+                    created_at: new Date().toISOString(),
+                    action_url: null,
+                    action_text: null
+                }
+            }));
+        @endif
+        
+        @if(session('error'))
+            window.dispatchEvent(new CustomEvent('notification-received', {
+                detail: {
+                    id: 'flash-' + Date.now(),
+                    type: 'error',
+                    message: '{{ session('error') }}',
+                    is_read: false,
+                    created_at: new Date().toISOString(),
+                    action_url: null,
+                    action_text: null
+                }
+            }));
+        @endif
+    });
+    </script>
     
     @include('components.toast')
     

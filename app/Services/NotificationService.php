@@ -41,6 +41,23 @@ class NotificationService
     }
 
     /**
+     * Get unread notifications for a user (for real-time display)
+     * 
+     * @param User $user
+     * @param int $limit
+     * @return Collection<Notification>
+     */
+    public function getUnreadNotifications(User $user, int $limit = 5): Collection
+    {
+        return Notification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->with('notifiable')
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
      * Mark a notification as read
      * 
      * @param Notification $notification
