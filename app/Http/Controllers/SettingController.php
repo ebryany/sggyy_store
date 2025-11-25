@@ -34,6 +34,7 @@ class SettingController extends Controller
         $homeSettings = $this->settingsService->getHomeSettings();
         $ownerSettings = $this->settingsService->getOwnerSettings();
         $bannerSettings = $this->settingsService->getBannerSettings();
+        $xenditSettings = $this->settingsService->getXenditSettings();
 
         return view('settings.index', compact(
             'settings',
@@ -48,7 +49,8 @@ class SettingController extends Controller
             'featureFlags',
             'homeSettings',
             'ownerSettings',
-            'bannerSettings'
+            'bannerSettings',
+            'xenditSettings'
         ));
     }
 
@@ -623,6 +625,34 @@ class SettingController extends Controller
                 'success' => false,
                 'message' => 'Gagal mengambil produk dari API: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function updateXenditSettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'xendit_secret_key' => ['required', 'string', 'min:10'],
+            'xendit_public_key' => ['sometimes', 'nullable', 'string'],
+            'xendit_webhook_token' => ['required', 'string', 'min:10'],
+            'xendit_api_url' => ['sometimes', 'nullable', 'url'],
+            'xendit_production' => ['sometimes', 'boolean'],
+            'escrow_hold_period_days' => ['required', 'integer', 'min:1', 'max:30'],
+        ]);
+
+        try {
+            $this->settingsService->set('xendit_secret_key', $request->xendit_secret_key);
+            $this->settingsService->set('xendit_public_key', $request->xendit_public_key ?? '');
+            $this->settingsService->set('xendit_webhook_token', $request->xendit_webhook_token);
+            $this->settingsService->set('xendit_api_url', $request->xendit_api_url ?? 'https://api.xendit.co');
+            $this->settingsService->set('xendit_production', $request->has('xendit_production') ? '1' : '0', 'boolean');
+            $this->settingsService->set('escrow_hold_period_days', (string) $request->escrow_hold_period_days, 'number');
+
+            // Clear cache to reload settings
+            $this->settingsService->clearCache();
+
+            return back()->with('success', 'Pengaturan Xendit berhasil diperbarui');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Gagal memperbarui pengaturan Xendit: ' . $e->getMessage()]);
         }
     }
 

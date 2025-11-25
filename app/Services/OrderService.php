@@ -156,16 +156,17 @@ class OrderService
                 }
             }
 
-            // If order completed, create seller earning and mark as available
-            if ($status === 'completed' && !$order->sellerEarning) {
+            // If order completed, check if escrow exists
+            // If escrow exists, earning will be created when escrow is released
+            // If no escrow (legacy orders or wallet payment), create earning immediately
+            if ($status === 'completed' && !$order->sellerEarning && !$order->escrow) {
                 try {
                     $earning = $this->sellerService->createEarning($order);
                     
-                    // Auto-mark as available immediately after creation
-                    // (You can change this to delay availability, e.g., after 7 days)
+                    // Auto-mark as available immediately (no escrow, legacy flow)
                     $this->sellerService->markEarningAvailable($earning);
                     
-                    Log::info('Seller earning created and marked as available', [
+                    Log::info('Seller earning created and marked as available (no escrow)', [
                         'order_id' => $order->id,
                         'seller_id' => $earning->seller_id ?? null,
                         'amount' => $earning->amount ?? $order->total,
@@ -180,6 +181,25 @@ class OrderService
                     
                     // Re-throw if critical
                     throw $e;
+                }
+            }
+            
+            // If order completed and has escrow, early release escrow
+            if ($status === 'completed' && $order->escrow && $order->escrow->isHolding()) {
+                try {
+                    $escrowService = app(\App\Services\EscrowService::class);
+                    $escrowService->earlyRelease($order->escrow);
+                    
+                    Log::info('Escrow early released on order completion', [
+                        'order_id' => $order->id,
+                        'escrow_id' => $order->escrow->id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to early release escrow', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Don't fail the transaction, escrow can be released later
                 }
             }
             
@@ -475,13 +495,49 @@ class OrderService
      * @param Order $order
      * @return Order
      */
-    public function confirmCompletion(Order $order): Order
+    public function confirmCompletion(Order $order, ?array $ratingData = null): Order
     {
         if ($order->status !== 'waiting_confirmation') {
             throw new \Exception("Order must be in 'waiting_confirmation' status");
         }
         
-        return $this->updateStatus($order, 'completed', 'Buyer mengkonfirmasi pesanan selesai', 'buyer');
+        // Update order status to completed
+        $order = $this->updateStatus($order, 'completed', 'Buyer mengkonfirmasi pesanan selesai', 'buyer');
+        
+        // Early release escrow if exists
+        if ($order->escrow && $order->escrow->isHolding()) {
+            try {
+                $escrowService = app(\App\Services\EscrowService::class);
+                $escrowService->earlyRelease($order->escrow);
+                
+                Log::info('Escrow early released on buyer confirmation', [
+                    'order_id' => $order->id,
+                    'escrow_id' => $order->escrow->id,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to early release escrow on confirmation', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail the confirmation, escrow can be released later
+            }
+        }
+        
+        // Create rating if provided
+        if ($ratingData && !empty($ratingData['rating'])) {
+            try {
+                $ratingService = app(\App\Services\RatingService::class);
+                $ratingService->createRating($order, $ratingData);
+            } catch (\Exception $e) {
+                Log::warning('Failed to create rating during confirmation', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail the confirmation
+            }
+        }
+        
+        return $order->fresh();
     }
     
     /**

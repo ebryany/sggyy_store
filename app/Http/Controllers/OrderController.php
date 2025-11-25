@@ -938,27 +938,17 @@ class OrderController extends Controller
         ]);
         
         try {
-            // Confirm completion
-            $this->orderService->confirmCompletion($order);
-            
-            // Create rating if provided
+            // Prepare rating data if provided
+            $ratingData = null;
             if (!empty($validated['rating']) && $validated['rating'] >= 1 && $validated['rating'] <= 5) {
-                try {
-                    $ratingData = [
-                        'rating' => $validated['rating'],
-                        'comment' => $validated['comment'] ?? null,
-                    ];
-                    
-                    $ratingService = app(\App\Services\RatingService::class);
-                    $ratingService->createRating($order->fresh(), $ratingData);
-                } catch (\Exception $e) {
-                    // Log error but don't fail the confirmation
-                    \Illuminate\Support\Facades\Log::warning('Failed to create rating during confirmation', [
-                        'order_id' => $order->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                $ratingData = [
+                    'rating' => $validated['rating'],
+                    'comment' => $validated['comment'] ?? null,
+                ];
             }
+            
+            // Confirm completion (includes early release escrow and rating creation)
+            $this->orderService->confirmCompletion($order, $ratingData);
             
             if (request()->expectsJson()) {
                 return response()->json([

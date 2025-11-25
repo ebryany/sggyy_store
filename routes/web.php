@@ -247,6 +247,10 @@ Route::middleware(['auth'])->group(function () {
     // API endpoint for real-time notifications
     Route::get('/api/notifications/unread', [NotificationController::class, 'getUnreadNotifications'])->name('api.notifications.unread');
     
+    // Xendit Webhook (public, no auth required - uses signature verification)
+    Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
+    Route::get('/webhooks/xendit/health', [\App\Http\Controllers\XenditWebhookController::class, 'health'])->name('webhooks.xendit.health');
+    
     // Logout
     Route::post('/logout', function () {
         auth()->logout();
@@ -308,6 +312,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::post('/settings/features', [SettingController::class, 'updateFeatureFlags'])->name('settings.features');
             Route::post('/settings/home', [SettingController::class, 'updateHomeSettings'])->name('settings.home');
             Route::post('/settings/banner', [SettingController::class, 'updateBannerSettings'])->name('settings.banner');
+    Route::post('/settings/xendit', [SettingController::class, 'updateXenditSettings'])->name('settings.xendit');
             Route::post('/settings/owner', [SettingController::class, 'updateOwnerSettings'])->name('settings.owner');
             Route::post('/settings/featured', [SettingController::class, 'storeFeaturedItem'])->name('settings.featured');
             Route::delete('/settings/featured/{featuredItem}', [SettingController::class, 'deleteFeaturedItem'])->name('settings.featured.delete');

@@ -37,6 +37,8 @@ class Order extends Model
         'download_count',
         'download_expires_at',
         'payment_expires_at',
+        'escrow_id',
+        'is_disputed',
     ];
     
     protected $casts = [
@@ -48,6 +50,7 @@ class Order extends Model
         'download_expires_at' => 'datetime',
         'payment_expires_at' => 'datetime',
         'needs_revision' => 'boolean',
+        'is_disputed' => 'boolean',
     ];
 
     protected static function boot()
@@ -102,6 +105,11 @@ class Order extends Model
     public function sellerEarning()
     {
         return $this->hasOne(SellerEarning::class);
+    }
+
+    public function escrow()
+    {
+        return $this->belongsTo(Escrow::class);
     }
     
     public function messages()

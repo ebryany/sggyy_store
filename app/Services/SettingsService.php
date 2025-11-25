@@ -149,6 +149,18 @@ class SettingsService
         ];
     }
 
+    public function getXenditSettings(): array
+    {
+        return [
+            'secret_key' => $this->get('xendit_secret_key', ''),
+            'public_key' => $this->get('xendit_public_key', ''),
+            'webhook_token' => $this->get('xendit_webhook_token', ''),
+            'api_url' => $this->get('xendit_api_url', 'https://api.xendit.co'),
+            'production' => (bool) $this->get('xendit_production', false),
+            'escrow_hold_period_days' => (int) $this->get('escrow_hold_period_days', 7),
+        ];
+    }
+
     public function getLimits(): array
     {
         return [
@@ -201,6 +213,7 @@ class SettingsService
             'enable_wallet' => (bool) $this->get('enable_wallet', true),
             'enable_bank_transfer' => (bool) $this->get('enable_bank_transfer', true),
             'enable_qris' => (bool) $this->get('enable_qris', true),
+            'enable_xendit' => (bool) $this->get('enable_xendit', false),
             'enable_seller_registration' => (bool) $this->get('enable_seller_registration', true),
             'maintenance_mode' => (bool) $this->get('maintenance_mode', false),
         ];

@@ -73,6 +73,25 @@ class PaymentService
             // Update order status using OrderService for consistency
             $order = $payment->order;
             
+            // Check if payment is via Xendit (has escrow) or manual (no escrow)
+            $isXenditPayment = $payment->isXenditPayment();
+            
+            if ($isXenditPayment) {
+                // Xendit payment: escrow will be created by XenditService webhook handler
+                // This method is for manual verification only
+                // For Xendit, webhook handler already processed everything
+                Log::info('Payment verified manually but is Xendit payment - escrow should be handled by webhook', [
+                    'payment_id' => $payment->id,
+                    'order_id' => $order->id,
+                ]);
+            } else {
+                // Manual payment verification: create escrow if enabled
+                $escrowService = app(\App\Services\EscrowService::class);
+                if (!$order->escrow) {
+                    $escrowService->createEscrow($order, $payment);
+                }
+            }
+            
             // For digital products, directly complete order (skip 'paid' status)
             // This prevents double update and creates cleaner audit trail
             if ($order->type === 'product') {

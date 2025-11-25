@@ -17,12 +17,17 @@ class Payment extends Model
         'verified_at',
         'verified_by',
         'rejection_reason',
+        'xendit_invoice_id',
+        'xendit_external_id',
+        'xendit_payment_method',
+        'xendit_metadata',
     ];
 
     protected function casts(): array
     {
         return [
             'verified_at' => 'datetime',
+            'xendit_metadata' => 'array',
         ];
     }
 
@@ -35,6 +40,16 @@ class Payment extends Model
     public function verifier()
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function escrow()
+    {
+        return $this->hasOne(Escrow::class);
+    }
+
+    public function isXenditPayment(): bool
+    {
+        return !empty($this->xendit_invoice_id) || !empty($this->xendit_external_id);
     }
 
     // Helper methods

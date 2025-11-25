@@ -36,8 +36,17 @@ class CheckoutService
             // Process payment based on method
             if ($paymentMethod === 'wallet') {
                 $this->processWalletPayment($order, $payment);
+            } elseif (in_array($paymentMethod, ['bank_transfer', 'qris', 'e_wallet'])) {
+                // Check if Xendit is enabled
+                $settingsService = app(\App\Services\SettingsService::class);
+                $featureFlags = $settingsService->getFeatureFlags();
+                
+                if ($featureFlags['enable_xendit'] ?? false) {
+                    // Create Xendit invoice
+                    $this->createXenditInvoice($order, $payment, $paymentMethod);
+                }
+                // If Xendit disabled, payment status remains 'pending' until admin verifies
             }
-            // For bank_transfer and qris, payment status remains 'pending' until admin verifies
 
             return $order->load('payment');
         });
@@ -74,8 +83,17 @@ class CheckoutService
             // Process payment based on method
             if ($paymentMethod === 'wallet') {
                 $this->processWalletPayment($order, $payment);
+            } elseif (in_array($paymentMethod, ['bank_transfer', 'qris', 'e_wallet'])) {
+                // Check if Xendit is enabled
+                $settingsService = app(\App\Services\SettingsService::class);
+                $featureFlags = $settingsService->getFeatureFlags();
+                
+                if ($featureFlags['enable_xendit'] ?? false) {
+                    // Create Xendit invoice
+                    $this->createXenditInvoice($order, $payment, $paymentMethod);
+                }
+                // If Xendit disabled, payment status remains 'pending' until admin verifies
             }
-            // For bank_transfer and qris, payment status remains 'pending' until admin verifies
 
             return $order->load('payment');
         });
@@ -86,7 +104,50 @@ class CheckoutService
      */
     private function storeTaskFile(\Illuminate\Http\UploadedFile $file): string
     {
-        return $file->store('orders/tasks', 'public');
+        $disk = config('filesystems.default');
+        return $file->store('orders/tasks', $disk);
+    }
+    
+    /**
+     * Create Xendit invoice for payment
+     */
+    private function createXenditInvoice(Order $order, Payment $payment, string $paymentMethod): void
+    {
+        try {
+            $xenditService = app(\App\Services\XenditService::class);
+            
+            // Map payment method to Xendit format
+            $xenditMethod = match($paymentMethod) {
+                'bank_transfer' => 'VA',
+                'qris' => 'QRIS',
+                'e_wallet' => 'E_WALLET',
+                default => 'VA',
+            };
+            
+            $invoice = $xenditService->createInvoice($order, $xenditMethod);
+            
+            // Update payment with Xendit data
+            $payment->update([
+                'xendit_invoice_id' => $invoice['id'],
+                'xendit_external_id' => $invoice['external_id'],
+                'xendit_payment_method' => $xenditMethod,
+                'xendit_metadata' => $invoice,
+            ]);
+            
+            \Illuminate\Support\Facades\Log::info('Xendit invoice created during checkout', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'invoice_id' => $invoice['id'],
+                'invoice_url' => $invoice['invoice_url'] ?? null,
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create Xendit invoice', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't throw - payment can still be processed manually
+        }
     }
 
     private function createPayment(Order $order, string $method): Payment
