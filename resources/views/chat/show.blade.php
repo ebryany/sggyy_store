@@ -75,7 +75,7 @@
 
     <!-- Message Form -->
     <form id="chat-form" 
-          action="{{ route('chat.send', '@' . $otherUser->username) }}" 
+          action="{{ route('chat.send', $otherUser->username) }}" 
           method="POST" 
           enctype="multipart/form-data" 
           class="glass p-4 sm:p-6 rounded-xl border border-white/10">

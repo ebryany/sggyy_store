@@ -12,13 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🎨 Enhanced button interactions loaded');
     
     // 1. Auto-add loading state to form submissions (prevent double-click)
-    // EXCEPT for chat forms - they must submit normally (not AJAX)
+    // EXCEPT for chat forms - they must submit via AJAX (handled by chat.js)
     const forms = document.querySelectorAll('form:not([data-no-ajax="true"]):not([data-no-intercept="true"])');
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
-            // Skip if this is a chat form or has no-intercept flag (must submit normally)
-            if (form.id === 'messageForm' || form.hasAttribute('data-no-ajax') || form.hasAttribute('data-no-intercept')) {
-                return; // Let form submit normally - DO NOT interfere
+            // Skip if this is a chat form (handled by chat.js) or has no-intercept flag
+            if (form.id === 'chat-form' || form.id === 'messageForm' || form.hasAttribute('data-no-ajax') || form.hasAttribute('data-no-intercept')) {
+                return; // Let chat.js handle it - DO NOT interfere
             }
             
             const submitBtn = form.querySelector('button[type="submit"]');

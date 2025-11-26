@@ -72,6 +72,7 @@ class ChatHandler {
 
     async handleSubmit(e) {
         e.preventDefault();
+        e.stopPropagation(); // Prevent any other handlers
 
         const message = this.messageInput.value.trim();
         const attachment = this.attachmentInput?.files[0];
@@ -91,7 +92,13 @@ class ChatHandler {
         if (attachment) formData.append('attachment', attachment);
 
         // Get CSRF token
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (!csrfToken) {
+            console.error('CSRF token not found');
+            this.showError('CSRF token tidak ditemukan');
+            this.setLoading(false);
+            return;
+        }
 
         try {
             const response = await fetch(this.chatForm.action, {
@@ -99,32 +106,45 @@ class ChatHandler {
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
                 body: formData
             });
 
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error('Response is not JSON:', contentType);
+                this.showError('Response tidak valid dari server');
+                this.setLoading(false);
+                return;
+            }
+
             const result = await response.json();
 
-            if (result.success) {
+            if (response.ok && result.success) {
                 // Clear form
                 this.messageInput.value = '';
+                this.autoResizeTextarea();
                 if (this.attachmentInput) this.attachmentInput.value = '';
                 this.removeFilePreview();
 
                 // Append message to chat (optimistic UI update)
-                this.appendMessage(result.data, true);
+                if (result.data) {
+                    this.appendMessage(result.data, true);
+                }
 
                 // Scroll to bottom
                 this.scrollToBottom();
 
-                // Show success
-                this.showSuccess('Pesan berhasil dikirim');
+                // Show success (optional, message already appended)
+                // this.showSuccess('Pesan berhasil dikirim');
             } else {
                 this.showError(result.message || 'Gagal mengirim pesan');
             }
         } catch (error) {
             console.error('Error sending message:', error);
-            this.showError('Terjadi kesalahan saat mengirim pesan');
+            this.showError('Terjadi kesalahan saat mengirim pesan: ' + error.message);
         } finally {
             this.setLoading(false);
         }
@@ -177,16 +197,24 @@ class ChatHandler {
     }
 
     joinChatRoom() {
+        if (!window.Echo) {
+            console.warn('Laravel Echo not initialized');
+            return;
+        }
+
         window.Echo.private(`chat.${this.chatId}`)
             .listen('.message.sent', (e) => {
                 console.log('New message received:', e);
                 
                 // Check if message is from other user
-                if (e.sender.id != this.currentUserId) {
+                if (e.sender && e.sender.id != this.currentUserId) {
                     this.appendMessage(e, false);
                     this.scrollToBottom();
                     this.playNotificationSound();
                 }
+            })
+            .error((error) => {
+                console.error('Echo connection error:', error);
             });
 
         console.log(`Joined chat room: chat.${this.chatId}`);
