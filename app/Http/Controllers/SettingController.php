@@ -636,6 +636,8 @@ class SettingController extends Controller
             'xendit_webhook_token' => ['required', 'string', 'min:10'],
             'xendit_api_url' => ['sometimes', 'nullable', 'url'],
             'xendit_production' => ['sometimes', 'boolean'],
+            'enable_xendit' => ['sometimes', 'boolean'],
+            'enable_xenplatform' => ['sometimes', 'boolean'],
             'escrow_hold_period_days' => ['required', 'integer', 'min:1', 'max:30'],
         ]);
 
@@ -645,6 +647,8 @@ class SettingController extends Controller
             $this->settingsService->set('xendit_webhook_token', $request->xendit_webhook_token);
             $this->settingsService->set('xendit_api_url', $request->xendit_api_url ?? 'https://api.xendit.co');
             $this->settingsService->set('xendit_production', $request->has('xendit_production') ? '1' : '0', 'boolean');
+            $this->settingsService->set('enable_xendit', $request->has('enable_xendit') ? '1' : '0', 'boolean');
+            $this->settingsService->set('enable_xenplatform', $request->has('enable_xenplatform') ? '1' : '0', 'boolean');
             $this->settingsService->set('escrow_hold_period_days', (string) $request->escrow_hold_period_days, 'number');
 
             // Clear cache to reload settings

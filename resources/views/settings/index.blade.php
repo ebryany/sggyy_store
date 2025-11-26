@@ -1394,6 +1394,45 @@
                             </label>
                         </div>
                         <p class="text-xs text-white/60 ml-7">Centang jika menggunakan production keys (untuk transaksi real)</p>
+
+                        <!-- Enable Xendit Payment -->
+                        <div class="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                            <div class="flex items-center gap-3 mb-2">
+                                <input type="checkbox" 
+                                       name="enable_xendit" 
+                                       value="1"
+                                       {{ ($featureFlags['enable_xendit'] ?? false) ? 'checked' : '' }}
+                                       id="enable_xendit"
+                                       class="w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary focus:ring-2">
+                                <label for="enable_xendit" class="text-sm font-medium text-white cursor-pointer">
+                                    Enable Xendit Payment Gateway
+                                </label>
+                            </div>
+                            <p class="text-xs text-white/60 ml-7">
+                                Aktifkan untuk menampilkan opsi pembayaran Xendit (VA & QRIS) di halaman checkout.
+                                <strong class="text-blue-400">Wajib diaktifkan jika ingin menggunakan Xendit sebagai payment gateway.</strong>
+                            </p>
+                        </div>
+
+                        <!-- Enable xenPlatform -->
+                        <div class="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                            <div class="flex items-center gap-3 mb-2">
+                                <input type="checkbox" 
+                                       name="enable_xenplatform" 
+                                       value="1"
+                                       {{ ($xenditSettings['enable_xenplatform'] ?? false) ? 'checked' : '' }}
+                                       id="enable_xenplatform"
+                                       class="w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary focus:ring-2">
+                                <label for="enable_xenplatform" class="text-sm font-medium text-white cursor-pointer">
+                                    Enable xenPlatform (Full Rekber)
+                                </label>
+                            </div>
+                            <p class="text-xs text-white/60 ml-7">
+                                Aktifkan untuk menggunakan Xendit xenPlatform dengan split payment otomatis. 
+                                Dana akan langsung di-split ke seller sub-account saat pembayaran verified.
+                                <strong class="text-purple-400">Pastikan xenPlatform sudah diaktifkan di Xendit Dashboard terlebih dahulu.</strong>
+                            </p>
+                        </div>
                     </div>
 
                     <!-- Escrow Configuration -->
