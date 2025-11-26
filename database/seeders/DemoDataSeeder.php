@@ -24,6 +24,7 @@ class DemoDataSeeder extends Seeder
             ['email' => 'admin@ebrystoree.com'],
             [
                 'name' => 'Admin Ebrystoree',
+                'username' => 'admin_ebrystoree',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'role' => 'admin',
@@ -32,6 +33,12 @@ class DemoDataSeeder extends Seeder
                 'address' => 'Jakarta, Indonesia',
             ]
         );
+        
+        // Ensure username exists (for existing users)
+        if (!$admin->username) {
+            $admin->username = 'admin_ebrystoree';
+            $admin->save();
+        }
         
         $this->command->info("✅ Admin: {$admin->email} / password");
         
@@ -42,6 +49,7 @@ class DemoDataSeeder extends Seeder
             ['email' => 'seller@ebrystoree.com'],
             [
                 'name' => 'Seller Pro',
+                'username' => 'seller_pro',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'role' => 'seller',
@@ -52,6 +60,12 @@ class DemoDataSeeder extends Seeder
                 'store_description' => 'Professional seller specializing in digital products and academic services. 5+ years experience helping students with assignments.',
             ]
         );
+        
+        // Ensure username exists (for existing users)
+        if (!$seller->username) {
+            $seller->username = 'seller_pro';
+            $seller->save();
+        }
         
         $this->command->info("✅ Seller: {$seller->email} / password");
         

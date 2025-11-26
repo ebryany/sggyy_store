@@ -84,6 +84,37 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Boot the model.
+     * Auto-generate username if not provided
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            // Auto-generate username if not provided
+            if (empty($user->username) && !empty($user->name)) {
+                $baseUsername = \Illuminate\Support\Str::slug($user->name, '_');
+                if (empty($baseUsername)) {
+                    // Fallback to email username if name is empty
+                    $baseUsername = explode('@', $user->email)[0] ?? 'user';
+                }
+                
+                $username = $baseUsername;
+                $counter = 1;
+
+                // Ensure unique username
+                while (static::where('username', $username)->exists()) {
+                    $username = $baseUsername . '_' . $counter;
+                    $counter++;
+                }
+
+                $user->username = $username;
+            }
+        });
+    }
+
     // Relationships
     public function products()
     {
