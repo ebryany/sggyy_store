@@ -70,6 +70,55 @@ class EscrowService
                 'hold_until' => $holdUntil->toDateTimeString(),
             ]);
 
+            // Create notifications
+            $buyer = $order->user;
+            $seller = $order->product ? $order->product->user : $order->service->user;
+            
+            // Notify buyer
+            \App\Models\Notification::create([
+                'user_id' => $buyer->id,
+                'message' => "🔒 Dana untuk pesanan #{$order->order_number} telah ditahan di escrow. Dana akan dilepas setelah periode hold atau saat Anda konfirmasi selesai.",
+                'type' => 'escrow_created',
+                'is_read' => false,
+                'notifiable_type' => \App\Models\Order::class,
+                'notifiable_id' => $order->id,
+            ]);
+            
+            // Notify seller
+            \App\Models\Notification::create([
+                'user_id' => $seller->id,
+                'message' => "💰 Dana untuk pesanan #{$order->order_number} telah ditahan di escrow. Dana akan dilepas setelah periode hold ({$holdPeriodDays} hari) atau saat buyer konfirmasi selesai.",
+                'type' => 'escrow_created',
+                'is_read' => false,
+                'notifiable_type' => \App\Models\Order::class,
+                'notifiable_id' => $order->id,
+            ]);
+
+            // Send email notifications
+            try {
+                \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
+                    new \App\Mail\EscrowCreatedMail($order, $holdPeriodDays)
+                );
+                \Illuminate\Support\Facades\Mail::to($seller->email)->send(
+                    new \App\Mail\EscrowCreatedMail($order, $holdPeriodDays)
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to send escrow created email', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // Broadcast real-time event
+            try {
+                broadcast(new \App\Events\EscrowCreated($escrow, $order))->toOthers();
+            } catch (\Exception $e) {
+                Log::warning('Failed to broadcast escrow created event', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             return $escrow;
         });
     }
@@ -103,14 +152,58 @@ class EscrowService
                 'release_type' => $releaseType,
             ]);
 
-            // Create seller earning (available for withdrawal)
+            // Handle escrow release based on xenPlatform or manual
             $order = $escrow->order;
-            if (!$order->sellerEarning) {
-                $sellerService = app(SellerService::class);
-                $earning = $sellerService->createEarning($order);
+            $seller = $order->product ? $order->product->user : $order->service->user;
+            
+            $settingsService = app(SettingsService::class);
+            $xenditSettings = $settingsService->getXenditSettings();
+            $useXenPlatform = $xenditSettings['enable_xenplatform'] ?? false;
+            
+            if ($useXenPlatform && $seller->xendit_subaccount_id) {
+                // xenPlatform: Use Xendit disbursement API
+                $xenditService = app(\App\Services\XenditService::class);
                 
-                // Mark as available immediately (escrow already held the funds)
-                $sellerService->markEarningAvailable($earning);
+                try {
+                    $externalId = 'DISB-' . $order->order_number . '-' . time();
+                    $description = "Pembayaran untuk Order #{$order->order_number}";
+                    
+                    $disbursement = $xenditService->createDisbursement(
+                        $seller,
+                        (float) $escrow->seller_earning,
+                        $externalId,
+                        $description
+                    );
+                    
+                    // Update escrow with disbursement info
+                    $escrow->update([
+                        'xendit_disbursement_id' => $disbursement['id'] ?? null,
+                        'xendit_disbursement_external_id' => $externalId,
+                    ]);
+                    
+                    Log::info('Escrow released via Xendit disbursement (xenPlatform)', [
+                        'escrow_id' => $escrow->id,
+                        'order_id' => $order->id,
+                        'disbursement_id' => $disbursement['id'] ?? null,
+                        'amount' => $escrow->seller_earning,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to create Xendit disbursement', [
+                        'escrow_id' => $escrow->id,
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    throw $e;
+                }
+            } else {
+                // Manual escrow: Create seller earning (available for withdrawal)
+                if (!$order->sellerEarning) {
+                    $sellerService = app(SellerService::class);
+                    $earning = $sellerService->createEarning($order);
+                    
+                    // Mark as available immediately (escrow already held the funds)
+                    $sellerService->markEarningAvailable($earning);
+                }
             }
 
             Log::info('Escrow released', [
@@ -119,6 +212,61 @@ class EscrowService
                 'release_type' => $releaseType,
                 'released_by' => $releasedBy ?? auth()->id(),
             ]);
+
+            // Create notifications
+            $buyer = $order->user;
+            $seller = $order->product ? $order->product->user : $order->service->user;
+            
+            $releaseTypeLabels = [
+                'early' => 'dilepas lebih awal saat Anda konfirmasi selesai',
+                'auto' => 'dilepas otomatis setelah periode hold selesai',
+                'manual' => 'dilepas secara manual oleh admin',
+            ];
+            
+            // Notify buyer
+            \App\Models\Notification::create([
+                'user_id' => $buyer->id,
+                'message' => "✅ Escrow untuk pesanan #{$order->order_number} telah {$releaseTypeLabels[$releaseType]}. Dana telah dikirim ke seller.",
+                'type' => 'escrow_released',
+                'is_read' => false,
+                'notifiable_type' => \App\Models\Order::class,
+                'notifiable_id' => $order->id,
+            ]);
+            
+            // Notify seller
+            \App\Models\Notification::create([
+                'user_id' => $seller->id,
+                'message' => "💰 Escrow untuk pesanan #{$order->order_number} telah {$releaseTypeLabels[$releaseType]}. Dana sebesar Rp " . number_format($escrow->seller_earning, 0, ',', '.') . " telah tersedia untuk withdrawal.",
+                'type' => 'escrow_released',
+                'is_read' => false,
+                'notifiable_type' => \App\Models\Order::class,
+                'notifiable_id' => $order->id,
+            ]);
+
+            // Send email notifications
+            try {
+                \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
+                    new \App\Mail\EscrowReleasedMail($order, $releaseType)
+                );
+                \Illuminate\Support\Facades\Mail::to($seller->email)->send(
+                    new \App\Mail\EscrowReleasedMail($order, $releaseType)
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to send escrow released email', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // Broadcast real-time event
+            try {
+                broadcast(new \App\Events\EscrowReleased($escrow->fresh(), $order, $releaseType))->toOthers();
+            } catch (\Exception $e) {
+                Log::warning('Failed to broadcast escrow released event', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return $escrow->fresh();
         });
@@ -187,6 +335,62 @@ class EscrowService
                 'reason' => $reason,
                 'disputed_by' => $disputedBy ?? auth()->id(),
             ]);
+
+            // Create notifications
+            $order = $escrow->order;
+            $buyer = $order->user;
+            $seller = $order->product ? $order->product->user : $order->service->user;
+            $disputedByUser = \App\Models\User::find($disputedBy ?? auth()->id());
+            $isBuyerDispute = $disputedByUser->id === $buyer->id;
+            
+            // Notify the other party
+            $otherUserId = $isBuyerDispute ? $seller->id : $buyer->id;
+            \App\Models\Notification::create([
+                'user_id' => $otherUserId,
+                'message' => "⚠️ Dispute dibuat untuk pesanan #{$order->order_number} oleh " . ($isBuyerDispute ? 'buyer' : 'seller') . ". Admin akan meninjau dispute ini.",
+                'type' => 'escrow_disputed',
+                'is_read' => false,
+                'notifiable_type' => \App\Models\Order::class,
+                'notifiable_id' => $order->id,
+            ]);
+            
+            // Notify admins
+            $admins = \App\Models\User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                \App\Models\Notification::create([
+                    'user_id' => $admin->id,
+                    'message' => "🚨 Dispute baru untuk pesanan #{$order->order_number}. Segera tinjau dan selesaikan.",
+                    'type' => 'admin_dispute_created',
+                    'is_read' => false,
+                    'notifiable_type' => \App\Models\Order::class,
+                    'notifiable_id' => $order->id,
+                ]);
+            }
+
+            // Send email notifications
+            try {
+                \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
+                    new \App\Mail\EscrowDisputedMail($order, $isBuyerDispute ? 'buyer' : 'seller')
+                );
+                \Illuminate\Support\Facades\Mail::to($seller->email)->send(
+                    new \App\Mail\EscrowDisputedMail($order, $isBuyerDispute ? 'buyer' : 'seller')
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to send escrow disputed email', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // Broadcast real-time event
+            try {
+                broadcast(new \App\Events\EscrowDisputed($escrow->fresh(), $order, $disputedBy ?? auth()->id()))->toOthers();
+            } catch (\Exception $e) {
+                Log::warning('Failed to broadcast escrow disputed event', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return $escrow->fresh();
         });
@@ -300,6 +504,55 @@ class EscrowService
                 'amount' => $escrow->amount,
                 'reason' => $reason,
             ]);
+
+            // Create notifications
+            $buyer = $order->user;
+            $seller = $order->product ? $order->product->user : $order->service->user;
+            
+            // Notify buyer
+            \App\Models\Notification::create([
+                'user_id' => $buyer->id,
+                'message' => "💰 Dana untuk pesanan #{$order->order_number} telah dikembalikan ke wallet Anda sebesar Rp " . number_format($escrow->amount, 0, ',', '.') . ".",
+                'type' => 'escrow_refunded',
+                'is_read' => false,
+                'notifiable_type' => \App\Models\Order::class,
+                'notifiable_id' => $order->id,
+            ]);
+            
+            // Notify seller
+            \App\Models\Notification::create([
+                'user_id' => $seller->id,
+                'message' => "⚠️ Dispute untuk pesanan #{$order->order_number} telah diselesaikan dengan refund ke buyer.",
+                'type' => 'escrow_refunded',
+                'is_read' => false,
+                'notifiable_type' => \App\Models\Order::class,
+                'notifiable_id' => $order->id,
+            ]);
+
+            // Send email notifications
+            try {
+                \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
+                    new \App\Mail\EscrowRefundedMail($order, $escrow->amount)
+                );
+                \Illuminate\Support\Facades\Mail::to($seller->email)->send(
+                    new \App\Mail\EscrowRefundedMail($order, $escrow->amount)
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to send escrow refunded email', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // Broadcast real-time event
+            try {
+                broadcast(new \App\Events\EscrowRefunded($escrow->fresh(), $order))->toOthers();
+            } catch (\Exception $e) {
+                Log::warning('Failed to broadcast escrow refunded event', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return $escrow->fresh();
         });

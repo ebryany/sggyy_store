@@ -172,6 +172,26 @@ class OrderController extends Controller
         // Refresh order to ensure deliverable_path is up-to-date
         $order->refresh();
         
+        // Real-time auto-release check: If order is completed and hold period expired, auto-release immediately
+        if ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding() && $order->escrow->hold_until && $order->escrow->hold_until <= now()) {
+            try {
+                $escrowService = app(\App\Services\EscrowService::class);
+                $escrowService->autoRelease($order->escrow);
+                $order->refresh(); // Refresh to get updated escrow status
+                
+                \Illuminate\Support\Facades\Log::info('Escrow auto-released in real-time on page load (hold period expired)', [
+                    'order_id' => $order->id,
+                    'escrow_id' => $order->escrow->id,
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed to auto-release escrow in real-time on page load', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail, cron will handle it later
+            }
+        }
+        
         // Enhanced timeline with order history
         $timeline = $this->timelineService->getOrderTimeline($order);
         
@@ -199,7 +219,10 @@ class OrderController extends Controller
             $bankAccountInfo = $this->settingsService->getBankAccountInfo();
         }
 
-        return view('orders.show', compact('order', 'timeline', 'bankAccountInfo', 'isOwner', 'isSeller', 'isAdmin'));
+        $settingsService = app(\App\Services\SettingsService::class);
+        $featureFlags = $settingsService->getFeatureFlags();
+        
+        return view('orders.show', compact('order', 'timeline', 'bankAccountInfo', 'isOwner', 'isSeller', 'isAdmin', 'featureFlags'));
     }
 
     public function updateStatus(Order $order, \App\Http\Requests\OrderStatusUpdateRequest $request): RedirectResponse

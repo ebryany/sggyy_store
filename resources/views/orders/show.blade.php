@@ -384,15 +384,27 @@
                         @php
                             $invoiceUrl = $order->payment->xendit_metadata['invoice_url'] ?? null;
                             $xenditStatus = $order->payment->xendit_metadata['status'] ?? 'PENDING';
+                            $useXenPlatform = isset($featureFlags) && ($featureFlags['enable_xenplatform'] ?? false);
                         @endphp
                         @if($invoiceUrl && $order->payment->status === 'pending')
                         <div class="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                             <div class="flex items-center gap-2 mb-3">
                                 <x-icon name="external-link" class="w-5 h-5 text-blue-400" />
-                                <h3 class="font-semibold text-blue-400">Pembayaran via Xendit</h3>
+                                <h3 class="font-semibold text-blue-400 flex items-center gap-2">
+                                    Pembayaran via Xendit
+                                    @if($useXenPlatform)
+                                        <span class="px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                                            <x-icon name="shield-check" class="w-3 h-3 inline" />
+                                            xenPlatform
+                                        </span>
+                                    @endif
+                                </h3>
                             </div>
                             <p class="text-sm text-white/70 mb-3">
                                 Klik tombol di bawah untuk melakukan pembayaran. Verifikasi akan dilakukan otomatis setelah pembayaran berhasil.
+                                @if($useXenPlatform)
+                                    <br><span class="text-purple-400 font-semibold">Dana akan langsung di-split ke seller sub-account saat verified.</span>
+                                @endif
                             </p>
                             <a href="{{ $invoiceUrl }}" 
                                target="_blank"

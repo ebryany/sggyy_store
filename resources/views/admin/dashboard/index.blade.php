@@ -212,6 +212,38 @@
         </div>
     </div>
     
+    <!-- Escrow Statistics (Quick Overview) -->
+    @if(isset($escrowStats))
+    <div class="glass p-4 sm:p-6 rounded-lg mb-6 border border-white/10">
+        <h2 class="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <x-icon name="shield" class="w-5 h-5" />
+            <span>Statistik Escrow / Rekber</span>
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                <p class="text-white/60 text-xs mb-1">Dana Ditahan</p>
+                <p class="text-lg font-bold text-blue-400">{{ $escrowStats['holding_count'] }}</p>
+                <p class="text-xs text-white/60 mt-1">Rp {{ number_format($escrowStats['holding_amount'], 0, ',', '.') }}</p>
+            </div>
+            <div class="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                <p class="text-white/60 text-xs mb-1">Dilepas</p>
+                <p class="text-lg font-bold text-green-400">{{ $escrowStats['released_count'] }}</p>
+                <p class="text-xs text-white/60 mt-1">Rp {{ number_format($escrowStats['released_amount'], 0, ',', '.') }}</p>
+            </div>
+            <div class="p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
+                <p class="text-white/60 text-xs mb-1">Dispute</p>
+                <p class="text-lg font-bold text-orange-400">{{ $escrowStats['disputed_count'] }}</p>
+                <p class="text-xs text-white/60 mt-1">Rp {{ number_format($escrowStats['disputed_amount'], 0, ',', '.') }}</p>
+            </div>
+            <div class="p-3 rounded-lg bg-white/5 border border-white/10">
+                <p class="text-white/60 text-xs mb-1">Total Volume</p>
+                <p class="text-lg font-bold">Rp {{ number_format($escrowStats['total_volume'] / 1000000, 1) }}M</p>
+                <p class="text-xs text-white/60 mt-1">Dispute Rate: {{ number_format($escrowStats['dispute_rate_percent'], 1) }}%</p>
+            </div>
+        </div>
+    </div>
+    @endif
+    
     <!-- Charts Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <!-- Revenue Chart -->

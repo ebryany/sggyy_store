@@ -4,6 +4,9 @@ import Alpine from 'alpinejs';
 // Import chat module for AJAX & real-time chat
 import './chat';
 
+// Import escrow module for real-time escrow updates
+import './escrow';
+
 window.Alpine = Alpine;
 Alpine.start();
 

@@ -1,6 +1,14 @@
 @props(['escrow', 'order'])
 
 @php
+    // Add data attributes for real-time updates
+    $orderId = $order->id;
+    $escrowId = $escrow->id;
+@endphp
+
+<div data-escrow-card data-order-id="{{ $orderId }}" data-escrow-id="{{ $escrowId }}">
+
+@php
     $isHolding = $escrow->isHolding();
     $isReleased = $escrow->isReleased();
     $isDisputed = $escrow->isDisputed();
@@ -61,10 +69,13 @@
                             <x-icon name="shield-check" class="w-3 h-3" />
                             xenPlatform
                         </span>
-                    @endif
-                </div>
-            </div>
-        </div>
+        @endif
+    </div>
+    
+    <!-- Escrow Timeline -->
+    <x-escrow-timeline :escrow="$escrow" :order="$order" />
+</div>
+</div>
     </div>
 
     @if($isHolding)
@@ -124,30 +135,106 @@
             </p>
         </div>
 
-        <!-- Early Release Button (for buyer, if order completed) -->
+        <!-- Action Buttons (for buyer, if order completed) -->
         @if($order->status === 'completed' && auth()->id() === $order->user_id)
-        <div class="mt-4 pt-4 border-t border-white/10">
-            <form action="{{ route('orders.confirm', $order) }}" method="POST" 
-                  x-data="{ submitting: false }"
-                  @submit="submitting = true">
-                @csrf
-                <button type="submit" 
-                        :disabled="submitting"
-                        class="w-full px-4 py-3 bg-primary hover:bg-primary-dark rounded-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+        <div class="mt-4 pt-4 border-t border-white/10 space-y-3">
+            <!-- Early Release Button with Confirmation -->
+            <div x-data="{ 
+                showConfirm: false,
+                confirmed: false,
+                submitting: false 
+            }">
+                <!-- Confirmation Modal -->
+                <div x-show="showConfirm" 
+                     x-cloak
+                     style="display: none;"
+                     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                     @click.self="showConfirm = false">
+                    <div class="glass p-6 rounded-xl border border-white/20 max-w-md w-full" @click.stop>
+                        <div class="flex items-center gap-3 mb-4">
+                            <x-icon name="alert" class="w-8 h-8 text-yellow-400" />
+                            <h3 class="text-xl font-semibold">Konfirmasi Lepas Escrow</h3>
+                        </div>
+                        
+                        <div class="mb-6 space-y-3">
+                            <p class="text-white/80">
+                                Apakah Anda yakin ingin melepas escrow sekarang?
+                            </p>
+                            <div class="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                                <p class="text-sm text-yellow-300">
+                                    <strong>Penting:</strong> Dana akan langsung dikirim ke seller. 
+                                    Pastikan Anda sudah menerima produk/jasa sesuai pesanan.
+                                </p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                                <p class="text-sm text-red-300">
+                                    <strong>Peringatan:</strong> Tindakan ini tidak dapat dibatalkan.
+                                </p>
+                            </div>
+                            
+                            <label class="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" x-model="confirmed" class="mt-1">
+                                <span class="text-sm text-white/80">
+                                    Saya memahami bahwa dana akan dikirim ke seller dan tindakan ini tidak dapat dibatalkan
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button 
+                                type="button"
+                                @click="showConfirm = false; confirmed = false"
+                                class="flex-1 px-4 py-2 glass border border-white/20 rounded-lg hover:border-white/40 transition-all"
+                            >
+                                Batal
+                            </button>
+                            <form action="{{ route('orders.confirm', $order) }}" method="POST" @submit="submitting = true">
+                                @csrf
+                                <button 
+                                    type="submit"
+                                    :disabled="submitting || !confirmed"
+                                    class="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    <span x-show="!submitting">Ya, Lepas Escrow</span>
+                                    <span x-show="submitting" class="flex items-center gap-2">
+                                        <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Memproses...
+                                    </span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trigger Button -->
+                <button 
+                    type="button"
+                    @click="showConfirm = true"
+                    class="w-full px-4 py-3 bg-primary hover:bg-primary-dark rounded-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
                     <x-icon name="check" class="w-5 h-5" />
-                    <span x-show="!submitting">Konfirmasi Selesai & Lepas Escrow</span>
-                    <span x-show="submitting" class="flex items-center gap-2">
-                        <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Memproses...
-                    </span>
+                    Konfirmasi Selesai & Lepas Escrow
                 </button>
                 <p class="text-xs text-white/60 mt-2 text-center">
                     Konfirmasi selesai akan melepas escrow segera ke seller
                 </p>
-            </form>
+            </div>
+            
+            <!-- Dispute Button -->
+            @if($escrow->canBeDisputed())
+            <a 
+                href="{{ route('disputes.create', $order) }}" 
+                class="block w-full px-4 py-3 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 hover:border-orange-500/50 rounded-lg font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2 text-orange-400"
+            >
+                <x-icon name="alert" class="w-5 h-5" />
+                Buat Dispute
+            </a>
+            <p class="text-xs text-white/60 text-center">
+                Jika ada masalah dengan pesanan, Anda bisa membuat dispute
+            </p>
+            @endif
         </div>
         @endif
 

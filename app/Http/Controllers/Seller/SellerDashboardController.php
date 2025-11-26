@@ -417,7 +417,27 @@ class SellerDashboardController extends Controller
             abort(403, 'Unauthorized access to this order');
         }
 
-        $order->load(['product', 'service', 'payment.verifier', 'rating', 'history.creator', 'user']);
+        $order->load(['product', 'service', 'payment.verifier', 'rating', 'history.creator', 'user', 'escrow']);
+        
+        // Real-time auto-release check: If order is completed and hold period expired, auto-release immediately
+        if ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding() && $order->escrow->hold_until && $order->escrow->hold_until <= now()) {
+            try {
+                $escrowService = app(\App\Services\EscrowService::class);
+                $escrowService->autoRelease($order->escrow);
+                $order->refresh(); // Refresh to get updated escrow status
+                
+                \Illuminate\Support\Facades\Log::info('Escrow auto-released in real-time on seller page load (hold period expired)', [
+                    'order_id' => $order->id,
+                    'escrow_id' => $order->escrow->id,
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed to auto-release escrow in real-time on seller page load', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail, cron will handle it later
+            }
+        }
         
         // Timeline
         $timeline = $this->timelineService->getOrderTimeline($order);

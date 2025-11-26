@@ -15,6 +15,11 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-4 sm:space-y-6">
+            <!-- Escrow Status Card (Seller View) -->
+            @if($order->escrow)
+                @include('components.escrow-status-card-seller', ['order' => $order, 'escrow' => $order->escrow])
+            @endif
+            
             <!-- Order Info -->
             <div class="glass p-4 sm:p-6 rounded-lg">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-3 sm:gap-4 mb-4">

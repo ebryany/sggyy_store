@@ -80,37 +80,37 @@ return new class extends Migration
         // Generate UUIDs for existing records (only if table has data)
         // Use conditional check to avoid errors on fresh migrations
         if (DB::table('orders')->count() > 0) {
-            DB::statement('UPDATE orders SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE orders SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('payments')->count() > 0) {
-            DB::statement('UPDATE payments SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE payments SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('seller_earnings')->count() > 0) {
-            DB::statement('UPDATE seller_earnings SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE seller_earnings SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('seller_withdrawals')->count() > 0) {
-            DB::statement('UPDATE seller_withdrawals SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE seller_withdrawals SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('chats')->count() > 0) {
-            DB::statement('UPDATE chats SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE chats SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('chat_messages')->count() > 0) {
-            DB::statement('UPDATE chat_messages SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE chat_messages SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('notifications')->count() > 0) {
-            DB::statement('UPDATE notifications SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE notifications SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('featured_items')->count() > 0) {
-            DB::statement('UPDATE featured_items SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE featured_items SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('wallet_transactions')->count() > 0) {
-            DB::statement('UPDATE wallet_transactions SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE wallet_transactions SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('products')->count() > 0) {
-            DB::statement('UPDATE products SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE products SET uuid = UUID() WHERE uuid IS NULL');
         }
         if (DB::table('services')->count() > 0) {
-            DB::statement('UPDATE services SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE services SET uuid = UUID() WHERE uuid IS NULL');
         }
 
         // Make uuid NOT NULL after populating

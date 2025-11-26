@@ -523,6 +523,25 @@ class OrderService
             }
         }
         
+        // Real-time auto-release check: If hold period expired, auto-release immediately
+        if ($order->escrow && $order->escrow->isHolding() && $order->escrow->hold_until && $order->escrow->hold_until <= now()) {
+            try {
+                $escrowService = app(\App\Services\EscrowService::class);
+                $escrowService->autoRelease($order->escrow);
+                
+                Log::info('Escrow auto-released in real-time on order completion (hold period expired)', [
+                    'order_id' => $order->id,
+                    'escrow_id' => $order->escrow->id,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to auto-release escrow in real-time', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail, cron will handle it later
+            }
+        }
+        
         // Create rating if provided
         if ($ratingData && !empty($ratingData['rating'])) {
             try {

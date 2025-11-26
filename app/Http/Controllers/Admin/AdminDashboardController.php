@@ -38,6 +38,9 @@ class AdminDashboardController extends Controller
         $topSellers = $topPerformers['top_sellers'];
         $topProducts = $topPerformers['top_products'];
         
+        // Get escrow statistics
+        $escrowStats = $this->dashboardService->getEscrowStats();
+        
         return view('admin.dashboard.index', compact(
             'stats',
             'alerts',
@@ -51,7 +54,8 @@ class AdminDashboardController extends Controller
             'pendingVerifications',
             'overdueOrders',
             'topSellers',
-            'topProducts'
+            'topProducts',
+            'escrowStats'
         ));
     }
 }

@@ -34,6 +34,7 @@ Route::post('/store/{slug}/follow', [StoreController::class, 'toggleFollow'])
     ->middleware('auth');
 
 // Chat Routes (Authenticated) - Username-based URLs
+// Note: Route pattern uses literal @ in URL, but controller handles username with or without @
 Route::middleware('auth')->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/@{username}', [ChatController::class, 'show'])->name('chat.show');
@@ -204,6 +205,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/orders/{order}/reject', [OrderController::class, 'rejectOrder'])->name('orders.reject'); // Seller rejects order
     Route::post('/orders/{order}/confirm', [OrderController::class, 'confirmCompletion'])->name('orders.confirm'); // Buyer confirms completion
     Route::post('/orders/{order}/cancel', [OrderController::class, 'cancelOrder'])->name('orders.cancel'); // Cancel order with refund rules
+    
+    // Dispute Routes
+    Route::get('/orders/{order}/dispute', [\App\Http\Controllers\DisputeController::class, 'create'])->name('disputes.create');
+    Route::post('/orders/{order}/dispute', [\App\Http\Controllers\DisputeController::class, 'store'])->name('disputes.store');
+    Route::get('/disputes', [\App\Http\Controllers\DisputeController::class, 'index'])->name('disputes.index');
     
     // 🔒 SECURITY: Payment Proof Upload (Buyer Only)
     // Rate limiting: 10 uploads per 10 minutes (more reasonable for retry scenarios)

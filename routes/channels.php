@@ -39,3 +39,19 @@ Broadcast::channel('online', function ($user) {
     ];
 });
 
+// Private order channel - users can only join if they are buyer or seller
+Broadcast::channel('order.{orderId}', function ($user, $orderId) {
+    $order = \App\Models\Order::find($orderId);
+    
+    if (!$order) {
+        return false;
+    }
+    
+    // User must be buyer or seller
+    $isBuyer = $order->user_id === $user->id;
+    $isSeller = ($order->product && $order->product->user_id === $user->id) ||
+                ($order->service && $order->service->user_id === $user->id);
+    
+    return $isBuyer || $isSeller || $user->isAdmin();
+});
+

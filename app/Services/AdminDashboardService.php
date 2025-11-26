@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Models\SellerWithdrawal;
 use App\Models\SellerVerification;
+use App\Models\Escrow;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -366,6 +367,81 @@ class AdminDashboardService
         for ($i = 7; $i <= 90; $i += 7) {
             Cache::forget("admin.dashboard.order_trend.{$i}");
         }
+    }
+    
+    /**
+     * Get escrow statistics for admin dashboard
+     */
+    public function getEscrowStats(): array
+    {
+        $ttl = app()->environment('production') ? 600 : 30;
+        return Cache::remember('admin.dashboard.escrow_stats', $ttl, function () {
+            $today = today();
+            $thisMonth = now()->month;
+            $thisYear = now()->year;
+            
+            // Total escrow volume
+            $totalEscrowVolume = Escrow::sum('amount');
+            $escrowVolumeToday = Escrow::whereDate('created_at', $today)->sum('amount');
+            $escrowVolumeThisMonth = Escrow::whereMonth('created_at', $thisMonth)
+                ->whereYear('created_at', $thisYear)
+                ->sum('amount');
+            
+            // Escrow by status
+            $holdingEscrows = Escrow::where('status', 'holding')->count();
+            $holdingAmount = Escrow::where('status', 'holding')->sum('amount');
+            $releasedEscrows = Escrow::where('status', 'released')->count();
+            $releasedAmount = Escrow::where('status', 'released')->sum('amount');
+            $disputedEscrows = Escrow::where('status', 'disputed')->count();
+            $disputedAmount = Escrow::where('status', 'disputed')->sum('amount');
+            $refundedEscrows = Escrow::where('status', 'refunded')->count();
+            $refundedAmount = Escrow::where('status', 'refunded')->sum('amount');
+            
+            // Average hold time
+            $avgHoldTime = Escrow::where('status', 'released')
+                ->whereNotNull('released_at')
+                ->whereNotNull('created_at')
+                ->get()
+                ->map(function($escrow) {
+                    return $escrow->created_at->diffInHours($escrow->released_at);
+                })
+                ->avg() ?? 0;
+            
+            // Dispute rate
+            $totalCompleted = $releasedEscrows + $refundedEscrows;
+            $disputeRate = $totalCompleted > 0 ? ($disputedEscrows / $totalCompleted) * 100 : 0;
+            
+            // Auto-release success rate
+            $autoReleased = Escrow::where('status', 'released')
+                ->where('release_type', 'auto')
+                ->count();
+            $totalReleased = $releasedEscrows;
+            $autoReleaseRate = $totalReleased > 0 ? ($autoReleased / $totalReleased) * 100 : 0;
+            
+            // Recent escrow activities
+            $recentEscrows = Escrow::with(['order.user', 'order.product', 'order.service'])
+                ->latest()
+                ->limit(10)
+                ->get();
+            
+            return [
+                'total_volume' => $totalEscrowVolume,
+                'volume_today' => $escrowVolumeToday,
+                'volume_this_month' => $escrowVolumeThisMonth,
+                'holding_count' => $holdingEscrows,
+                'holding_amount' => $holdingAmount,
+                'released_count' => $releasedEscrows,
+                'released_amount' => $releasedAmount,
+                'disputed_count' => $disputedEscrows,
+                'disputed_amount' => $disputedAmount,
+                'refunded_count' => $refundedEscrows,
+                'refunded_amount' => $refundedAmount,
+                'average_hold_time_hours' => round($avgHoldTime, 2),
+                'dispute_rate_percent' => round($disputeRate, 2),
+                'auto_release_rate_percent' => round($autoReleaseRate, 2),
+                'recent_escrows' => $recentEscrows,
+            ];
+        });
     }
 }
 

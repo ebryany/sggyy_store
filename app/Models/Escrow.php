@@ -24,9 +24,12 @@ class Escrow extends Model
         'disputed_at',
         'dispute_reason',
         'disputed_by',
-        'xendit_invoice_id',
-        'xendit_external_id',
-    ];
+            'xendit_invoice_id',
+            'xendit_external_id',
+            'xendit_disbursement_id',
+            'xendit_disbursement_external_id',
+            'xendit_disbursement_metadata',
+        ];
 
     protected function casts(): array
     {
@@ -38,6 +41,7 @@ class Escrow extends Model
             'released_at' => 'datetime',
             'disputed_at' => 'datetime',
             'is_disputed' => 'boolean',
+            'xendit_disbursement_metadata' => 'array',
         ];
     }
 
