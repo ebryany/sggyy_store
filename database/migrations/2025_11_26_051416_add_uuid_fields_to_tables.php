@@ -1,0 +1,178 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        // Add UUID to orders table
+        Schema::table('orders', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to payments table
+        Schema::table('payments', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to seller_earnings table
+        Schema::table('seller_earnings', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to seller_withdrawals table
+        Schema::table('seller_withdrawals', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to chats table
+        Schema::table('chats', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to chat_messages table
+        Schema::table('chat_messages', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to notifications table
+        Schema::table('notifications', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to featured_items table (for admin banner management)
+        Schema::table('featured_items', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to wallet_transactions table
+        Schema::table('wallet_transactions', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to products table (untuk seller management internal)
+        Schema::table('products', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Add UUID to services table (untuk seller management internal)
+        Schema::table('services', function (Blueprint $table) {
+            $table->uuid('uuid')->after('id')->unique()->nullable();
+            $table->index('uuid');
+        });
+
+        // Generate UUIDs for existing records
+        DB::statement('UPDATE orders SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE payments SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE seller_earnings SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE seller_withdrawals SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE chats SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE chat_messages SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE notifications SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE featured_items SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE wallet_transactions SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE products SET uuid = UUID() WHERE uuid IS NULL');
+        DB::statement('UPDATE services SET uuid = UUID() WHERE uuid IS NULL');
+
+        // Make uuid NOT NULL after populating
+        Schema::table('orders', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('payments', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('seller_earnings', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('seller_withdrawals', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('chats', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('chat_messages', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('notifications', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('featured_items', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('wallet_transactions', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('products', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+        Schema::table('services', function (Blueprint $table) {
+            $table->uuid('uuid')->nullable(false)->change();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('payments', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('seller_earnings', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('seller_withdrawals', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('chats', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('chat_messages', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('notifications', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('featured_items', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('wallet_transactions', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('products', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+
+        Schema::table('services', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
+    }
+};
