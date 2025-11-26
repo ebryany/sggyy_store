@@ -94,9 +94,27 @@
                     <div x-data="{ open: false }" class="relative">
                         <button @click="open = !open" 
                                 class="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 hover:opacity-80 touch-target transition-all duration-200">
-                            <img src="{{ auth()->user()->avatar ?? 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) }}" 
-                                 alt="{{ auth()->user()->name }}" 
-                                 class="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/20">
+                            @php
+                                $user = auth()->user();
+                                $avatarUrl = null;
+                                if ($user->avatar) {
+                                    // Check if avatar is a full URL or local path
+                                    if (str_starts_with($user->avatar, 'http://') || str_starts_with($user->avatar, 'https://')) {
+                                        $avatarUrl = $user->avatar;
+                                    } else {
+                                        // Local path - use storage URL
+                                        $avatarUrl = asset('storage/' . ltrim($user->avatar, '/'));
+                                    }
+                                }
+                                // Fallback to UI Avatars if no avatar
+                                if (!$avatarUrl) {
+                                    $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=random&color=fff&size=128';
+                                }
+                            @endphp
+                            <img src="{{ $avatarUrl }}" 
+                                 alt="{{ $user->name }}" 
+                                 class="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white/20 object-cover"
+                                 onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=random&color=fff&size=128'">
                             <span class="hidden md:block text-sm lg:text-base text-white">{{ auth()->user()->name }}</span>
                             <x-icon name="chevron-down" class="w-4 h-4 hidden sm:block text-white" />
                         </button>
