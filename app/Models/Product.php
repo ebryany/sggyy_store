@@ -10,6 +10,7 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'user_id',
         'title',
         'slug',
@@ -41,6 +42,27 @@ class Product extends Model
         'meta_title',
         'meta_description',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($product) {
+            // 🔒 CRITICAL: Always generate UUID if not set
+            // This ensures UUID is always present even if seeder doesn't provide it
+            if (empty($product->uuid)) {
+                $product->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::saving(function ($product) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            // This catches cases where boot::creating might not fire
+            if (empty($product->uuid)) {
+                $product->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
 
     protected function casts(): array
     {
@@ -136,10 +158,15 @@ class Product extends Model
 
     /**
      * Get the route key for the model.
-     * Support both slug and ID for backward compatibility
+     * Use slug for public routes, UUID for seller/admin API routes
      */
     public function getRouteKeyName(): string
     {
+        // For API seller/admin routes, use UUID
+        if (request()->is('api/*/seller/products/*') || request()->is('api/*/admin/products/*')) {
+            return 'uuid';
+        }
+        // For public routes, use slug
         return 'slug';
     }
 

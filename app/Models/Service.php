@@ -10,6 +10,7 @@ class Service extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'user_id',
         'title',
         'slug',
@@ -20,6 +21,25 @@ class Service extends Model
         'image',
         'completed_count',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($service) {
+            // 🔒 CRITICAL: Always generate UUID if not set
+            if (empty($service->uuid)) {
+                $service->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::saving(function ($service) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($service->uuid)) {
+                $service->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
 
     protected function casts(): array
     {
@@ -57,10 +77,15 @@ class Service extends Model
 
     /**
      * Get the route key for the model.
-     * Support both slug and ID for backward compatibility
+     * Use slug for public routes, UUID for seller/admin API routes
      */
     public function getRouteKeyName(): string
     {
+        // For API seller/admin routes, use UUID
+        if (request()->is('api/*/seller/services/*') || request()->is('api/*/admin/services/*')) {
+            return 'uuid';
+        }
+        // For public routes, use slug
         return 'slug';
     }
 
