@@ -64,7 +64,7 @@ class CheckoutService
 
         // Validate payment method
         $paymentMethod = $data['payment_method'] ?? 'wallet';
-        $validMethods = ['wallet', 'bank_transfer', 'qris'];
+        $validMethods = ['wallet', 'bank_transfer', 'qris', 'xendit_va', 'xendit_qris'];
         if (!in_array($paymentMethod, $validMethods)) {
             throw new \Exception('Metode pembayaran tidak valid');
         }
@@ -86,6 +86,9 @@ class CheckoutService
             // Process payment based on method
             if ($paymentMethod === 'wallet') {
                 $this->processWalletPayment($order, $payment);
+            } elseif (in_array($paymentMethod, ['xendit_va', 'xendit_qris'])) {
+                // Xendit payment methods - create invoice immediately
+                $this->createXenditInvoice($order, $payment, $paymentMethod);
             } elseif (in_array($paymentMethod, ['bank_transfer', 'qris', 'e_wallet'])) {
                 // Check if Xendit is enabled
                 $settingsService = app(\App\Services\SettingsService::class);
