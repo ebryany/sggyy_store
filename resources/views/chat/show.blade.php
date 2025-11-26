@@ -52,7 +52,10 @@
 
     <!-- Messages Container -->
     <div class="glass p-4 sm:p-6 rounded-xl mb-4 border border-white/10" 
-         id="messagesContainer" 
+         id="messages-container" 
+         data-chat-id="{{ $chat->id }}"
+         data-current-user-id="{{ $currentUser->id }}"
+         data-username="{{ $otherUser->username }}"
          style="max-height: 60vh; overflow-y: auto; scroll-behavior: smooth;">
         @if($messages->isEmpty())
         <div class="text-center py-12">
@@ -61,461 +64,64 @@
             <p class="text-white/40 text-sm">Mulai percakapan dengan mengirim pesan pertama!</p>
         </div>
         @else
-        <div class="space-y-4">
-            @php
-                $lastDate = null;
-            @endphp
-            @foreach($messages as $message)
-                @php
-                    $currentDate = $message->created_at->format('Y-m-d');
-                    $showDateSeparator = $lastDate !== $currentDate;
-                    $lastDate = $currentDate;
-                @endphp
-                
-                @if($showDateSeparator)
-                <div class="flex items-center justify-center my-4">
-                    <div class="flex items-center gap-2 px-3 py-1 glass rounded-full">
-                        <span class="text-xs text-white/60">
-                            @if($message->created_at->isToday())
-                                Hari Ini
-                            @elseif($message->created_at->isYesterday())
-                                Kemarin
-                            @else
-                                {{ $message->created_at->format('d M Y') }}
-                            @endif
-                        </span>
-                    </div>
-                </div>
-                @endif
-                
-                <div class="flex {{ $message->isFromCurrentUser() ? 'justify-end' : 'justify-start' }} group">
-                    <div class="max-w-[75%] sm:max-w-[60%] lg:max-w-[50%]">
-                        @if(!$message->isFromCurrentUser())
-                        <div class="flex items-center gap-2 mb-1 px-1">
-                            <img src="{{ $message->sender->avatar ? asset('storage/' . $message->sender->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($message->sender->name) }}" 
-                                 alt="{{ $message->sender->name }}" 
-                                 class="w-5 h-5 rounded-full border border-white/20">
-                            <span class="text-xs text-white/60 font-medium">{{ $message->sender->name }}</span>
-                        </div>
-                        @endif
-                        
-                        <div class="p-3 sm:p-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow {{ $message->isFromCurrentUser() ? 'bg-primary text-white rounded-tr-sm' : 'bg-white/10 text-white rounded-tl-sm' }}">
-                            @if($message->message)
-                            <p class="text-sm sm:text-base whitespace-pre-wrap break-words leading-relaxed">{{ $message->message }}</p>
-                            @endif
-                            
-                            @if($message->attachment_path)
-                            <div class="mt-3">
-                                @php
-                                    $attachmentUrl = $message->getAttachmentUrl();
-                                    $extension = strtolower(pathinfo($message->attachment_path, PATHINFO_EXTENSION));
-                                    $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                                @endphp
-                                
-                                @if($isImage)
-                                <div class="rounded-lg overflow-hidden border-2 border-white/20 hover:border-white/30 transition-colors">
-                                    <a href="{{ $attachmentUrl }}" target="_blank" class="block">
-                                        <img src="{{ $attachmentUrl }}" 
-                                             alt="Attachment" 
-                                             class="max-w-full h-auto max-h-64 object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                        <div style="display:none;" class="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg">
-                                            <x-icon name="file-text" class="w-4 h-4" />
-                                            <span class="text-sm">Gambar tidak dapat dimuat</span>
-                                        </div>
-                                    </a>
-                                </div>
-                                <a href="{{ $attachmentUrl }}" 
-                                   target="_blank" 
-                                   class="inline-flex items-center gap-2 mt-2 px-3 py-1.5 {{ $message->isFromCurrentUser() ? 'bg-white/20 hover:bg-white/30' : 'bg-white/10 hover:bg-white/20' }} rounded-lg transition-colors text-xs">
-                                    <x-icon name="link" class="w-3 h-3" />
-                                    Buka di tab baru
-                                </a>
-                                @else
-                                <a href="{{ $attachmentUrl }}" 
-                                   target="_blank" 
-                                   class="inline-flex items-center gap-2 px-3 py-2 {{ $message->isFromCurrentUser() ? 'bg-white/20 hover:bg-white/30' : 'bg-white/10 hover:bg-white/20' }} rounded-lg transition-colors text-sm">
-                                    <x-icon name="file-text" class="w-4 h-4" />
-                                    <span>{{ basename($message->attachment_path) }}</span>
-                                    <x-icon name="arrow-right" class="w-3 h-3" />
-                                </a>
-                                @endif
-                            </div>
-                            @endif
-                            
-                            <div class="flex items-center {{ $message->isFromCurrentUser() ? 'justify-end' : 'justify-start' }} gap-2 mt-2">
-                                <span class="text-xs opacity-70">{{ $message->created_at->format('H:i') }}</span>
-                                @if($message->isFromCurrentUser())
-                                    @if($message->is_read)
-                                    <x-icon name="check" class="w-4 h-4 opacity-70" />
-                                    @else
-                                    <x-icon name="check" class="w-4 h-4 opacity-40" />
-                                    @endif
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
+        @foreach($messages as $message)
+            @include('chat.partials.message', ['message' => $message])
+        @endforeach
         @endif
     </div>
 
-    <!-- Success/Error Messages -->
-    @if(session('success'))
-    <div class="glass p-4 rounded-xl mb-4 border border-green-500/30 bg-green-500/20">
-        <p class="text-green-400 flex items-center gap-2">
-            <x-icon name="check" class="w-5 h-5" />
-            {{ session('success') }}
-        </p>
-    </div>
-    @endif
-
-    @if($errors->any())
-    <div class="glass p-4 rounded-xl mb-4 border border-red-500/30 bg-red-500/20">
-        <div class="flex items-start gap-2">
-            <x-icon name="alert-circle" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div class="flex-1">
-                <p class="text-red-400 font-semibold mb-1">Terjadi kesalahan:</p>
-                <ul class="text-red-300 text-sm space-y-1">
-                    @foreach($errors->all() as $error)
-                    <li>• {{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
-    </div>
-    @endif
+    <!-- File Preview Container -->
+    <div id="file-preview" class="hidden mb-4 glass p-3 rounded-xl border border-white/10"></div>
 
     <!-- Message Form -->
-    <form action="{{ route('chat.send', $otherUser->id) }}" 
+    <form id="chat-form" 
+          action="{{ route('chat.send', '@' . $otherUser->username) }}" 
           method="POST" 
           enctype="multipart/form-data" 
-          class="glass p-4 sm:p-6 rounded-xl border border-white/10"
-          id="messageForm"
-          data-no-ajax="true"
-          data-no-intercept="true"
-          data-form-type="normal"
-          onsubmit="return validateChatForm(this);">
+          class="glass p-4 sm:p-6 rounded-xl border border-white/10">
         @csrf
-        <input type="hidden" name="_no_ajax" value="1">
-        <input type="hidden" name="_form_type" value="normal">
         
         <div class="flex flex-col sm:flex-row gap-3">
             <!-- File Input (Hidden) -->
             <input type="file" 
                    name="attachment" 
-                   id="attachmentInput" 
+                   id="attachment-input" 
                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,.jpg,.jpeg,.png,.gif,.webp"
                    class="hidden">
             
             <!-- Attachment Button -->
             <button type="button" 
-                    onclick="document.getElementById('attachmentInput').click()"
+                    onclick="document.getElementById('attachment-input').click()"
                     class="px-4 py-3 glass glass-hover rounded-lg transition-colors flex-shrink-0 flex items-center justify-center">
                 <x-icon name="file-text" class="w-5 h-5" />
             </button>
             
             <!-- Message Input -->
             <textarea name="message" 
-                      id="messageInput"
+                      id="message-input"
                       rows="1"
                       placeholder="Ketik pesan..." 
                       class="flex-1 px-4 py-3 glass border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-none"></textarea>
             
             <!-- Send Button -->
             <button type="submit" 
-                    id="sendButton"
+                    id="send-button"
                     class="px-6 py-3 bg-primary hover:bg-primary-dark rounded-lg font-semibold transition-colors flex-shrink-0 flex items-center justify-center shadow-lg hover:shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
-                <x-icon name="arrow-right" class="w-5 h-5" />
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
             </button>
-        </div>
-        
-        <!-- File Preview & Name Display -->
-        <div id="filePreviewContainer" class="mt-3 hidden">
-            <div class="glass p-3 rounded-lg border border-white/10 flex items-center justify-between">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <div id="filePreview" class="flex-shrink-0"></div>
-                    <div class="flex-1 min-w-0">
-                        <p id="fileNameDisplay" class="text-sm text-white/80 font-medium truncate"></p>
-                        <p id="fileSizeDisplay" class="text-xs text-white/60"></p>
-                    </div>
-                </div>
-                <button type="button" 
-                        onclick="clearAttachment()"
-                        class="p-1 glass glass-hover rounded-lg transition-colors flex-shrink-0 ml-2">
-                    <x-icon name="x" class="w-4 h-4" />
-                </button>
-            </div>
         </div>
     </form>
 </div>
-
-@push('scripts')
-<script>
-    // CRITICAL: Inline validation - NO AJAX, NO fetch, NO intercept
-    // This function is called by form's onsubmit attribute
-    function validateChatForm(form) {
-        const messageInput = form.querySelector('textarea[name="message"]');
-        const attachmentInput = form.querySelector('input[name="attachment"]');
-        
-        const hasMessage = messageInput && messageInput.value.trim().length > 0;
-        const hasAttachment = attachmentInput && attachmentInput.files.length > 0;
-        
-        if (!hasMessage && !hasAttachment) {
-            // Use toast instead of alert for better UX
-            window.dispatchEvent(new CustomEvent('toast', { 
-                detail: { 
-                    message: 'Pesan atau file attachment wajib diisi', 
-                    type: 'error' 
-                } 
-            }));
-            return false;
-        }
-        
-        // CRITICAL: Let form submit normally - browser will handle POST and follow redirect
-        // DO NOT use fetch, axios, or any AJAX
-        // DO NOT prevent default - browser must submit form normally
-        return true;
-    }
-    
-    // CRITICAL: Ensure form is marked BEFORE app.js runs
-    // This prevents app.js from adding event listeners
-    (function() {
-        const form = document.getElementById('messageForm');
-        if (form) {
-            form.setAttribute('data-no-ajax', 'true');
-            form.setAttribute('data-no-intercept', 'true');
-        }
-    })();
-</script>
-<style>
-    /* SECURITY: Hide any JSON responses that might appear (should never happen, but safety measure) */
-    body > pre:only-child,
-    body > pre:first-child:last-child {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        overflow: hidden !important;
-    }
-    
-    /* Hide JSON if it appears as text content */
-    body:has(> pre:only-child) {
-        overflow: hidden;
-    }
-</style>
-<script>
-    // Auto-scroll to bottom with smooth behavior
-    function scrollToBottom() {
-        const messagesContainer = document.getElementById('messagesContainer');
-        if (messagesContainer) {
-            messagesContainer.scrollTo({
-                top: messagesContainer.scrollHeight,
-                behavior: 'smooth'
-            });
-        }
-    }
-    
-    // Initial scroll
-    setTimeout(scrollToBottom, 100);
-
-    // Auto-resize textarea
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-    
-    function validateForm() {
-        const hasMessage = messageInput && messageInput.value.trim().length > 0;
-        const hasAttachment = attachmentInput && attachmentInput.files.length > 0;
-        const isValid = hasMessage || hasAttachment;
-        
-        if (sendButton) {
-            sendButton.disabled = !isValid;
-        }
-        
-        return isValid;
-    }
-    
-    if (messageInput) {
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-            validateForm();
-        });
-        
-        // Handle Enter key (submit on Enter, new line on Shift+Enter)
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (validateForm()) {
-                    document.getElementById('messageForm').submit();
-                }
-            }
-        });
-    }
-    
-    // Validate on attachment change
-    if (attachmentInput) {
-        attachmentInput.addEventListener('change', function() {
-            validateForm();
-        });
-    }
-    
-    // Initial validation
-    validateForm();
-
-    // File preview and display
-    const attachmentInput = document.getElementById('attachmentInput');
-    const filePreviewContainer = document.getElementById('filePreviewContainer');
-    const filePreview = document.getElementById('filePreview');
-    const fileNameDisplay = document.getElementById('fileNameDisplay');
-    const fileSizeDisplay = document.getElementById('fileSizeDisplay');
-    
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-    }
-    
-    function clearAttachment() {
-        if (attachmentInput) {
-            attachmentInput.value = '';
-        }
-        if (filePreviewContainer) {
-            filePreviewContainer.classList.add('hidden');
-        }
-        if (filePreview) {
-            filePreview.innerHTML = '';
-        }
-    }
-    
-    if (attachmentInput && filePreviewContainer) {
-        attachmentInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                const file = this.files[0];
-                const fileName = file.name;
-                const fileSize = formatFileSize(file.size);
-                const fileType = file.type;
-                
-                // Display file name and size
-                if (fileNameDisplay) {
-                    fileNameDisplay.textContent = fileName;
-                }
-                if (fileSizeDisplay) {
-                    fileSizeDisplay.textContent = fileSize;
-                }
-                
-                // Preview for images
-                if (fileType.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        if (filePreview) {
-                            filePreview.innerHTML = '<img src="' + e.target.result + '" alt="Preview" class="w-12 h-12 object-cover rounded-lg border border-white/20">';
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    if (filePreview) {
-                        filePreview.innerHTML = '<div class="w-12 h-12 glass rounded-lg flex items-center justify-center"><svg class="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>';
-                    }
-                }
-                
-                filePreviewContainer.classList.remove('hidden');
-            } else {
-                clearAttachment();
-            }
-        });
-    }
-
-    // Auto-refresh messages every 5 seconds (AJAX instead of full reload)
-    let isRefreshing = false;
-    setInterval(function() {
-        if (document.visibilityState === 'visible' && !isRefreshing) {
-            isRefreshing = true;
-            fetch(window.location.href, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'text/html'
-                }
-            })
-            .then(response => response.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newMessagesContainer = doc.getElementById('messagesContainer');
-                const currentMessagesContainer = document.getElementById('messagesContainer');
-                
-                if (newMessagesContainer && currentMessagesContainer) {
-                    const wasAtBottom = currentMessagesContainer.scrollHeight - currentMessagesContainer.scrollTop <= currentMessagesContainer.clientHeight + 100;
-                    currentMessagesContainer.innerHTML = newMessagesContainer.innerHTML;
-                    
-                    if (wasAtBottom) {
-                        scrollToBottom();
-                    }
-                }
-                isRefreshing = false;
-            })
-            .catch(error => {
-                console.error('Error refreshing messages:', error);
-                isRefreshing = false;
-            });
-        }
-    }, 5000);
-    
-    // CRITICAL: NO JavaScript interference with form submit AT ALL
-    // Form uses inline onsubmit validation - browser handles everything else
-    // DO NOT add any event listeners to form or button
-    // DO NOT use fetch, axios, or any AJAX
-    // Let browser submit form normally and follow redirect from server
-    
-    // Reset form after successful submit (when page reloads with success message)
-    @if(session('success'))
-    document.addEventListener('DOMContentLoaded', function() {
-        if (messageInput) {
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-        }
-        clearAttachment();
-        if (sendButton) {
-            sendButton.disabled = false;
-            sendButton.innerHTML = '<x-icon name="arrow-right" class="w-5 h-5" />';
-        }
-        validateForm();
-        scrollToBottom();
-    });
-    @endif
-    
-    // SECURITY: Prevent JSON response from being displayed
-    // If somehow JSON response appears, immediately redirect
-    window.addEventListener('DOMContentLoaded', function() {
-        // Check if page contains only JSON (should never happen)
-        const bodyText = document.body.innerText.trim();
-        if (bodyText.startsWith('{') && bodyText.endsWith('}') && bodyText.includes('"id"') && bodyText.includes('"sender"')) {
-            // This is a JSON response - redirect immediately
-            console.error('SECURITY: JSON response detected, redirecting...');
-            window.location.href = '{{ route("chat.show", $otherUser->id) }}';
-        }
-    });
-    
-    // Auto-hide success/error messages after 5 seconds
-    setTimeout(function() {
-        const successMsg = document.querySelector('.bg-green-500\\/20');
-        const errorMsg = document.querySelector('.bg-red-500\\/20');
-        if (successMsg) {
-            successMsg.style.transition = 'opacity 0.5s';
-            successMsg.style.opacity = '0';
-            setTimeout(() => successMsg.remove(), 500);
-        }
-        if (errorMsg) {
-            errorMsg.style.transition = 'opacity 0.5s';
-            errorMsg.style.opacity = '0';
-            setTimeout(() => errorMsg.remove(), 500);
-        }
-    }, 5000);
-</script>
-@endpush
 @endsection
 
+@push('scripts')
+<!-- Chat module will be loaded via app.js -->
+<script>
+// Listen for chat module initialization
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Chat page loaded with username: @{{ $otherUser->username }}');
+});
+</script>
+@endpush

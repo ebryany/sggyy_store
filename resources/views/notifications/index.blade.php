@@ -111,7 +111,7 @@
                             $otherUser = $notification->notifiable->getOtherUser();
                         @endphp
                         @if($otherUser)
-                        <a href="{{ route('chat.show', $otherUser->id) }}" 
+                        <a href="{{ route('chat.show', '@' . $otherUser->username) }}" 
                            class="inline-flex items-center gap-2 text-xs px-3 py-1.5 glass glass-hover rounded-lg transition-all hover:scale-105 border border-white/10">
                             <x-icon name="arrow-right" class="w-4 h-4" />
                             Buka Chat

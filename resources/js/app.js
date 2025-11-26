@@ -1,6 +1,9 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
 
+// Import chat module for AJAX & real-time chat
+import './chat';
+
 window.Alpine = Alpine;
 Alpine.start();
 

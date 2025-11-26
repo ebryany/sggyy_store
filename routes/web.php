@@ -33,13 +33,13 @@ Route::post('/store/{slug}/follow', [StoreController::class, 'toggleFollow'])
     ->name('store.toggleFollow')
     ->middleware('auth');
 
-// Chat Routes (Authenticated)
+// Chat Routes (Authenticated) - Username-based URLs
 Route::middleware('auth')->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
-    Route::get('/chat/{userId}', [ChatController::class, 'show'])->name('chat.show');
-    Route::post('/chat/{userId}/start', [ChatController::class, 'startChat'])->name('chat.start');
-    Route::post('/chat/{userId}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
-    Route::post('/chat/{userId}/read', [ChatController::class, 'markAsRead'])->name('chat.read');
+    Route::get('/chat/@{username}', [ChatController::class, 'show'])->name('chat.show');
+    Route::post('/chat/@{username}/start', [ChatController::class, 'startChat'])->name('chat.start');
+    Route::post('/chat/@{username}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::post('/chat/@{username}/read', [ChatController::class, 'markAsRead'])->name('chat.read');
 });
 
 // Auth Routes

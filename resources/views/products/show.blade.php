@@ -257,10 +257,23 @@
                             <div class="flex items-start gap-3">
                                 <x-icon name="info" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                                 <div class="text-sm text-white/90">
-                                    <p class="font-semibold text-blue-400 mb-1">Pembayaran Otomatis via Xendit</p>
+                                    <p class="font-semibold text-blue-400 mb-1 flex items-center gap-2">
+                                        Pembayaran Otomatis via Xendit
+                                        @if(isset($featureFlags) && ($featureFlags['enable_xenplatform'] ?? false))
+                                            <span class="px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                                                <x-icon name="shield-check" class="w-3 h-3 inline" />
+                                                xenPlatform
+                                            </span>
+                                        @endif
+                                    </p>
                                     <ul class="list-disc list-inside space-y-1 text-white/70 text-xs">
                                         <li>Verifikasi pembayaran otomatis setelah transfer</li>
-                                        <li>Dana ditahan di escrow untuk keamanan transaksi</li>
+                                        @if(isset($featureFlags) && ($featureFlags['enable_xenplatform'] ?? false))
+                                            <li><strong class="text-purple-400">Split Payment:</strong> Dana langsung di-split ke seller sub-account saat verified</li>
+                                            <li><strong class="text-purple-400">Platform Fee:</strong> Otomatis masuk ke akun platform</li>
+                                        @else
+                                            <li>Dana ditahan di escrow untuk keamanan transaksi</li>
+                                        @endif
                                         <li>Tidak perlu upload bukti pembayaran</li>
                                     </ul>
                                 </div>
@@ -462,7 +475,7 @@
                     <!-- Chat Button -->
                     @auth
                     @if(auth()->id() !== $product->user_id)
-                    <a href="{{ route('chat.show', $product->user->id) }}" class="block w-full px-4 py-3 rounded-lg border-2 border-green-500/30 bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:border-green-500/50 transition-all font-semibold mb-5 flex items-center justify-center gap-2">
+                    <a href="{{ route('chat.show', '@' . $product->user->username) }}" class="block w-full px-4 py-3 rounded-lg border-2 border-green-500/30 bg-green-500/20 text-green-400 hover:bg-green-500/30 hover:border-green-500/50 transition-all font-semibold mb-5 flex items-center justify-center gap-2">
                         <x-icon name="chat" class="w-5 h-5" />
                         Chat Sekarang
                     </a>

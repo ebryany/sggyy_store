@@ -6,11 +6,13 @@ use App\Models\Chat;
 use App\Models\ChatMessage;
 use App\Models\User;
 use App\Services\FileUploadSecurityService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use App\Events\MessageSent;
 
 class ChatController extends Controller
 {
@@ -46,12 +48,17 @@ class ChatController extends Controller
     }
 
     /**
-     * Display chat with specific user
+     * Display chat with specific user (username-based)
+     * 
+     * URL: /chat/@{username}
      */
-    public function show(string $userId): View
+    public function show(string $username): View
     {
+        // Remove @ if present
+        $username = ltrim($username, '@');
+
         $currentUser = auth()->user();
-        $otherUser = User::findOrFail($userId);
+        $otherUser = User::where('username', $username)->firstOrFail();
 
         // Prevent self-chat
         if ($currentUser->id === $otherUser->id) {
@@ -83,9 +90,12 @@ class ChatController extends Controller
     /**
      * Start chat with a user (redirects to show)
      */
-    public function startChat(string $userId): RedirectResponse
+    public function startChat(string $username): RedirectResponse
     {
-        $user = User::findOrFail($userId);
+        // Remove @ if present
+        $username = ltrim($username, '@');
+        
+        $user = User::where('username', $username)->firstOrFail();
 
         // Prevent self-chat
         if (auth()->id() === $user->id) {
@@ -95,23 +105,28 @@ class ChatController extends Controller
         // Get or create chat
         $chat = Chat::getOrCreateChat(auth()->id(), $user->id);
 
-        return redirect()->route('chat.show', $user->id);
+        return redirect()->route('chat.show', $user->username);
     }
 
     /**
-     * Send a message
+     * Send a message (AJAX endpoint)
+     * 
+     * Returns JSON for AJAX requests
      */
-    public function sendMessage(Request $request, string $userId)
+    public function sendMessage(Request $request, string $username): JsonResponse
     {
-        $currentUser = auth()->user();
-        $otherUser = User::findOrFail($userId);
+        // Remove @ if present
+        $username = ltrim($username, '@');
         
-        // FORCE redirect response type - never return JSON for security
-        // This prevents sensitive data exposure even if browser/extension adds AJAX headers
+        $currentUser = auth()->user();
+        $otherUser = User::where('username', $username)->firstOrFail();
 
         // Prevent self-chat
         if ($currentUser->id === $otherUser->id) {
-            return back()->withErrors(['error' => 'Anda tidak bisa chat dengan diri sendiri']);
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak bisa chat dengan diri sendiri'
+            ], 403);
         }
 
         $validated = $request->validate([
@@ -120,13 +135,16 @@ class ChatController extends Controller
         ], [
             'message.max' => 'Pesan maksimal 2000 karakter',
             'attachment.file' => 'File yang diupload tidak valid',
-            'attachment.mimes' => 'Format file tidak didukung. Format yang didukung: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP, RAR, TXT, JPG, JPEG, PNG, GIF, WEBP',
+            'attachment.mimes' => 'Format file tidak didukung',
             'attachment.max' => 'Ukuran file maksimal 10MB',
         ]);
         
         // Custom validation: must have either message or attachment
         if (empty($validated['message']) && !$request->hasFile('attachment')) {
-            return back()->withErrors(['error' => 'Pesan atau file attachment wajib diisi']);
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesan atau file attachment wajib diisi'
+            ], 422);
         }
 
         try {
@@ -189,67 +207,59 @@ class ChatController extends Controller
                 'notifiable_id' => $chat->id,
             ]);
 
+            // Broadcast message via Laravel Echo (real-time)
+            broadcast(new MessageSent($message, $chat, $otherUser))->toOthers();
+
             DB::commit();
 
-            Log::info('Chat message sent', [
+            Log::info('Chat message sent via AJAX', [
                 'chat_id' => $chat->id,
                 'sender_id' => $currentUser->id,
                 'recipient_id' => $otherUser->id,
                 'message_id' => $message->id,
             ]);
 
-            // SECURITY: Always redirect for form submissions - NEVER return JSON
-            // Form submissions expose sensitive data (user info, emails, etc) if returned as JSON
-            // This is a security risk - always redirect to prevent data exposure
-            
-            // For POST requests from forms, ALWAYS redirect (never return JSON)
-            // This prevents sensitive user data from being exposed in JSON responses
-            // Even if browser/extension adds AJAX headers, we still redirect for security
-            
-            // CRITICAL: Always redirect - NEVER return JSON
-            // Bypass ALL Laravel helpers and return raw HTTP 302 redirect
-            $url = route('chat.show', $otherUser->id);
-            session()->flash('success', 'Pesan berhasil dikirim');
-            
-            // Force redirect using raw HTTP response - cannot be converted to JSON
-            // This is the ONLY way to guarantee redirect, not JSON
-            return \Illuminate\Support\Facades\Response::make('', 302, [
-                'Location' => $url,
-                'Content-Type' => 'text/html; charset=UTF-8',
-                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            // Return JSON response for AJAX
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesan berhasil dikirim',
+                'data' => [
+                    'id' => $message->id,
+                    'message' => $message->message,
+                    'attachment_path' => $message->attachment_path,
+                    'attachment_url' => $message->getAttachmentUrl(),
+                    'sender_id' => $message->sender_id,
+                    'sender_name' => $currentUser->name,
+                    'created_at' => $message->created_at->format('H:i'),
+                    'is_from_me' => true,
+                ]
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
 
-            Log::error('Failed to send chat message', [
+            Log::error('Failed to send chat message via AJAX', [
                 'sender_id' => $currentUser->id,
                 'recipient_id' => $otherUser->id,
                 'error' => $e->getMessage(),
             ]);
 
-            // SECURITY: Always redirect for form submissions - NEVER return JSON
-            // Even on error, redirect to prevent data exposure
-            
-            // CRITICAL: Always redirect on error - NEVER return JSON
-            $url = route('chat.show', $otherUser->id);
-            session()->flash('error', 'Gagal mengirim pesan: ' . $e->getMessage());
-            
-            // Force redirect using raw HTTP response - cannot be converted to JSON
-            return \Illuminate\Support\Facades\Response::make('', 302, [
-                'Location' => $url,
-                'Content-Type' => 'text/html; charset=UTF-8',
-                'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim pesan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
      * Mark messages as read
      */
-    public function markAsRead(string $userId): RedirectResponse
+    public function markAsRead(string $username): JsonResponse
     {
+        // Remove @ if present
+        $username = ltrim($username, '@');
+        
         $currentUser = auth()->user();
-        $otherUser = User::findOrFail($userId);
+        $otherUser = User::where('username', $username)->firstOrFail();
 
         $chat = Chat::getOrCreateChat($currentUser->id, $otherUser->id);
 
@@ -262,7 +272,10 @@ class ChatController extends Controller
             $message->markAsRead();
         }
 
-        // Always redirect (never return JSON for security)
-        return back();
+        return response()->json([
+            'success' => true,
+            'message' => 'Messages marked as read',
+            'unread_count' => 0
+        ]);
     }
 }

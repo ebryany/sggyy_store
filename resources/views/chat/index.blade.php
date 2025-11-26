@@ -23,7 +23,7 @@
     @else
     <div class="space-y-3">
         @foreach($chats as $chat)
-        <a href="{{ route('chat.show', $chat->other_user->id) }}" 
+        <a href="{{ route('chat.show', '@' . $chat->other_user->username) }}" 
            class="block glass glass-hover p-4 sm:p-6 rounded-xl transition-all hover:scale-[1.01] border border-white/10 hover:border-primary/40 group">
             <div class="flex items-center gap-4">
                 <!-- Avatar -->
