@@ -11,6 +11,7 @@ class SellerWithdrawal extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'seller_id',
         'amount',
         'status',
@@ -37,10 +38,31 @@ class SellerWithdrawal extends Model
         parent::boot();
 
         static::creating(function ($withdrawal) {
+            if (empty($withdrawal->uuid)) {
+                $withdrawal->uuid = (string) Str::uuid();
+            }
             if (empty($withdrawal->reference_number)) {
                 $withdrawal->reference_number = 'WD-' . strtoupper(Str::random(12));
             }
         });
+
+        static::saving(function ($withdrawal) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($withdrawal->uuid)) {
+                $withdrawal->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        if (request()->is('api/*')) {
+            return 'uuid';
+        }
+        return 'id';
     }
 
     // Relationships

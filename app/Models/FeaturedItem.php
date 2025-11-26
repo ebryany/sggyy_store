@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class FeaturedItem extends Model
 {
     protected $fillable = [
+        'uuid',
         'type',
         'item_id',
         'title',
@@ -24,6 +25,24 @@ class FeaturedItem extends Model
         'ends_at',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($item) {
+            if (empty($item->uuid)) {
+                $item->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::saving(function ($item) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($item->uuid)) {
+                $item->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
     protected $casts = [
         'features' => 'array',
         'is_active' => 'boolean',
@@ -31,6 +50,17 @@ class FeaturedItem extends Model
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
     ];
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        if (request()->is('api/*')) {
+            return 'uuid';
+        }
+        return 'id';
+    }
 
     // Relationships
     public function product()

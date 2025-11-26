@@ -10,6 +10,7 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'order_id',
         'method',
         'proof_path',
@@ -22,6 +23,24 @@ class Payment extends Model
         'xendit_payment_method',
         'xendit_metadata',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($payment) {
+            if (empty($payment->uuid)) {
+                $payment->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::saving(function ($payment) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($payment->uuid)) {
+                $payment->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
 
     protected function casts(): array
     {
@@ -138,6 +157,20 @@ class Payment extends Model
         }
         
         return strtolower(pathinfo($this->proof_path, PATHINFO_EXTENSION));
+    }
+
+    /**
+     * Get the route key for the model.
+     * Use UUID for API routes
+     */
+    public function getRouteKeyName(): string
+    {
+        // For API routes, use UUID
+        if (request()->is('api/*')) {
+            return 'uuid';
+        }
+        // For web routes, use ID
+        return 'id';
     }
 }
 

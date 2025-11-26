@@ -10,6 +10,7 @@ class WalletTransaction extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'user_id',
         'type',
         'amount',
@@ -29,6 +30,17 @@ class WalletTransaction extends Model
             'amount' => 'decimal:2',
             'approved_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        if (request()->is('api/*')) {
+            return 'uuid';
+        }
+        return 'id';
     }
 
     // Relationships
@@ -63,14 +75,24 @@ class WalletTransaction extends Model
         return $this->status === 'rejected';
     }
 
-    // Generate reference number
+    // Generate reference number and UUID
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($transaction) {
+            if (empty($transaction->uuid)) {
+                $transaction->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
             if (empty($transaction->reference_number)) {
                 $transaction->reference_number = 'WT-' . strtoupper(\Illuminate\Support\Str::random(12));
+            }
+        });
+
+        static::saving(function ($transaction) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($transaction->uuid)) {
+                $transaction->uuid = (string) \Illuminate\Support\Str::uuid();
             }
         });
     }

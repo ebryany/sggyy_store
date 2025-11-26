@@ -10,6 +10,7 @@ class SellerEarning extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'seller_id',
         'order_id',
         'amount',
@@ -18,6 +19,24 @@ class SellerEarning extends Model
         'available_at',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($earning) {
+            if (empty($earning->uuid)) {
+                $earning->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::saving(function ($earning) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($earning->uuid)) {
+                $earning->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -25,6 +44,17 @@ class SellerEarning extends Model
             'platform_fee' => 'decimal:2',
             'available_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        if (request()->is('api/*')) {
+            return 'uuid';
+        }
+        return 'id';
     }
 
     // Relationships

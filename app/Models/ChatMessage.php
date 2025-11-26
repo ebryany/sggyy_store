@@ -12,6 +12,7 @@ class ChatMessage extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'chat_id',
         'sender_id',
         'message',
@@ -20,12 +21,41 @@ class ChatMessage extends Model
         'read_at',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($message) {
+            if (empty($message->uuid)) {
+                $message->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::saving(function ($message) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($message->uuid)) {
+                $message->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
             'is_read' => 'boolean',
             'read_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        if (request()->is('api/*')) {
+            return 'uuid';
+        }
+        return 'id';
     }
 
     /**

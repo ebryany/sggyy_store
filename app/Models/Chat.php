@@ -12,16 +12,46 @@ class Chat extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'user1_id',
         'user2_id',
         'last_message_at',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($chat) {
+            if (empty($chat->uuid)) {
+                $chat->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::saving(function ($chat) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($chat->uuid)) {
+                $chat->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
 
     protected function casts(): array
     {
         return [
             'last_message_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        if (request()->is('api/*')) {
+            return 'uuid';
+        }
+        return 'id';
     }
 
     /**

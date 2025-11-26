@@ -56,6 +56,13 @@ class Banner extends Model
                 $banner->uuid = (string) Str::uuid();
             }
         });
+
+        static::saving(function ($banner) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($banner->uuid)) {
+                $banner->uuid = (string) Str::uuid();
+            }
+        });
     }
 
     /**

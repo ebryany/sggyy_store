@@ -11,6 +11,7 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
+        'uuid',
         'user_id',
         'order_number',
         'type',
@@ -58,8 +59,18 @@ class Order extends Model
         parent::boot();
 
         static::creating(function ($order) {
+            if (empty($order->uuid)) {
+                $order->uuid = (string) Str::uuid();
+            }
             if (empty($order->order_number)) {
                 $order->order_number = 'EBR-' . strtoupper(Str::random(10));
+            }
+        });
+
+        static::saving(function ($order) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            if (empty($order->uuid)) {
+                $order->uuid = (string) Str::uuid();
             }
         });
     }
@@ -176,11 +187,37 @@ class Order extends Model
 
     /**
      * Get the route key for the model.
-     * Use order_number instead of id for URLs
+     * Use UUID for API routes
      */
     public function getRouteKeyName(): string
     {
+        // For API routes, use UUID
+        if (request()->is('api/*')) {
+            return 'uuid';
+        }
+        // For web routes, use order_number
         return 'order_number';
+    }
+
+    /**
+     * Find order by UUID, order_number or id (for backward compatibility)
+     */
+    public static function findByUuidOrOrderNumber($value)
+    {
+        // Try UUID first (API format)
+        $order = static::where('uuid', $value)->first();
+        
+        // Try order_number (web format)
+        if (!$order) {
+            $order = static::where('order_number', $value)->first();
+        }
+        
+        // Fallback to ID if not found (backward compatibility)
+        if (!$order && is_numeric($value)) {
+            $order = static::find($value);
+        }
+        
+        return $order;
     }
 
     /**

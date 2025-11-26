@@ -17,6 +17,7 @@ class Notification extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'uuid',
         'user_id',
         'type',
         'message',
@@ -24,6 +25,26 @@ class Notification extends Model
         'notifiable_type',
         'notifiable_id',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($notification) {
+            // 🔒 CRITICAL: Always generate UUID if not set
+            if (empty($notification->uuid)) {
+                $notification->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
+        static::saving(function ($notification) {
+            // 🔒 CRITICAL: Double-check UUID before saving (fallback)
+            // This catches cases where boot::creating might not fire
+            if (empty($notification->uuid)) {
+                $notification->uuid = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -35,6 +56,17 @@ class Notification extends Model
         return [
             'is_read' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        if (request()->is('api/*')) {
+            return 'uuid';
+        }
+        return 'id';
     }
 
     /**
