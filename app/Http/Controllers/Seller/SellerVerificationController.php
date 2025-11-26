@@ -25,6 +25,9 @@ class SellerVerificationController extends Controller
     {
         $user = auth()->user();
         
+        // Refresh user to get latest data (important for cloud deployment)
+        $user->refresh();
+        
         // 🔒 SECURITY: If user is already verified seller, redirect to dashboard
         if ($user->isVerifiedSeller()) {
             return redirect()

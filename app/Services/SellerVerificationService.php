@@ -124,9 +124,14 @@ class SellerVerificationService
                 $user = $verification->user;
                 if (!$user->isSeller() && !$user->isAdmin()) {
                     $user->update(['role' => 'seller']);
-                    // Refresh user to clear any cached data
-                    $user->refresh();
                 }
+                
+                // Refresh user and clear all relationships to ensure fresh data
+                $user->refresh();
+                $user->unsetRelation('sellerVerification');
+                
+                // Clear any cached user data
+                \Illuminate\Support\Facades\Cache::forget('user_' . $user->id);
 
                 // Refresh verification to ensure latest data
                 $verification->refresh();

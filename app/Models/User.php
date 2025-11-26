@@ -40,6 +40,10 @@ class User extends Authenticatable
         'bank_name',
         'bank_account_number',
         'bank_account_name',
+        'xendit_subaccount_id',
+        'xendit_subaccount_email',
+        'xendit_subaccount_status',
+        'xendit_subaccount_metadata',
     ];
 
     /**
@@ -75,6 +79,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'wallet_balance' => 'decimal:2',
+            'xendit_subaccount_metadata' => 'array',
         ];
     }
 
@@ -166,8 +171,13 @@ class User extends Authenticatable
             return false;
         }
 
-        // Refresh relationship to get latest data (important for cloud deployment)
+        // Refresh user model to get latest data (important for cloud deployment)
+        $this->refresh();
+        
+        // Unset and reload relationship to ensure fresh data
+        $this->unsetRelation('sellerVerification');
         $this->load('sellerVerification');
+        
         $verification = $this->sellerVerification;
         
         return $verification && $verification->status === 'verified';

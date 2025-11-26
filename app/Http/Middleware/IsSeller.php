@@ -42,6 +42,11 @@ class IsSeller
         // Check if seller verification is verified
         // Refresh user to get latest data (important for cloud deployment)
         $user->refresh();
+        
+        // Unset and reload relationship to ensure fresh data
+        $user->unsetRelation('sellerVerification');
+        $user->load('sellerVerification');
+        
         $verification = $user->sellerVerification;
         
         if (!$verification || $verification->status !== 'verified') {

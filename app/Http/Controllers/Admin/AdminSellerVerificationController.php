@@ -69,7 +69,11 @@ class AdminSellerVerificationController extends Controller
             
             // Clear cache for the user (if any)
             $user = $verification->user;
+            $user->refresh();
             $user->unsetRelation('sellerVerification');
+            
+            // Clear any cached user data
+            \Illuminate\Support\Facades\Cache::forget('user_' . $user->id);
 
             // Create notification for user
             \App\Models\Notification::create([
