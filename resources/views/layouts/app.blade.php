@@ -79,6 +79,9 @@
     
     @include('components.toast')
     
+    {{-- Stack for page-specific scripts --}}
+    @stack('scripts')
+    
     {{-- Mobile Bottom Navigation (only show on mobile devices, only when authenticated) --}}
     @auth
     <div class="lg:hidden block">

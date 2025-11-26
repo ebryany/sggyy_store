@@ -117,11 +117,51 @@
 @endsection
 
 @push('scripts')
+<!-- CRITICAL: Prevent default form submission IMMEDIATELY -->
+<!-- This ensures form doesn't submit before JavaScript loads -->
+<script>
+(function() {
+    'use strict';
+    
+    // Get form immediately (don't wait for DOMContentLoaded)
+    const chatForm = document.getElementById('chat-form');
+    
+    if (chatForm) {
+        // CRITICAL: Prevent default submission immediately
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            console.log('🚫 Default form submission prevented (inline script)');
+            return false;
+        }, { capture: true, once: false });
+        
+        // Also set onsubmit as fallback
+        chatForm.onsubmit = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🚫 Default form submission prevented (onsubmit)');
+            return false;
+        };
+        
+        console.log('✅ Inline form protection attached');
+    } else {
+        console.warn('⚠️ Chat form not found in inline script');
+    }
+})();
+</script>
+
 <!-- Chat module will be loaded via app.js -->
 <script>
-// Listen for chat module initialization
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Chat page loaded with username: @{{ $otherUser->username }}');
+    console.log('📱 Chat page loaded with username: @{{ $otherUser->username }}');
+    
+    // Verify ChatHandler is initialized
+    if (window.chatHandler) {
+        console.log('✅ ChatHandler is initialized');
+    } else {
+        console.error('❌ ChatHandler is NOT initialized!');
+    }
 });
 </script>
 @endpush

@@ -46,10 +46,30 @@ class ChatHandler {
     }
 
     init() {
-        if (!this.chatForm) return;
+        if (!this.chatForm) {
+            console.error('❌ Chat form not found in ChatHandler.init()');
+            return;
+        }
 
-        // Handle form submit
-        this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
+        console.log('📝 Attaching event listeners to chat form...');
+
+        // CRITICAL: Use capture phase to ensure we intercept before any other handlers
+        // Also use once: false to ensure it's always attached
+        this.chatForm.addEventListener('submit', (e) => {
+            console.log('📤 Form submit intercepted by ChatHandler');
+            this.handleSubmit(e);
+        }, { capture: true, once: false });
+
+        // Double-check: Also prevent default on form element directly
+        this.chatForm.onsubmit = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📤 Form submit prevented by onsubmit handler');
+            this.handleSubmit(e);
+            return false;
+        };
+
+        console.log('✅ Event listeners attached successfully');
 
         // Auto-resize textarea
         if (this.messageInput) {
@@ -326,14 +346,45 @@ class ChatHandler {
     }
 }
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.chatHandler = new ChatHandler();
-    });
-} else {
-    window.chatHandler = new ChatHandler();
-}
+// Initialize ChatHandler - CRITICAL: Must initialize immediately
+// This ensures form submit is intercepted before any default behavior
+(function() {
+    'use strict';
+    
+    function initializeChat() {
+        // Check if we're on a chat page
+        const chatForm = document.getElementById('chat-form');
+        if (!chatForm) {
+            console.log('Chat form not found, skipping chat initialization');
+            return;
+        }
+
+        console.log('🚀 Initializing ChatHandler...');
+        
+        try {
+            window.chatHandler = new ChatHandler();
+            console.log('✅ ChatHandler initialized successfully');
+        } catch (error) {
+            console.error('❌ Failed to initialize ChatHandler:', error);
+        }
+    }
+
+    // Initialize immediately if DOM is ready, otherwise wait
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeChat);
+    } else {
+        // DOM already loaded, initialize immediately
+        initializeChat();
+    }
+
+    // Also try to initialize after a short delay (fallback for edge cases)
+    setTimeout(() => {
+        if (!window.chatHandler && document.getElementById('chat-form')) {
+            console.warn('⚠️ ChatHandler not initialized, retrying...');
+            initializeChat();
+        }
+    }, 100);
+})();
 
 export default ChatHandler;
 
