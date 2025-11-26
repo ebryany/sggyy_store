@@ -10,6 +10,12 @@
     $daysRemaining = $holdUntil ? now()->diffInDays($holdUntil, false) : 0;
     $hoursRemaining = $holdUntil ? now()->diffInHours($holdUntil, false) : 0;
     $progress = $holdUntil ? max(0, min(100, (1 - ($holdUntil->diffInSeconds(now()) / $holdUntil->diffInSeconds($escrow->created_at))) * 100)) : 0;
+    
+    // Check if using xenPlatform
+    $settingsService = app(\App\Services\SettingsService::class);
+    $xenditSettings = $settingsService->getXenditSettings();
+    $useXenPlatform = $xenditSettings['enable_xenplatform'] ?? false;
+    $hasDisbursement = !empty($escrow->xendit_disbursement_id);
 @endphp
 
 <div class="glass p-5 sm:p-6 rounded-xl border border-white/10">
@@ -32,7 +38,7 @@
             </div>
             <div>
                 <h3 class="font-semibold text-white mb-1">Status Escrow / Rekber</h3>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                     @if($isHolding)
                         <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
                             Dana Ditahan
@@ -48,6 +54,12 @@
                     @elseif($isRefunded)
                         <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
                             Dikembalikan
+                        </span>
+                    @endif
+                    @if($useXenPlatform)
+                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1">
+                            <x-icon name="shield-check" class="w-3 h-3" />
+                            xenPlatform
                         </span>
                     @endif
                 </div>
@@ -104,14 +116,18 @@
         <div class="p-3 rounded-lg bg-white/5 border border-white/10">
             <p class="text-xs text-white/70 leading-relaxed">
                 <x-icon name="info" class="w-4 h-4 inline text-blue-400" />
-                Dana ditahan di escrow untuk keamanan transaksi. Dana akan dilepas setelah periode hold selesai atau saat Anda konfirmasi selesai.
+                @if($useXenPlatform)
+                    Pembayaran menggunakan <strong class="text-purple-400">xenPlatform</strong>. Dana sudah di-split otomatis ke seller sub-account saat pembayaran verified. Escrow ini untuk tracking saja.
+                @else
+                    Dana ditahan di escrow untuk keamanan transaksi. Dana akan dilepas setelah periode hold selesai atau saat Anda konfirmasi selesai.
+                @endif
             </p>
         </div>
 
         <!-- Early Release Button (for buyer, if order completed) -->
         @if($order->status === 'completed' && auth()->id() === $order->user_id)
         <div class="mt-4 pt-4 border-t border-white/10">
-            <form action="{{ route('orders.confirmCompletion', $order) }}" method="POST" 
+            <form action="{{ route('orders.confirm', $order) }}" method="POST" 
                   x-data="{ submitting: false }"
                   @submit="submitting = true">
                 @csrf
@@ -142,7 +158,9 @@
                 <span class="font-semibold text-green-400">Escrow Telah Dilepas</span>
             </div>
             <p class="text-sm text-white/70 mb-2">
-                @if($escrow->release_type === 'early')
+                @if($useXenPlatform && $hasDisbursement)
+                    Dana telah di-disburse ke seller sub-account via Xendit xenPlatform.
+                @elseif($escrow->release_type === 'early')
                     Dilepas lebih awal saat Anda konfirmasi selesai
                 @elseif($escrow->release_type === 'auto')
                     Dilepas otomatis setelah periode hold selesai
@@ -150,6 +168,12 @@
                     Dilepas secara manual oleh admin
                 @endif
             </p>
+            @if($useXenPlatform && $hasDisbursement)
+                <p class="text-xs text-purple-400 mb-2 flex items-center gap-1">
+                    <x-icon name="shield-check" class="w-3 h-3" />
+                    Disbursement ID: {{ substr($escrow->xendit_disbursement_id, 0, 20) }}...
+                </p>
+            @endif
             <p class="text-xs text-white/60">
                 Pada: {{ $escrow->released_at->format('d M Y, H:i') }}
             </p>
