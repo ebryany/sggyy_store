@@ -40,7 +40,8 @@ class IsSeller
         }
 
         // Check if seller verification is verified
-        // Refresh user to get latest data (important for cloud deployment)
+        // 🔒 CRITICAL: Clear all caches and refresh to get latest data
+        \Illuminate\Support\Facades\Cache::forget('user_' . $user->id);
         $user->refresh();
         
         // Unset and reload relationship to ensure fresh data
@@ -48,6 +49,15 @@ class IsSeller
         $user->load('sellerVerification');
         
         $verification = $user->sellerVerification;
+        
+        // 🔍 DEBUG: Log verification status for troubleshooting
+        \Illuminate\Support\Facades\Log::info('IsSeller middleware check', [
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'has_verification' => $verification !== null,
+            'verification_status' => $verification?->status,
+            'is_verified' => $verification && $verification->status === 'verified',
+        ]);
         
         if (!$verification || $verification->status !== 'verified') {
             // User punya role seller tapi verification belum verified
@@ -58,6 +68,12 @@ class IsSeller
                 'rejected' => 'Verifikasi seller Anda ditolak. Silakan perbaiki dan kirim ulang.',
                 default => 'Anda harus menyelesaikan verifikasi seller terlebih dahulu.',
             };
+
+            \Illuminate\Support\Facades\Log::warning('Seller access denied - verification not verified', [
+                'user_id' => $user->id,
+                'verification_status' => $verification?->status,
+                'message' => $message,
+            ]);
 
             return redirect()
                 ->route('seller.verification.index')

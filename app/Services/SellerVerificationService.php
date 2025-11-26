@@ -121,9 +121,22 @@ class SellerVerificationService
                 ]);
 
                 // Update user role to seller if not already
+                // 🔒 CRITICAL FIX: role is guarded, must use direct assignment or forceFill
                 $user = $verification->user;
                 if (!$user->isSeller() && !$user->isAdmin()) {
-                    $user->update(['role' => 'seller']);
+                    // Use direct assignment since 'role' is in $guarded array
+                    $user->role = 'seller';
+                    $user->save();
+                    
+                    // Alternative: Use forceFill (bypasses mass assignment protection)
+                    // $user->forceFill(['role' => 'seller'])->save();
+                    
+                    // Log for debugging
+                    \Illuminate\Support\Facades\Log::info('User role updated to seller', [
+                        'user_id' => $user->id,
+                        'old_role' => $user->getOriginal('role'),
+                        'new_role' => 'seller',
+                    ]);
                 }
                 
                 // Refresh user and clear all relationships to ensure fresh data
@@ -132,6 +145,13 @@ class SellerVerificationService
                 
                 // Clear any cached user data
                 \Illuminate\Support\Facades\Cache::forget('user_' . $user->id);
+                
+                // 🔒 CRITICAL: Force refresh authenticated user session if user is currently logged in
+                // This ensures user can access seller dashboard immediately without logout/login
+                if (\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::id() === $user->id) {
+                    // Refresh the authenticated user instance in session
+                    \Illuminate\Support\Facades\Auth::setUser($user->fresh());
+                }
 
                 // Refresh verification to ensure latest data
                 $verification->refresh();
