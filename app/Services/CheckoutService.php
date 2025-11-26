@@ -20,7 +20,7 @@ class CheckoutService
     {
         // Validate payment method
         $paymentMethod = $data['payment_method'] ?? 'wallet';
-        $validMethods = ['wallet', 'bank_transfer', 'qris'];
+        $validMethods = ['wallet', 'bank_transfer', 'qris', 'xendit_va', 'xendit_qris'];
         if (!in_array($paymentMethod, $validMethods)) {
             throw new \Exception('Metode pembayaran tidak valid');
         }
