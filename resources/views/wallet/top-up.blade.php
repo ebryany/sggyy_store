@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('title', 'Top Up Wallet - Ebrystoree')
 
 @section('content')
-<div class="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12 max-w-2xl">
+<div class="space-y-4 sm:space-y-6 max-w-2xl mx-auto">
     <!-- Back Button -->
     <div class="mb-4 sm:mb-6">
         <a href="{{ route('wallet.index') }}" class="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors touch-target text-sm sm:text-base">

@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('title', 'Beri Rating - Ebrystoree')
 
 @section('content')
-<div class="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12">
+<div class="space-y-4 sm:space-y-6">
     <div class="max-w-2xl mx-auto">
         <!-- Back Button -->
         <div class="mb-4 sm:mb-6">

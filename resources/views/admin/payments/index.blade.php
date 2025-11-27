@@ -128,72 +128,45 @@
                         <td class="py-3 px-4 text-white/60 text-xs sm:text-sm">
                             {{ $payment->created_at->format('d M Y, H:i') }}
                         </td>
-                        <td class="py-3 px-4">
+                        <td class="py-3 px-4" style="position: relative; z-index: 1;">
                             @if($payment->status === 'pending')
-                            <div class="flex flex-col gap-2">
+                            <div class="flex flex-col gap-2" style="position: relative; z-index: 1;">
                                 <button type="button"
-                                        @click="
+                                        class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded text-xs hover:bg-blue-500/30 whitespace-nowrap transition-colors font-semibold cursor-pointer flex items-center gap-1"
+                                        style="position: relative; z-index: 2; pointer-events: auto;"
+                                        onclick="
                                             const modal = document.getElementById('detail-modal-{{ $payment->id }}');
                                             if (modal) {
                                                 modal.style.display = 'flex';
                                                 document.body.style.overflow = 'hidden';
                                             }
-                                        "
-                                        class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded text-xs hover:bg-blue-500/30 whitespace-nowrap transition-colors font-semibold cursor-pointer flex items-center gap-1">
+                                        ">
                                     <x-icon name="eye" class="w-4 h-4" />
                                     Lihat Detail
                                 </button>
-                                <div class="flex gap-1">
+                                <div class="flex gap-1" style="position: relative; z-index: 2;">
                                     <button type="button"
+                                            class="px-3 py-1.5 bg-green-500/20 text-green-400 rounded text-xs hover:bg-green-500/30 active:bg-green-500/40 whitespace-nowrap transition-colors font-semibold cursor-pointer flex items-center gap-1"
                                             onclick="
                                                 const modal = document.getElementById('verify-payment-modal-{{ $payment->id }}');
                                                 if (modal) {
                                                     modal.style.display = 'flex';
                                                     document.body.style.overflow = 'hidden';
                                                 }
-                                            "
-                                            class="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs hover:bg-green-500/30 whitespace-nowrap cursor-pointer flex items-center gap-1">
+                                            ">
                                         <x-icon name="check" class="w-4 h-4" />
                                         Verifikasi
                                     </button>
                                     
-                                    <!-- Verify Payment Modal -->
-                                    <x-confirm-modal 
-                                        id="verify-payment-modal-{{ $payment->id }}"
-                                        title="Verifikasi Pembayaran"
-                                        message="Yakin verifikasi pembayaran ini? Pastikan sudah cek bukti pembayaran dan detail user!"
-                                        confirm-text="Ya, Verifikasi"
-                                        cancel-text="Batal"
-                                        type="info" />
-                                    
-                                    <form id="verify-payment-form-{{ $payment->id }}" method="POST" action="{{ route('admin.payments.verify', $payment) }}" style="display: none;">
-                                        @csrf
-                                    </form>
-                                    
-                                    <script>
-                                        document.addEventListener('DOMContentLoaded', function() {
-                                            const verifyBtn{{ $payment->id }} = document.getElementById('verify-payment-modal-{{ $payment->id }}-confirm-btn');
-                                            const verifyModal{{ $payment->id }} = document.getElementById('verify-payment-modal-{{ $payment->id }}');
-                                            const verifyForm{{ $payment->id }} = document.getElementById('verify-payment-form-{{ $payment->id }}');
-                                            
-                                            if (verifyBtn{{ $payment->id }} && verifyModal{{ $payment->id }} && verifyForm{{ $payment->id }}) {
-                                                verifyBtn{{ $payment->id }}.addEventListener('click', function() {
-                                                    verifyModal{{ $payment->id }}.style.display = 'none';
-                                                    document.body.style.overflow = '';
-                                                    verifyForm{{ $payment->id }}.submit();
-                                                });
-                                            }
-                                        });
-                                    </script>
                                     <button type="button"
+                                            class="px-3 py-1.5 bg-red-500/20 text-red-400 rounded text-xs hover:bg-red-500/30 active:bg-red-500/40 whitespace-nowrap transition-colors font-semibold cursor-pointer flex items-center gap-1"
                                             onclick="
                                                 const modal = document.getElementById('reject-modal-{{ $payment->id }}');
                                                 if (modal) {
                                                     modal.style.display = 'flex';
                                                     document.body.style.overflow = 'hidden';
                                                 }
-                                            "
-                                            class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs hover:bg-red-500/30 whitespace-nowrap cursor-pointer flex items-center gap-1">
+                                            ">
                                         <x-icon name="x" class="w-4 h-4" />
                                         Tolak
                                     </button>
@@ -425,6 +398,10 @@
                                         Verifikasi Pembayaran
                                     </button>
                                     
+                                    <form id="verify-payment-simple-form-{{ $payment->id }}" method="POST" action="{{ route('admin.payments.verify', $payment) }}" style="display: none;">
+                                        @csrf
+                                    </form>
+                                    
                                     <!-- Verify Payment Simple Modal -->
                                     <x-confirm-modal 
                                         id="verify-payment-simple-modal-{{ $payment->id }}"
@@ -432,27 +409,8 @@
                                         message="Yakin verifikasi pembayaran ini?"
                                         confirm-text="Ya, Verifikasi"
                                         cancel-text="Batal"
-                                        type="info" />
-                                    
-                                    <form id="verify-payment-simple-form-{{ $payment->id }}" method="POST" action="{{ route('admin.payments.verify', $payment) }}" style="display: none;">
-                                        @csrf
-                                    </form>
-                                    
-                                    <script>
-                                        document.addEventListener('DOMContentLoaded', function() {
-                                            const verifyBtn{{ $payment->id }} = document.getElementById('verify-payment-simple-modal-{{ $payment->id }}-confirm-btn');
-                                            const verifyModal{{ $payment->id }} = document.getElementById('verify-payment-simple-modal-{{ $payment->id }}');
-                                            const verifyForm{{ $payment->id }} = document.getElementById('verify-payment-simple-form-{{ $payment->id }}');
-                                            
-                                            if (verifyBtn{{ $payment->id }} && verifyModal{{ $payment->id }} && verifyForm{{ $payment->id }}) {
-                                                verifyBtn{{ $payment->id }}.addEventListener('click', function() {
-                                                    verifyModal{{ $payment->id }}.style.display = 'none';
-                                                    document.body.style.overflow = '';
-                                                    verifyForm{{ $payment->id }}.submit();
-                                                });
-                                            }
-                                        });
-                                    </script>
+                                        type="info"
+                                        formId="verify-payment-simple-form-{{ $payment->id }}" />
                                     @endif
                                     <button type="button"
                                             onclick="
@@ -571,6 +529,51 @@
                     </div>
                     @endif
                     
+                    <!-- Verify Payment Modal -->
+                    @if($payment->status === 'pending')
+                    <div id="verify-payment-modal-{{ $payment->id }}"
+                         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+                         style="display: none;"
+                         onclick="
+                             if (event.target === this) {
+                                 this.style.display = 'none';
+                                 document.body.style.overflow = '';
+                             }
+                         ">
+                        <div class="glass p-4 sm:p-6 rounded-lg max-w-md w-full mx-4 shadow-2xl"
+                             onclick="event.stopPropagation()">
+                            <div class="flex items-start gap-4 mb-4">
+                                <div class="flex-shrink-0">
+                                    <x-icon name="info" class="w-8 h-8 text-blue-400" />
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold mb-2">Verifikasi Pembayaran</h3>
+                                    <p class="text-white/80 text-sm sm:text-base">Yakin verifikasi pembayaran ini? Pastikan sudah cek bukti pembayaran dan detail user!</p>
+                                </div>
+                            </div>
+                            <form method="POST" action="{{ route('admin.payments.verify', $payment) }}">
+                                @csrf
+                                <div class="flex space-x-3">
+                                    <button type="button"
+                                            onclick="
+                                                const modal = document.getElementById('verify-payment-modal-{{ $payment->id }}');
+                                                if (modal) {
+                                                    modal.style.display = 'none';
+                                                    document.body.style.overflow = '';
+                                                }
+                                            "
+                                            class="flex-1 px-4 py-2.5 glass glass-hover rounded-lg font-semibold transition-colors cursor-pointer">
+                                        Batal
+                                    </button>
+                                    <button type="submit" class="flex-1 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors font-semibold text-white cursor-pointer">
+                                        Ya, Verifikasi
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    @endif
+                    
                     <!-- Reject Modal -->
                     @if($payment->status === 'pending')
                     <div id="reject-modal-{{ $payment->id }}"
@@ -627,5 +630,6 @@
         @endif
     </div>
 </div>
+
 @endsection
 

@@ -45,7 +45,13 @@ class OrderController extends Controller
                 });
         } else {
             // Regular user sees their own orders
-            $query = Order::with(['product', 'service', 'payment', 'rating'])
+            // Include seller info (product.user or service.user)
+            $query = Order::with([
+                'product.user', 
+                'service.user', 
+                'payment', 
+                'rating'
+            ])
                 ->where('user_id', $user->id);
         }
 
@@ -149,7 +155,23 @@ class OrderController extends Controller
         // Ensure payment relationship is loaded for all orders
         $orders->loadMissing('payment');
 
-        return view('orders.index', compact('orders'));
+        // Get order status counts for tabs
+        $statusCounts = Order::where('user_id', $user->id)
+            ->select('status', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+        
+        $orderStatusCounts = [
+            'all' => Order::where('user_id', $user->id)->count(),
+            'pending' => $statusCounts['pending'] ?? 0,
+            'paid' => $statusCounts['paid'] ?? 0,
+            'processing' => $statusCounts['processing'] ?? 0,
+            'completed' => $statusCounts['completed'] ?? 0,
+            'cancelled' => $statusCounts['cancelled'] ?? 0,
+        ];
+
+        return view('orders.index', compact('orders', 'orderStatusCounts'));
     }
 
     public function show(Order $order): View
@@ -195,23 +217,9 @@ class OrderController extends Controller
         // Enhanced timeline with order history
         $timeline = $this->timelineService->getOrderTimeline($order);
         
-        // Merge with order history if exists
-        if ($order->history->count() > 0) {
-            foreach ($order->history as $history) {
-                $timeline[] = [
-                    'time' => $history->created_at->format('d M Y, H:i'),
-                    'label' => 'Status: ' . ucfirst($history->status_to),
-                    'status' => $history->status_to === 'completed' ? 'completed' : ($history->status_to === 'cancelled' ? 'cancelled' : 'processing'),
-                    'icon' => $history->status_to === 'completed' ? '✅' : ($history->status_to === 'cancelled' ? '❌' : '⚙️'),
-                    'description' => $history->notes ?? "Status berubah dari {$history->status_from} ke {$history->status_to}",
-                ];
-            }
-        }
-        
-        // Sort timeline by time
-        usort($timeline, function($a, $b) {
-            return strtotime($a['time']) - strtotime($b['time']);
-        });
+        // 🔒 REKBER FLOW: Jangan merge order history ke timeline karena akan menampilkan status internal
+        // TimelineService sudah menangani semua step penting (Pesanan Dibuat, Dibayarkan, Dikirimkan, Selesai, Rating)
+        // Order history hanya untuk audit trail, bukan untuk display timeline
 
         // Get bank account info for bank transfer payment
         $bankAccountInfo = null;
@@ -953,7 +961,7 @@ class OrderController extends Controller
      */
     public function confirmCompletion(Request $request, Order $order): RedirectResponse
     {
-        $this->authorize('update', $order);
+        $this->authorize('confirmCompletion', $order);
         
         $validated = $request->validate([
             'rating' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:5'],

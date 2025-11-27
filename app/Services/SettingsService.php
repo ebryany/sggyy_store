@@ -179,6 +179,11 @@ class SettingsService
             'admin_email' => $this->get('admin_email', ''),
             'email_from_name' => $this->get('email_from_name', 'Ebrystoree'),
             'email_from_address' => $this->get('email_from_address', 'noreply@ebrystoree.com'),
+            // Escrow email notifications
+            'enable_escrow_emails' => (bool) $this->get('enable_escrow_emails', true),
+            'escrow_email_buyer' => (bool) $this->get('escrow_email_buyer', true),
+            'escrow_email_seller' => (bool) $this->get('escrow_email_seller', true),
+            'escrow_email_admin' => (bool) $this->get('escrow_email_admin', false),
         ];
     }
 

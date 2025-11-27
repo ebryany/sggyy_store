@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('title', 'Detail Pesanan - Ebrystoree')
 
 @section('content')
-<div class="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12">
+<div class="space-y-4 sm:space-y-6">
     <div class="mb-4 sm:mb-6">
         <a href="{{ route('orders.index') }}" class="text-primary hover:underline flex items-center space-x-2 touch-target text-sm sm:text-base">
             <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -13,38 +13,33 @@
         </a>
     </div>
     
-    <!-- Banner Rating Reminder (Menonjol) -->
-    @if($order->canBeRated())
-    <div class="mb-4 sm:mb-6 glass p-4 sm:p-6 rounded-lg border-2 border-yellow-500/50 bg-gradient-to-r from-yellow-500/10 via-yellow-500/5 to-transparent" 
-         x-data="{ show: true }"
-         x-show="show"
-         x-transition>
-        <div class="flex items-start gap-4">
-            <div class="flex-shrink-0">
-                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                    <x-icon name="star" class="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
+    <!-- Horizontal Timeline (Shopee Style) - Pindah ke Paling Atas -->
+    <div class="mb-6 sm:mb-8">
+        <div class="glass p-4 sm:p-6 rounded-xl border border-white/10">
+            <div class="mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg sm:text-xl font-semibold">No. Pesanan. {{ $order->order_number }}</h2>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs sm:text-sm text-white/60">|</span>
+                        <span class="text-sm sm:text-base font-semibold text-primary">
+                            @if($order->status === 'completed')
+                                PESANAN SELESAI
+                            @elseif($order->status === 'processing')
+                                SEDANG DIPROSES
+                            @elseif($order->status === 'paid')
+                                PESANAN DIBAYAR
+                            @elseif($order->status === 'waiting_confirmation')
+                                MENUNGGU KONFIRMASI
+                            @else
+                                {{ strtoupper($order->status) }}
+                            @endif
+                        </span>
                 </div>
             </div>
-            <div class="flex-1 min-w-0">
-                <h3 class="font-bold text-yellow-400 mb-2 text-lg sm:text-xl flex items-center gap-2">
-                    <span>Beri Rating untuk Pesanan Ini</span>
-                </h3>
-                <p class="text-white/90 mb-4 text-sm sm:text-base">
-                    Pesanan Anda telah selesai! Bagikan pengalaman Anda dengan memberikan rating dan ulasan. Ini akan membantu seller lain dalam membuat keputusan.
-                </p>
-                <a href="{{ route('ratings.create', $order) }}" 
-                   class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-yellow-500/20">
-                    <x-icon name="star" class="w-5 h-5" />
-                    <span>Beri Rating Sekarang</span>
-                </a>
             </div>
-            <button @click="show = false" 
-                    class="text-white/60 hover:text-white flex-shrink-0 transition-colors touch-target">
-                <x-icon name="x" class="w-5 h-5" />
-            </button>
+            @include('components.order-timeline', ['timeline' => $timeline])
         </div>
     </div>
-    @endif
 
     <!-- Alert untuk upload bukti pembayaran -->
     @if(session('upload_proof_required') || ($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending' && !$order->payment->proof_path))
@@ -116,12 +111,6 @@
     </div>
     @endif
     
-    <!-- Escrow Status Card (if escrow exists) -->
-    @if($order->escrow)
-    <div class="mb-4 sm:mb-6">
-        <x-escrow-status-card :escrow="$order->escrow" :order="$order" />
-    </div>
-    @endif
     
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <!-- Main Content -->
@@ -819,9 +808,9 @@
             <div class="glass p-6 rounded-lg">
                 <h2 class="text-xl font-semibold mb-4">Aksi</h2>
                 <div class="flex flex-wrap gap-3">
-                    @if($order->type === 'product' && $order->status === 'completed')
+                    @if($order->type === 'product' && in_array($order->status, ['processing', 'waiting_confirmation', 'completed']))
                         @php
-                            $canDownload = $order->product && $order->product->file_path;
+                            $canDownload = $order->product && $order->product->file_path && $order->canDownload();
                             $paymentVerified = $order->payment && $order->payment->status === 'verified';
                         @endphp
                         
@@ -831,7 +820,7 @@
                             <x-icon name="download" class="w-5 h-5 inline mr-2" />
                             Download File Produk
                         </a>
-                        @elseif(!$canDownload)
+                        @elseif(!$canDownload && $order->product && !$order->product->file_path)
                         <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
                             <p class="font-semibold flex items-center gap-2">
                                 <x-icon name="alert" class="w-5 h-5" />
@@ -843,6 +832,11 @@
                         <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
                             <p class="font-semibold">⏳ Menunggu verifikasi pembayaran</p>
                             <p class="text-sm text-yellow-300/80 mt-1">File akan tersedia setelah pembayaran diverifikasi oleh admin.</p>
+                        </div>
+                        @elseif($order->status === 'processing')
+                        <div class="px-6 py-3 bg-blue-500/20 text-blue-400 rounded-lg border border-blue-500/30">
+                            <p class="font-semibold">📦 Produk sedang diproses</p>
+                            <p class="text-sm text-blue-300/80 mt-1">Seller sedang menyiapkan produk. File akan tersedia setelah seller mengirim produk.</p>
                         </div>
                         @endif
                     @endif
@@ -932,12 +926,43 @@
                     </label>
                     @endif
                     
-                    @if($order->canBeRated())
-                    <a href="{{ route('ratings.create', $order) }}" 
-                       class="px-6 py-3 bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 hover:from-yellow-500/30 hover:to-yellow-600/30 border-2 border-yellow-500/50 rounded-lg font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2">
-                        <x-icon name="star" class="w-5 h-5 text-yellow-400" />
-                        <span>Beri Rating</span>
-                    </a>
+                    @php
+                        // 🔒 REKBER FLOW: Buyer dapat konfirmasi saat status processing, waiting_confirmation, atau completed dengan escrow holding
+                        $canConfirmProduct = $isOwner && (
+                            ($order->type === 'product' && in_array($order->status, ['processing', 'waiting_confirmation'])) ||
+                            ($order->type === 'service' && $order->status === 'waiting_confirmation') ||
+                            ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding())
+                        );
+                    @endphp
+                    
+                    @if($canConfirmProduct)
+                    <form id="confirm-product-form-{{ $order->id }}" 
+                          action="{{ route('orders.confirm', $order) }}" 
+                          method="POST" 
+                          x-data="{ confirming: false }">
+                        @csrf
+                        <button type="button" 
+                                onclick="
+                                    const modal = document.getElementById('confirm-product-modal-{{ $order->id }}');
+                                    if (modal) {
+                                        modal.style.display = 'flex';
+                                        document.body.style.overflow = 'hidden';
+                                    }
+                                "
+                                class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 touch-target">
+                            <x-icon name="check" class="w-5 h-5" />
+                            <span>Konfirmasi Produk</span>
+                        </button>
+                    </form>
+                    
+                    <x-confirm-modal 
+                        id="confirm-product-modal-{{ $order->id }}"
+                        title="Konfirmasi Penerimaan Produk"
+                        message="Apakah Anda yakin produk sudah diterima? Dana rekber akan otomatis diteruskan ke seller."
+                        confirmText="Ya, Konfirmasi"
+                        cancelText="Batal"
+                        type="warning"
+                        formId="confirm-product-form-{{ $order->id }}" />
                     @endif
                     
                     @if(auth()->user()->isAdmin())
@@ -958,15 +983,112 @@
             </div>
         </div>
         
-        <!-- Sidebar: Timeline -->
+        <!-- Sidebar: Action Buttons -->
         <div class="lg:col-span-1">
-            <div class="glass p-6 rounded-lg sticky top-20">
-                <h2 class="text-xl font-semibold mb-4">Timeline Pesanan</h2>
-                @include('components.order-timeline', ['timeline' => $timeline])
+            <div class="glass p-6 rounded-lg sticky top-20 space-y-3">
+                @php
+                    $seller = null;
+                    if ($order->type === 'product' && $order->product) {
+                        $seller = $order->product->user;
+                    } elseif ($order->type === 'service' && $order->service) {
+                        $seller = $order->service->user;
+                    }
+                    
+                    // 🔒 REKBER FLOW: Buyer dapat konfirmasi saat status processing, waiting_confirmation, atau completed dengan escrow holding
+                    $canConfirmProduct = $isOwner && (
+                        ($order->type === 'product' && in_array($order->status, ['processing', 'waiting_confirmation'])) ||
+                        ($order->type === 'service' && $order->status === 'waiting_confirmation') ||
+                        ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding())
+                    );
+                @endphp
+                
+                @if($canConfirmProduct)
+                <form id="confirm-product-form-sidebar-{{ $order->id }}" 
+                      action="{{ route('orders.confirm', $order) }}" 
+                      method="POST">
+                    @csrf
+                    <button type="button" 
+                            onclick="
+                                const modal = document.getElementById('confirm-product-modal-sidebar-{{ $order->id }}');
+                                if (modal) {
+                                    modal.style.display = 'flex';
+                                    document.body.style.overflow = 'hidden';
+                                }
+                            "
+                            class="block w-full px-4 py-3 bg-green-500 hover:bg-green-600 rounded-lg transition-all text-center font-semibold touch-target">
+                        <span class="flex items-center justify-center gap-2">
+                            <x-icon name="check" class="w-5 h-5" />
+                            <span>Konfirmasi Produk</span>
+                        </span>
+                    </button>
+                </form>
+                
+                <x-confirm-modal 
+                    id="confirm-product-modal-sidebar-{{ $order->id }}"
+                    title="Konfirmasi Penerimaan Produk"
+                    message="Apakah Anda yakin produk sudah diterima? Dana rekber akan otomatis diteruskan ke seller."
+                    confirmText="Ya, Konfirmasi"
+                    cancelText="Batal"
+                    type="warning"
+                    formId="confirm-product-form-sidebar-{{ $order->id }}" />
+                @endif
+                
+                @if($seller)
+                <a href="{{ route('chat.show', '@' . $seller->username) }}" 
+                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Hubungi Penjual
+                </a>
+                @endif
+                
+                @if($order->type === 'product' && $order->product)
+                <a href="{{ route('products.show', $order->product) }}" 
+                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Beli Lagi
+                </a>
+                @elseif($order->type === 'service' && $order->service)
+                <a href="{{ route('services.show', $order->service) }}" 
+                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Beli Lagi
+                </a>
+                @endif
+                
+                @if($order->payment)
+                <a href="{{ route('orders.show', $order) }}#payment" 
+                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Lihat Tagihan
+                </a>
+                @endif
             </div>
         </div>
     </div>
     
+    <!-- Section: Beri Rating untuk Pesanan Ini (Paling Bawah) -->
+    @if($order->canBeRated())
+    <div class="mt-8 sm:mt-10">
+        <div class="glass p-6 sm:p-8 rounded-xl border-2 border-yellow-500/50 bg-gradient-to-r from-yellow-500/10 via-yellow-500/5 to-transparent">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                <div class="flex-shrink-0">
+                    <div class="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center border-2 border-yellow-500/30">
+                        <x-icon name="star" class="w-8 h-8 text-yellow-400" />
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-bold text-yellow-400 mb-2 text-xl sm:text-2xl">
+                        Beri Rating untuk Pesanan Ini
+                    </h3>
+                    <p class="text-white/90 mb-4 text-sm sm:text-base">
+                        Pesanan Anda telah selesai! Bagikan pengalaman Anda dengan memberikan rating dan ulasan. Ini akan membantu seller lain dalam membuat keputusan.
+                    </p>
+                    <a href="{{ route('ratings.create', $order) }}" 
+                       class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-yellow-500/20 touch-target">
+                        <x-icon name="star" class="w-5 h-5" />
+                        <span>Beri Rating Sekarang</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 @endsection
 

@@ -61,15 +61,17 @@ class SellerService
         $data = [];
         for ($i = $months - 1; $i >= 0; $i--) {
             $date = now()->subMonths($i);
+            
+            // 🔒 REKBER FLOW: Include all earnings (available, holding, withdrawn) untuk revenue chart
+            // Revenue chart menampilkan total pendapatan, bukan hanya yang available
             $revenue = SellerEarning::where('seller_id', $seller->id)
-                ->where('status', 'available')
                 ->whereMonth('created_at', $date->month)
                 ->whereYear('created_at', $date->year)
                 ->sum('amount');
             
             $data[] = [
                 'month' => $date->format('M Y'),
-                'revenue' => $revenue,
+                'revenue' => (float) $revenue,
             ];
         }
         return $data;

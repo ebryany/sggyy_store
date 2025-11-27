@@ -233,14 +233,15 @@ class OrderService
                 // Check if order can be rated (completed and no rating yet)
                 $order = $order->fresh()->load('rating');
                 if ($order->canBeRated()) {
-                    \App\Models\Notification::create([
-                        'user_id' => $order->user_id,
-                        'message' => "Pesanan #{$order->order_number} telah selesai! Beri rating untuk membantu seller lain.",
-                        'type' => 'order_completed',
-                        'is_read' => false,
-                        'notifiable_type' => \App\Models\Order::class,
-                        'notifiable_id' => $order->id,
-                    ]);
+                    // 🔒 FIX: Use NotificationService with idempotency check
+                    $notificationService = app(\App\Services\NotificationService::class);
+                    $notificationService->createNotificationIfNotExists(
+                        $order->user,
+                        'order_completed',
+                        "Pesanan #{$order->order_number} telah selesai! Beri rating untuk membantu seller lain.",
+                        $order,
+                        10 // 10 minutes window for duplicate check
+                    );
                     
                     Log::info('Rating reminder notification created', [
                         'order_id' => $order->id,
@@ -282,13 +283,27 @@ class OrderService
             'disputed' => ['completed', 'cancelled'], // Admin can resolve dispute
         ];
         
-        // Special cases for digital products (simpler flow):
-        // 1. Allow pending → completed (for instant completion after payment verification)
-        // 2. Allow paid → completed (for wallet payments that auto-complete)
+        // 🔒 REKBER FLOW: Special cases for digital products
+        // Flow: pending → paid → processing → waiting_confirmation → completed
         if ($order && $order->type === 'product') {
-            if (($from === 'pending' && $to === 'completed') || 
-                ($from === 'paid' && $to === 'completed')) {
-                // This is a valid transition for digital products
+            // Allow pending → paid (payment verified)
+            if ($from === 'pending' && $to === 'paid') {
+                return;
+            }
+            // Allow paid → processing (after rekber created)
+            if ($from === 'paid' && $to === 'processing') {
+                return;
+            }
+            // Allow processing → waiting_confirmation (seller kirim produk)
+            if ($from === 'processing' && $to === 'waiting_confirmation') {
+                return;
+            }
+            // Allow waiting_confirmation → completed (buyer konfirmasi)
+            if ($from === 'waiting_confirmation' && $to === 'completed') {
+                return;
+            }
+            // Allow processing → completed (backward compatibility: auto-complete jika buyer langsung konfirmasi)
+            if ($from === 'processing' && $to === 'completed') {
                 return;
             }
         }
@@ -491,36 +506,83 @@ class OrderService
     
     /**
      * Buyer confirms order completion (waiting_confirmation → completed)
+     * OR early release escrow for completed orders
      * 
      * @param Order $order
      * @return Order
      */
     public function confirmCompletion(Order $order, ?array $ratingData = null): Order
     {
-        if ($order->status !== 'waiting_confirmation') {
-            throw new \Exception("Order must be in 'waiting_confirmation' status");
+        // 🔒 REKBER FLOW: Handle different cases for order confirmation
+        // Case 1: Order is processing (product orders) → mark as completed
+        if ($order->status === 'processing' && $order->type === 'product') {
+            // Update order status to completed
+            $order = $this->updateStatus($order, 'completed', 'Buyer mengkonfirmasi pesanan selesai', 'buyer');
+            
+            // Early release escrow if exists
+            if ($order->escrow && $order->escrow->isHolding()) {
+                try {
+                    $escrowService = app(\App\Services\EscrowService::class);
+                    $escrowService->earlyRelease($order->escrow);
+                    
+                    Log::info('Escrow early released on buyer confirmation (processing → completed)', [
+                        'order_id' => $order->id,
+                        'escrow_id' => $order->escrow->id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to early release escrow on confirmation', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Don't fail the confirmation, escrow can be released later
+                }
+            }
         }
-        
-        // Update order status to completed
-        $order = $this->updateStatus($order, 'completed', 'Buyer mengkonfirmasi pesanan selesai', 'buyer');
-        
-        // Early release escrow if exists
-        if ($order->escrow && $order->escrow->isHolding()) {
+        // Case 2: Order is waiting_confirmation → mark as completed
+        elseif ($order->status === 'waiting_confirmation') {
+            // Update order status to completed
+            $order = $this->updateStatus($order, 'completed', 'Buyer mengkonfirmasi pesanan selesai', 'buyer');
+            
+            // Early release escrow if exists
+            if ($order->escrow && $order->escrow->isHolding()) {
+                try {
+                    $escrowService = app(\App\Services\EscrowService::class);
+                    $escrowService->earlyRelease($order->escrow);
+                    
+                    Log::info('Escrow early released on buyer confirmation', [
+                        'order_id' => $order->id,
+                        'escrow_id' => $order->escrow->id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to early release escrow on confirmation', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Don't fail the confirmation, escrow can be released later
+                }
+            }
+        }
+        // Case 3: Order is already completed but escrow still holding → early release escrow only
+        elseif ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding()) {
             try {
                 $escrowService = app(\App\Services\EscrowService::class);
                 $escrowService->earlyRelease($order->escrow);
                 
-                Log::info('Escrow early released on buyer confirmation', [
+                Log::info('Escrow early released for completed order (buyer confirmation)', [
                     'order_id' => $order->id,
                     'escrow_id' => $order->escrow->id,
                 ]);
             } catch (\Exception $e) {
-                Log::error('Failed to early release escrow on confirmation', [
+                Log::error('Failed to early release escrow for completed order', [
                     'order_id' => $order->id,
                     'error' => $e->getMessage(),
                 ]);
-                // Don't fail the confirmation, escrow can be released later
+                throw $e; // Re-throw for this case since order is already completed
             }
+        }
+        // Case 4: Invalid status
+        else {
+            throw new \Exception("Order must be in 'processing' (product), 'waiting_confirmation', or 'completed' with escrow still holding");
         }
         
         // Real-time auto-release check: If hold period expired, auto-release immediately

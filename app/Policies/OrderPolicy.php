@@ -292,4 +292,37 @@ class OrderPolicy
         
         return false;
     }
+
+    /**
+     * Determine whether the user can confirm order completion.
+     * Only buyer (order owner) can confirm their order is completed.
+     * 🔒 REKBER FLOW: Buyer dapat konfirmasi saat status processing, waiting_confirmation, atau completed dengan escrow holding
+     */
+    public function confirmCompletion(User $user, Order $order): bool
+    {
+        // Only buyer (order owner) can confirm completion
+        if ($order->user_id === $user->id) {
+            // 🔒 REKBER FLOW: Untuk product orders, buyer dapat konfirmasi saat:
+            // 1. Status processing (seller sudah kirim produk)
+            // 2. Status waiting_confirmation (seller sudah kirim produk)
+            // 3. Status completed tapi escrow masih holding (early release)
+            if ($order->type === 'product') {
+                return in_array($order->status, ['processing', 'waiting_confirmation'])
+                    || ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding());
+            }
+            
+            // Untuk service orders, buyer dapat konfirmasi saat:
+            // 1. Status waiting_confirmation (seller sudah kirim hasil pekerjaan)
+            // 2. Status completed tapi escrow masih holding (early release)
+            return $order->status === 'waiting_confirmation' 
+                || ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding());
+        }
+        
+        // Admin can also confirm any order
+        if ($user->isAdmin()) {
+            return true;
+        }
+        
+        return false;
+    }
 }

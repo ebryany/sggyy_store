@@ -51,32 +51,44 @@ class UpdateOrderStatusOnPayment
     
     /**
      * Process payment verification logic
+     * 🔒 FIX: Use NotificationService with idempotency check to prevent duplicates
      */
     private function processPaymentVerification(Order $order, $payment): void
     {
+        $notificationService = app(\App\Services\NotificationService::class);
         
-        // Auto-complete untuk digital products
+        // 🔒 REKBER FLOW: Product orders now go through paid → processing flow
         if ($order->type === 'product') {
-            $this->orderService->updateStatus($order, 'completed');
-            
-            // 🔒 CRITICAL SECURITY: Set download expiry (30 days) - handled in OrderService
-            // Download expiry is automatically set in OrderService::updateStatus() when status becomes 'completed'
-            
+            // Note: Order status already updated in PaymentService (paid → processing), skip here to prevent double update
             // Create seller earning (with duplicate prevention)
             $this->createSellerEarning($order);
             
-            // Create notification for buyer
-            Notification::create([
-                'user_id' => $order->user_id,
-                'message' => "Pembayaran untuk produk #{$order->order_number} telah dikonfirmasi! File dapat langsung diunduh.",
-                'type' => 'payment_verified',
-                'is_read' => false,
-                'notifiable_type' => Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            // 🔒 FIX: Use idempotency check for notification
+            $notificationService->createNotificationIfNotExists(
+                $order->user,
+                'payment_verified',
+                "Pembayaran untuk produk #{$order->order_number} telah dikonfirmasi! Seller akan mengirim produk.",
+                $order,
+                10 // 10 minutes window for duplicate check
+            );
+            
+            // Notify seller about new paid order (product)
+            $sellerId = $order->product?->user_id;
+            if ($sellerId) {
+                $seller = \App\Models\User::find($sellerId);
+                if ($seller) {
+                    $notificationService->createNotificationIfNotExists(
+                        $seller,
+                        'payment_verified_seller',
+                        "💰 Pembayaran untuk pesanan produk #{$order->order_number} sudah diverifikasi! Produk siap dikirim.",
+                        $order,
+                        10 // 10 minutes window for duplicate check
+                    );
+                }
+            }
         } else {
-            // For services, update to 'paid' status
-            $this->orderService->updateStatus($order, 'paid');
+            // Note: Order status already updated in PaymentService, skip here to prevent double update
+            // $this->orderService->updateStatus($order, 'paid');
             
             // Create seller earning (with duplicate prevention)
             $this->createSellerEarning($order);
@@ -91,27 +103,28 @@ class UpdateOrderStatusOnPayment
                 $order->update(['deadline_at' => $deadlineAt]);
             }
             
-            // Create notification for buyer
-            Notification::create([
-                'user_id' => $order->user_id,
-                'message' => "Pembayaran untuk jasa #{$order->order_number} telah dikonfirmasi! Seller akan segera memproses pesanan Anda." . ($order->deadline_at ? " Deadline: " . $order->deadline_at->format('d M Y, H:i') : ''),
-                'type' => 'payment_verified',
-                'is_read' => false,
-                'notifiable_type' => Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            // 🔒 FIX: Use idempotency check for buyer notification
+            $notificationService->createNotificationIfNotExists(
+                $order->user,
+                'payment_verified',
+                "Pembayaran untuk jasa #{$order->order_number} telah dikonfirmasi! Seller akan segera memproses pesanan Anda." . ($order->deadline_at ? " Deadline: " . $order->deadline_at->format('d M Y, H:i') : ''),
+                $order,
+                10 // 10 minutes window for duplicate check
+            );
             
-            // Notify seller about new paid order
+            // 🔒 FIX: Use idempotency check for seller notification
             $sellerId = $order->service?->user_id;
             if ($sellerId) {
-                Notification::create([
-                    'user_id' => $sellerId,
-                    'message' => "💰 Pembayaran untuk pesanan jasa #{$order->order_number} sudah diverifikasi! Segera mulai proses pesanan. " . ($order->deadline_at ? "Deadline: " . $order->deadline_at->format('d M Y, H:i') : 'Deadline: Belum ditetapkan'),
-                    'type' => 'payment_verified_seller',
-                    'is_read' => false,
-                    'notifiable_type' => Order::class,
-                    'notifiable_id' => $order->id,
-                ]);
+                $seller = \App\Models\User::find($sellerId);
+                if ($seller) {
+                    $notificationService->createNotificationIfNotExists(
+                        $seller,
+                        'payment_verified_seller',
+                        "💰 Pembayaran untuk pesanan jasa #{$order->order_number} sudah diverifikasi! Segera mulai proses pesanan. " . ($order->deadline_at ? "Deadline: " . $order->deadline_at->format('d M Y, H:i') : 'Deadline: Belum ditetapkan'),
+                        $order,
+                        10 // 10 minutes window for duplicate check
+                    );
+                }
             }
         }
     }

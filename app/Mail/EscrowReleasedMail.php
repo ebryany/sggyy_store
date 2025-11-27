@@ -26,8 +26,10 @@ class EscrowReleasedMail extends Mailable
             'manual' => 'Dilepas Manual',
         ];
         
+        $releaseLabel = $releaseTypeLabels[$this->releaseType] ?? 'Dilepas';
+        
         return new Envelope(
-            subject: "Escrow untuk Pesanan #{$this->order->order_number} Telah Dilepas - {$releaseTypeLabels[$this->releaseType] ?? 'Dilepas'}",
+            subject: "Escrow untuk Pesanan #{$this->order->order_number} Telah Dilepas - {$releaseLabel}",
         );
     }
 

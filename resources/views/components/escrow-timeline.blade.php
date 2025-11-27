@@ -3,28 +3,29 @@
 @php
     $timeline = [];
     
-    // Created
+    // Created (hanya tampilkan sekali, tidak duplikat dengan holding)
     if ($escrow->created_at) {
-        $timeline[] = [
-            'date' => $escrow->created_at,
-            'status' => 'created',
-            'label' => 'Escrow Dibuat',
-            'description' => 'Dana sebesar Rp ' . number_format($escrow->amount, 0, ',', '.') . ' ditahan di escrow',
-            'icon' => 'shield',
-            'color' => 'blue',
-        ];
-    }
-    
-    // Holding
-    if ($escrow->isHolding() && $escrow->hold_until) {
-        $timeline[] = [
-            'date' => $escrow->created_at,
-            'status' => 'holding',
-            'label' => 'Dana Ditahan',
-            'description' => 'Dana akan dilepas pada ' . $escrow->hold_until->format('d M Y, H:i'),
-            'icon' => 'clock',
-            'color' => 'blue',
-        ];
+        if ($escrow->isHolding() && $escrow->hold_until) {
+            // Jika masih holding, gabungkan info created dan holding dalam satu item
+            $timeline[] = [
+                'date' => $escrow->created_at,
+                'status' => 'created',
+                'label' => 'Escrow Dibuat & Dana Ditahan',
+                'description' => 'Dana sebesar Rp ' . number_format($escrow->amount, 0, ',', '.') . ' ditahan di escrow. Akan dilepas pada ' . $escrow->hold_until->format('d M Y, H:i'),
+                'icon' => 'shield',
+                'color' => 'blue',
+            ];
+        } else {
+            // Jika sudah tidak holding, tampilkan created saja
+            $timeline[] = [
+                'date' => $escrow->created_at,
+                'status' => 'created',
+                'label' => 'Escrow Dibuat',
+                'description' => 'Dana sebesar Rp ' . number_format($escrow->amount, 0, ',', '.') . ' ditahan di escrow',
+                'icon' => 'shield',
+                'color' => 'blue',
+            ];
+        }
     }
     
     // Disputed
@@ -78,10 +79,16 @@
 
 @if(count($timeline) > 0)
 <div class="mt-4 pt-4 border-t border-white/10">
-    <h4 class="text-sm font-semibold mb-4 flex items-center gap-2">
-        <x-icon name="clock" class="w-4 h-4 text-primary" />
-        Timeline Escrow
-    </h4>
+    <div class="mb-3">
+        <h4 class="text-sm font-semibold mb-1 flex items-center gap-2">
+            <x-icon name="clock" class="w-4 h-4 text-primary" />
+            Timeline Escrow / Rekber
+        </h4>
+        <p class="text-xs text-white/60">
+            Timeline khusus untuk status escrow (perlindungan pembayaran). 
+            <strong>Berbeda</strong> dengan Timeline Pesanan yang menampilkan status order.
+        </p>
+    </div>
     
     <div class="space-y-4">
         @foreach($timeline as $index => $item)

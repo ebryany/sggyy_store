@@ -140,6 +140,7 @@ class Order extends Model
     
     /**
      * Check if order can download product (for digital products)
+     * 🔒 REKBER FLOW: Allow download saat status processing, waiting_confirmation, atau completed
      * 🔒 SECURITY: Validates expiry and download limit
      */
     public function canDownload(): bool
@@ -149,18 +150,18 @@ class Order extends Model
             return false;
         }
         
-        // Order must be completed
-        if ($this->status !== 'completed') {
+        // 🔒 REKBER FLOW: Allow download if status is processing, waiting_confirmation, or completed
+        if (!in_array($this->status, ['processing', 'waiting_confirmation', 'completed'])) {
             return false;
         }
         
-        // Check expiry
-        if ($this->download_expires_at && $this->download_expires_at->isPast()) {
+        // Check expiry (only for completed orders)
+        if ($this->status === 'completed' && $this->download_expires_at && $this->download_expires_at->isPast()) {
             return false;
         }
         
-        // Check download limit
-        if ($this->download_count >= $this->download_limit) {
+        // Check download limit (only for completed orders)
+        if ($this->status === 'completed' && $this->download_limit > 0 && $this->download_count >= $this->download_limit) {
             return false;
         }
         
@@ -245,6 +246,63 @@ class Order extends Model
     public function canBeRated(): bool
     {
         return $this->isCompleted() && !$this->rating;
+    }
+
+    /**
+     * Get status label in Bahasa Indonesia
+     * 🔒 REKBER FLOW: Mapping status ke label yang user-friendly
+     */
+    public function getStatusLabel(): string
+    {
+        return match($this->status) {
+            'pending' => 'Menunggu Pembayaran',
+            'paid' => 'Sudah Dibayar',
+            'accepted' => 'Diterima Seller',
+            'processing' => 'Diproses',
+            'waiting_confirmation' => 'Menunggu Konfirmasi',
+            'completed' => 'Selesai',
+            'needs_revision' => 'Perlu Revisi',
+            'cancelled' => 'Dibatalkan',
+            'disputed' => 'Dispute',
+            default => ucfirst(str_replace('_', ' ', $this->status)),
+        };
+    }
+
+    /**
+     * Get status badge color for UI
+     */
+    public function getStatusBadgeColor(): string
+    {
+        return match($this->status) {
+            'pending' => 'yellow',
+            'paid' => 'blue',
+            'accepted' => 'blue',
+            'processing' => 'purple',
+            'waiting_confirmation' => 'orange',
+            'completed' => 'green',
+            'needs_revision' => 'yellow',
+            'cancelled' => 'red',
+            'disputed' => 'red',
+            default => 'gray',
+        };
+    }
+
+    /**
+     * Get status badge CSS classes for UI
+     */
+    public function getStatusBadgeClasses(): string
+    {
+        $color = $this->getStatusBadgeColor();
+        
+        return match($color) {
+            'yellow' => 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+            'blue' => 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+            'purple' => 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+            'orange' => 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
+            'green' => 'bg-green-500/20 text-green-400 border border-green-500/30',
+            'red' => 'bg-red-500/20 text-red-400 border border-red-500/30',
+            default => 'bg-white/10 text-white/60 border border-white/20',
+        };
     }
 }
 

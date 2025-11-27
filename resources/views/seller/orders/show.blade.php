@@ -260,6 +260,99 @@
             </div>
             @endif
             
+            <!-- 🔒 REKBER FLOW: Send Product Section (for Product Orders) -->
+            @if($order->type === 'product' && $order->status === 'processing')
+            <div class="glass p-4 sm:p-6 rounded-lg border-2 border-primary/30">
+                <h3 class="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+                    <x-icon name="package" class="w-6 h-6 text-primary" />
+                    Kirim Produk
+                </h3>
+                
+                <div class="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <p class="text-sm text-blue-300 flex items-center gap-2">
+                        <x-icon name="info" class="w-4 h-4" />
+                        Produk digital akan otomatis aktif untuk download setelah Anda klik "Kirim Produk". Buyer dapat langsung mengunduh file setelah produk dikirim.
+                    </p>
+                </div>
+                
+                @if($order->product && $order->product->file_path)
+                <div class="glass p-3 rounded-lg mb-4 bg-green-500/10 border border-green-500/30">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <x-icon name="check" class="w-6 h-6 text-green-400" />
+                            <div>
+                                <p class="font-semibold text-sm text-green-400">File produk tersedia</p>
+                                <p class="text-xs text-white/60">File siap dikirim ke buyer</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="POST" action="{{ route('seller.orders.sendProduct', $order) }}" 
+                      x-data="{ sending: false }"
+                      @submit.prevent="
+                          sending = true;
+                          const formData = new FormData($el);
+                          fetch('{{ route('seller.orders.sendProduct', $order) }}', {
+                              method: 'POST',
+                              headers: {
+                                  'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                  'Accept': 'application/json'
+                              },
+                              body: formData
+                          })
+                          .then(response => response.json())
+                          .then(data => {
+                              if (data.success || !data.errors) {
+                                  window.dispatchEvent(new CustomEvent('toast', { 
+                                      detail: { message: data.message || 'Produk berhasil dikirim!', type: 'success' } 
+                                  }));
+                                  setTimeout(() => window.location.reload(), 1000);
+                              } else {
+                                  throw new Error(data.message || Object.values(data.errors || {})[0]?.[0] || 'Gagal mengirim produk');
+                              }
+                          })
+                          .catch(error => {
+                              window.dispatchEvent(new CustomEvent('toast', { 
+                                  detail: { message: error.message || 'Gagal mengirim produk. Silakan coba lagi.', type: 'error' } 
+                              }));
+                              sending = false;
+                          });
+                      ">
+                    @csrf
+                    <button type="submit" 
+                            :disabled="sending"
+                            class="w-full px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg transition-colors font-semibold disabled:opacity-50 text-sm cursor-pointer">
+                        <span x-show="!sending" class="flex items-center justify-center gap-2">
+                            <x-icon name="send" class="w-4 h-4" />
+                            Kirim Produk
+                        </span>
+                        <span x-show="sending" class="flex items-center justify-center">
+                            <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Mengirim...
+                        </span>
+                    </button>
+                </form>
+                @else
+                <div class="glass p-3 rounded-lg mb-4 bg-yellow-500/20 border border-yellow-500/30">
+                    <p class="text-yellow-400 font-semibold mb-2 flex items-center gap-2">
+                        <x-icon name="alert" class="w-5 h-5" />
+                        File Produk Belum Tersedia
+                    </p>
+                    <p class="text-sm text-yellow-300/80">Anda perlu mengupload file produk terlebih dahulu sebelum dapat mengirim produk ke buyer.</p>
+                    <a href="{{ route('seller.products.edit', $order->product) }}" 
+                       class="mt-3 inline-block px-4 py-2 bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 rounded-lg text-sm font-semibold transition-colors">
+                        <x-icon name="edit" class="w-4 h-4 inline mr-1" />
+                        Edit Produk & Upload File
+                    </a>
+                </div>
+                @endif
+            </div>
+            @endif
+            
             <!-- Order Management Controls (Seller) -->
             <x-order-progress-control :order="$order" />
             

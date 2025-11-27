@@ -24,11 +24,12 @@
                 <select name="status" 
                         class="glass border border-white/10 rounded-lg px-4 py-3 sm:py-2 bg-white/5 text-white text-base sm:text-sm touch-target focus:outline-none focus:border-primary focus:bg-white/10">
                     <option value="" class="bg-dark text-white">Semua Status</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }} class="bg-dark text-white">Pending</option>
-                    <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }} class="bg-dark text-white">Paid</option>
-                    <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }} class="bg-dark text-white">Processing</option>
-                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }} class="bg-dark text-white">Completed</option>
-                    <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }} class="bg-dark text-white">Cancelled</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }} class="bg-dark text-white">Menunggu Pembayaran</option>
+                    <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }} class="bg-dark text-white">Sudah Dibayar</option>
+                    <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }} class="bg-dark text-white">Diproses</option>
+                    <option value="waiting_confirmation" {{ request('status') == 'waiting_confirmation' ? 'selected' : '' }} class="bg-dark text-white">Menunggu Konfirmasi</option>
+                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }} class="bg-dark text-white">Selesai</option>
+                    <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }} class="bg-dark text-white">Dibatalkan</option>
                     <option value="needs_revision" {{ request('status') == 'needs_revision' ? 'selected' : '' }} class="bg-dark text-white">Perlu Revisi</option>
                 </select>
 
@@ -136,16 +137,25 @@
                                 <span class="text-white/40">-</span>
                             @endif
                         </td>
-                        <td class="py-3 px-4 font-semibold text-sm">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
+                        <td class="py-3 px-4 font-semibold text-sm">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
                         <td class="py-3 px-4">
                             @if($order->payment)
-                                <span class="text-xs text-white/60">{{ ucfirst(str_replace('_', ' ', $order->payment->payment_method)) }}</span>
+                                <span class="text-xs text-white/60">{{ $order->payment->getMethodDisplayName() }}</span>
+                                @if($order->payment->status === 'verified')
+                                    <span class="ml-1 text-xs text-green-400">✓</span>
+                                @elseif($order->payment->status === 'pending')
+                                    <span class="ml-1 text-xs text-yellow-400">⏳</span>
+                                @elseif($order->payment->status === 'rejected')
+                                    <span class="ml-1 text-xs text-red-400">✗</span>
+                                @endif
                             @else
                                 <span class="text-xs text-white/40">-</span>
                             @endif
                         </td>
                         <td class="py-3 px-4">
-                            @include('components.order-status-badge', ['status' => $order->status])
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium {{ $order->getStatusBadgeClasses() }}">
+                                {{ $order->getStatusLabel() }}
+                            </span>
                         </td>
                         <td class="py-3 px-4 text-white/60 text-xs sm:text-sm">{{ $order->created_at->format('d M Y') }}</td>
                         <td class="py-3 px-4">
@@ -179,14 +189,25 @@
                         @endif
                     </div>
                     <div class="ml-2 flex-shrink-0">
-                        @include('components.order-status-badge', ['status' => $order->status])
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium {{ $order->getStatusBadgeClasses() }}">
+                            {{ $order->getStatusLabel() }}
+                        </span>
                     </div>
                 </div>
                 <div class="flex items-center justify-between mt-2">
                     <div>
-                        <span class="font-bold text-primary text-base">Rp {{ number_format($order->total_amount, 0, ',', '.') }}</span>
+                        <span class="font-bold text-primary text-base">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
                         @if($order->payment)
-                            <p class="text-xs text-white/60 mt-1">{{ ucfirst(str_replace('_', ' ', $order->payment->payment_method)) }}</p>
+                            <p class="text-xs text-white/60 mt-1">
+                                {{ $order->payment->getMethodDisplayName() }}
+                                @if($order->payment->status === 'verified')
+                                    <span class="text-green-400">✓</span>
+                                @elseif($order->payment->status === 'pending')
+                                    <span class="text-yellow-400">⏳</span>
+                                @elseif($order->payment->status === 'rejected')
+                                    <span class="text-red-400">✗</span>
+                                @endif
+                            </p>
                         @endif
                     </div>
                     <span class="text-xs text-white/60">{{ $order->created_at->format('d M Y') }}</span>

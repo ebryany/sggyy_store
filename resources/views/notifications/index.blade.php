@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('title', 'Notifikasi - Ebrystoree')
 
 @section('content')
-<div class="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12 max-w-4xl">
+<div class="space-y-4 sm:space-y-6 max-w-4xl mx-auto">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-4">

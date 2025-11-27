@@ -70,43 +70,59 @@ class EscrowService
                 'hold_until' => $holdUntil->toDateTimeString(),
             ]);
 
-            // Create notifications
+            // 🔒 FIX: Use NotificationService with idempotency check
+            $notificationService = app(\App\Services\NotificationService::class);
             $buyer = $order->user;
             $seller = $order->product ? $order->product->user : $order->service->user;
             
             // Notify buyer
-            \App\Models\Notification::create([
-                'user_id' => $buyer->id,
-                'message' => "🔒 Dana untuk pesanan #{$order->order_number} telah ditahan di escrow. Dana akan dilepas setelah periode hold atau saat Anda konfirmasi selesai.",
-                'type' => 'escrow_created',
-                'is_read' => false,
-                'notifiable_type' => \App\Models\Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            $notificationService->createNotificationIfNotExists(
+                $buyer,
+                'escrow_created',
+                "🔒 Dana untuk pesanan #{$order->order_number} telah ditahan di rekber. Dana akan dilepas setelah periode hold atau saat Anda konfirmasi selesai.",
+                $order,
+                10 // 10 minutes window for duplicate check
+            );
             
             // Notify seller
-            \App\Models\Notification::create([
-                'user_id' => $seller->id,
-                'message' => "💰 Dana untuk pesanan #{$order->order_number} telah ditahan di escrow. Dana akan dilepas setelah periode hold ({$holdPeriodDays} hari) atau saat buyer konfirmasi selesai.",
-                'type' => 'escrow_created',
-                'is_read' => false,
-                'notifiable_type' => \App\Models\Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            if ($seller) {
+                $notificationService->createNotificationIfNotExists(
+                    $seller,
+                    'escrow_created',
+                    "💰 Dana untuk pesanan #{$order->order_number} telah ditahan di rekber. Dana akan dilepas setelah periode hold ({$holdPeriodDays} hari) atau saat buyer konfirmasi selesai.",
+                    $order,
+                    10 // 10 minutes window for duplicate check
+                );
+            }
 
-            // Send email notifications
-            try {
-                \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
-                    new \App\Mail\EscrowCreatedMail($order, $holdPeriodDays)
-                );
-                \Illuminate\Support\Facades\Mail::to($seller->email)->send(
-                    new \App\Mail\EscrowCreatedMail($order, $holdPeriodDays)
-                );
-            } catch (\Exception $e) {
-                Log::warning('Failed to send escrow created email', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
+            // Send email notifications (if enabled)
+            $emailSettings = app(SettingsService::class)->getEmailSettings();
+            if ($emailSettings['enable_escrow_emails'] ?? true) {
+                try {
+                    if ($emailSettings['escrow_email_buyer'] ?? true) {
+                        \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
+                            new \App\Mail\EscrowCreatedMail($order, $holdPeriodDays)
+                        );
+                    }
+                    if ($emailSettings['escrow_email_seller'] ?? true) {
+                        \Illuminate\Support\Facades\Mail::to($seller->email)->send(
+                            new \App\Mail\EscrowCreatedMail($order, $holdPeriodDays)
+                        );
+                    }
+                    if ($emailSettings['escrow_email_admin'] ?? false) {
+                        $adminEmail = $emailSettings['admin_email'] ?? null;
+                        if ($adminEmail) {
+                            \Illuminate\Support\Facades\Mail::to($adminEmail)->send(
+                                new \App\Mail\EscrowCreatedMail($order, $holdPeriodDays)
+                            );
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send escrow created email', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             // Broadcast real-time event
@@ -140,8 +156,10 @@ class EscrowService
                 ->firstOrFail();
 
             // Validate escrow can be released
-            if (!$escrow->canBeReleased()) {
-                throw new \Exception('Escrow cannot be released. Status: ' . $escrow->status . ', Disputed: ' . ($escrow->is_disputed ? 'yes' : 'no'));
+            // Early release allows release before hold period expires
+            $allowEarlyRelease = ($releaseType === 'early' || $releaseType === 'manual');
+            if (!$escrow->canBeReleased($allowEarlyRelease)) {
+                throw new \Exception('Escrow cannot be released. Status: ' . $escrow->status . ', Disputed: ' . ($escrow->is_disputed ? 'yes' : 'no') . ', Hold until: ' . ($escrow->hold_until ? $escrow->hold_until->format('Y-m-d H:i:s') : 'null'));
             }
 
             // Update escrow status
@@ -213,7 +231,8 @@ class EscrowService
                 'released_by' => $releasedBy ?? auth()->id(),
             ]);
 
-            // Create notifications
+            // 🔒 FIX: Use NotificationService with idempotency check
+            $notificationService = app(\App\Services\NotificationService::class);
             $buyer = $order->user;
             $seller = $order->product ? $order->product->user : $order->service->user;
             
@@ -224,38 +243,53 @@ class EscrowService
             ];
             
             // Notify buyer
-            \App\Models\Notification::create([
-                'user_id' => $buyer->id,
-                'message' => "✅ Escrow untuk pesanan #{$order->order_number} telah {$releaseTypeLabels[$releaseType]}. Dana telah dikirim ke seller.",
-                'type' => 'escrow_released',
-                'is_read' => false,
-                'notifiable_type' => \App\Models\Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            $notificationService->createNotificationIfNotExists(
+                $buyer,
+                'escrow_released',
+                "✅ Rekber untuk pesanan #{$order->order_number} telah {$releaseTypeLabels[$releaseType]}. Dana telah dikirim ke seller.",
+                $order,
+                10 // 10 minutes window for duplicate check
+            );
             
             // Notify seller
-            \App\Models\Notification::create([
-                'user_id' => $seller->id,
-                'message' => "💰 Escrow untuk pesanan #{$order->order_number} telah {$releaseTypeLabels[$releaseType]}. Dana sebesar Rp " . number_format($escrow->seller_earning, 0, ',', '.') . " telah tersedia untuk withdrawal.",
-                'type' => 'escrow_released',
-                'is_read' => false,
-                'notifiable_type' => \App\Models\Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            if ($seller) {
+                $notificationService->createNotificationIfNotExists(
+                    $seller,
+                    'escrow_released',
+                    "💰 Rekber untuk pesanan #{$order->order_number} telah {$releaseTypeLabels[$releaseType]}. Dana sebesar Rp " . number_format($escrow->seller_earning, 0, ',', '.') . " telah tersedia untuk withdrawal.",
+                    $order,
+                    10 // 10 minutes window for duplicate check
+                );
+            }
 
-            // Send email notifications
-            try {
-                \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
-                    new \App\Mail\EscrowReleasedMail($order, $releaseType)
-                );
-                \Illuminate\Support\Facades\Mail::to($seller->email)->send(
-                    new \App\Mail\EscrowReleasedMail($order, $releaseType)
-                );
-            } catch (\Exception $e) {
-                Log::warning('Failed to send escrow released email', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
+            // Send email notifications (if enabled)
+            $emailSettings = app(SettingsService::class)->getEmailSettings();
+            if ($emailSettings['enable_escrow_emails'] ?? true) {
+                try {
+                    if ($emailSettings['escrow_email_buyer'] ?? true) {
+                        \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
+                            new \App\Mail\EscrowReleasedMail($order, $releaseType)
+                        );
+                    }
+                    if ($emailSettings['escrow_email_seller'] ?? true) {
+                        \Illuminate\Support\Facades\Mail::to($seller->email)->send(
+                            new \App\Mail\EscrowReleasedMail($order, $releaseType)
+                        );
+                    }
+                    if ($emailSettings['escrow_email_admin'] ?? false) {
+                        $adminEmail = $emailSettings['admin_email'] ?? null;
+                        if ($adminEmail) {
+                            \Illuminate\Support\Facades\Mail::to($adminEmail)->send(
+                                new \App\Mail\EscrowReleasedMail($order, $releaseType)
+                            );
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send escrow released email', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             // Broadcast real-time event
@@ -336,50 +370,69 @@ class EscrowService
                 'disputed_by' => $disputedBy ?? auth()->id(),
             ]);
 
-            // Create notifications
+            // 🔒 FIX: Use NotificationService with idempotency check
+            $notificationService = app(\App\Services\NotificationService::class);
             $order = $escrow->order;
             $buyer = $order->user;
             $seller = $order->product ? $order->product->user : $order->service->user;
             $disputedByUser = \App\Models\User::find($disputedBy ?? auth()->id());
-            $isBuyerDispute = $disputedByUser->id === $buyer->id;
+            $isBuyerDispute = $disputedByUser && $disputedByUser->id === $buyer->id;
             
             // Notify the other party
-            $otherUserId = $isBuyerDispute ? $seller->id : $buyer->id;
-            \App\Models\Notification::create([
-                'user_id' => $otherUserId,
-                'message' => "⚠️ Dispute dibuat untuk pesanan #{$order->order_number} oleh " . ($isBuyerDispute ? 'buyer' : 'seller') . ". Admin akan meninjau dispute ini.",
-                'type' => 'escrow_disputed',
-                'is_read' => false,
-                'notifiable_type' => \App\Models\Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            $otherUserId = $isBuyerDispute ? ($seller?->id) : $buyer->id;
+            if ($otherUserId) {
+                $otherUser = \App\Models\User::find($otherUserId);
+                if ($otherUser) {
+                    $notificationService->createNotificationIfNotExists(
+                        $otherUser,
+                        'escrow_disputed',
+                        "⚠️ Dispute dibuat untuk pesanan #{$order->order_number} oleh " . ($isBuyerDispute ? 'buyer' : 'seller') . ". Admin akan meninjau dispute ini.",
+                        $order,
+                        10 // 10 minutes window for duplicate check
+                    );
+                }
+            }
             
             // Notify admins
             $admins = \App\Models\User::where('role', 'admin')->get();
             foreach ($admins as $admin) {
-                \App\Models\Notification::create([
-                    'user_id' => $admin->id,
-                    'message' => "🚨 Dispute baru untuk pesanan #{$order->order_number}. Segera tinjau dan selesaikan.",
-                    'type' => 'admin_dispute_created',
-                    'is_read' => false,
-                    'notifiable_type' => \App\Models\Order::class,
-                    'notifiable_id' => $order->id,
-                ]);
+                $notificationService->createNotificationIfNotExists(
+                    $admin,
+                    'admin_dispute_created',
+                    "🚨 Dispute baru untuk pesanan #{$order->order_number}. Segera tinjau dan selesaikan.",
+                    $order,
+                    10 // 10 minutes window for duplicate check
+                );
             }
 
-            // Send email notifications
-            try {
-                \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
-                    new \App\Mail\EscrowDisputedMail($order, $isBuyerDispute ? 'buyer' : 'seller')
-                );
-                \Illuminate\Support\Facades\Mail::to($seller->email)->send(
-                    new \App\Mail\EscrowDisputedMail($order, $isBuyerDispute ? 'buyer' : 'seller')
-                );
-            } catch (\Exception $e) {
-                Log::warning('Failed to send escrow disputed email', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
+            // Send email notifications (if enabled)
+            $emailSettings = app(SettingsService::class)->getEmailSettings();
+            if ($emailSettings['enable_escrow_emails'] ?? true) {
+                try {
+                    if ($emailSettings['escrow_email_buyer'] ?? true) {
+                        \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
+                            new \App\Mail\EscrowDisputedMail($order, $isBuyerDispute ? 'buyer' : 'seller')
+                        );
+                    }
+                    if ($emailSettings['escrow_email_seller'] ?? true) {
+                        \Illuminate\Support\Facades\Mail::to($seller->email)->send(
+                            new \App\Mail\EscrowDisputedMail($order, $isBuyerDispute ? 'buyer' : 'seller')
+                        );
+                    }
+                    if ($emailSettings['escrow_email_admin'] ?? false) {
+                        $adminEmail = $emailSettings['admin_email'] ?? null;
+                        if ($adminEmail) {
+                            \Illuminate\Support\Facades\Mail::to($adminEmail)->send(
+                                new \App\Mail\EscrowDisputedMail($order, $isBuyerDispute ? 'buyer' : 'seller')
+                            );
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send escrow disputed email', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             // Broadcast real-time event
@@ -505,43 +558,59 @@ class EscrowService
                 'reason' => $reason,
             ]);
 
-            // Create notifications
+            // 🔒 FIX: Use NotificationService with idempotency check
+            $notificationService = app(\App\Services\NotificationService::class);
             $buyer = $order->user;
             $seller = $order->product ? $order->product->user : $order->service->user;
             
             // Notify buyer
-            \App\Models\Notification::create([
-                'user_id' => $buyer->id,
-                'message' => "💰 Dana untuk pesanan #{$order->order_number} telah dikembalikan ke wallet Anda sebesar Rp " . number_format($escrow->amount, 0, ',', '.') . ".",
-                'type' => 'escrow_refunded',
-                'is_read' => false,
-                'notifiable_type' => \App\Models\Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            $notificationService->createNotificationIfNotExists(
+                $buyer,
+                'escrow_refunded',
+                "💰 Dana untuk pesanan #{$order->order_number} telah dikembalikan ke wallet Anda sebesar Rp " . number_format($escrow->amount, 0, ',', '.') . ".",
+                $order,
+                10 // 10 minutes window for duplicate check
+            );
             
             // Notify seller
-            \App\Models\Notification::create([
-                'user_id' => $seller->id,
-                'message' => "⚠️ Dispute untuk pesanan #{$order->order_number} telah diselesaikan dengan refund ke buyer.",
-                'type' => 'escrow_refunded',
-                'is_read' => false,
-                'notifiable_type' => \App\Models\Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            if ($seller) {
+                $notificationService->createNotificationIfNotExists(
+                    $seller,
+                    'escrow_refunded',
+                    "⚠️ Dispute untuk pesanan #{$order->order_number} telah diselesaikan dengan refund ke buyer.",
+                    $order,
+                    10 // 10 minutes window for duplicate check
+                );
+            }
 
-            // Send email notifications
-            try {
-                \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
-                    new \App\Mail\EscrowRefundedMail($order, $escrow->amount)
-                );
-                \Illuminate\Support\Facades\Mail::to($seller->email)->send(
-                    new \App\Mail\EscrowRefundedMail($order, $escrow->amount)
-                );
-            } catch (\Exception $e) {
-                Log::warning('Failed to send escrow refunded email', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
+            // Send email notifications (if enabled)
+            $emailSettings = app(SettingsService::class)->getEmailSettings();
+            if ($emailSettings['enable_escrow_emails'] ?? true) {
+                try {
+                    if ($emailSettings['escrow_email_buyer'] ?? true) {
+                        \Illuminate\Support\Facades\Mail::to($buyer->email)->send(
+                            new \App\Mail\EscrowRefundedMail($order, $escrow->amount)
+                        );
+                    }
+                    if ($emailSettings['escrow_email_seller'] ?? true) {
+                        \Illuminate\Support\Facades\Mail::to($seller->email)->send(
+                            new \App\Mail\EscrowRefundedMail($order, $escrow->amount)
+                        );
+                    }
+                    if ($emailSettings['escrow_email_admin'] ?? false) {
+                        $adminEmail = $emailSettings['admin_email'] ?? null;
+                        if ($adminEmail) {
+                            \Illuminate\Support\Facades\Mail::to($adminEmail)->send(
+                                new \App\Mail\EscrowRefundedMail($order, $escrow->amount)
+                            );
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send escrow refunded email', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             // Broadcast real-time event

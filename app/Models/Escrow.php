@@ -87,11 +87,17 @@ class Escrow extends Model
         return $this->status === 'disputed' || $this->is_disputed;
     }
 
-    public function canBeReleased(): bool
+    public function canBeReleased(bool $allowEarlyRelease = false): bool
     {
-        return $this->isHolding() 
-            && !$this->is_disputed 
-            && ($this->hold_until === null || now() >= $this->hold_until);
+        $baseCheck = $this->isHolding() && !$this->is_disputed;
+        
+        if ($allowEarlyRelease) {
+            // Early release: buyer can confirm before hold period expires
+            return $baseCheck;
+        }
+        
+        // Auto release: only if hold period expired or no hold period set
+        return $baseCheck && ($this->hold_until === null || now() >= $this->hold_until);
     }
 
     public function canBeDisputed(): bool

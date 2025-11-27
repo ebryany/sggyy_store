@@ -80,11 +80,19 @@ class SellerDashboardController extends Controller
     {
         $seller = auth()->user();
         
-        // Get revenue chart data
+        // Get revenue chart data (6 months)
         $revenueChart = $this->sellerService->getRevenueChart($seller, 6);
         
-        // Get order trend
+        // Get order trend (30 days)
         $orderTrend = $this->sellerService->getOrderTrend($seller, 30);
+        
+        // Ensure arrays are not null
+        if (empty($revenueChart)) {
+            $revenueChart = [];
+        }
+        if (empty($orderTrend)) {
+            $orderTrend = [];
+        }
         
         return view('seller.analytics.index', compact(
             'revenueChart',
@@ -311,7 +319,7 @@ class SellerDashboardController extends Controller
 
         // Status filter
         if ($request->filled('status')) {
-            $validStatuses = ['pending', 'paid', 'processing', 'completed', 'cancelled', 'needs_revision'];
+            $validStatuses = ['pending', 'paid', 'processing', 'waiting_confirmation', 'completed', 'cancelled', 'needs_revision'];
             $status = $request->status;
             if (in_array($status, $validStatuses)) {
                 $query->where('status', $status);
@@ -379,10 +387,10 @@ class SellerDashboardController extends Controller
                 $query->oldest();
                 break;
             case 'price_asc':
-                $query->orderBy('total_amount', 'asc');
+                $query->orderBy('total', 'asc');
                 break;
             case 'price_desc':
-                $query->orderBy('total_amount', 'desc');
+                $query->orderBy('total', 'desc');
                 break;
             case 'status':
                 $query->orderBy('status', 'asc');
@@ -397,6 +405,9 @@ class SellerDashboardController extends Controller
         }
 
         $orders = $query->paginate((int)$perPage)->withQueryString();
+        
+        // Ensure payment relationship is loaded for all orders
+        $orders->loadMissing('payment');
 
         return view('seller.orders.index', compact('orders'));
     }
@@ -491,5 +502,79 @@ class SellerDashboardController extends Controller
         $transactions = $this->walletService->getTransactionHistory($seller, $type, $status);
 
         return view('seller.wallet.index', compact('balance', 'transactions', 'type', 'status'));
+    }
+
+    /**
+     * Send product (for product orders)
+     * 🔒 REKBER FLOW: Update order status from processing to waiting_confirmation
+     */
+    public function sendProduct(Order $order, Request $request)
+    {
+        $seller = auth()->user();
+        
+        // Verify seller owns this order's product
+        if (!$order->product || $order->product->user_id !== $seller->id) {
+            if (!$seller->isAdmin()) {
+                abort(403, 'Unauthorized access to this order');
+            }
+        }
+        
+        // Validate order type and status
+        if ($order->type !== 'product') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya pesanan produk yang dapat dikirim',
+            ], 400);
+        }
+        
+        if ($order->status !== 'processing') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order harus dalam status "Diproses" untuk dapat dikirim',
+            ], 400);
+        }
+        
+        // Validate product has file
+        if (!$order->product->file_path) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File produk belum tersedia. Silakan upload file produk terlebih dahulu.',
+            ], 400);
+        }
+        
+        try {
+            // Update order status to waiting_confirmation
+            $orderService = app(\App\Services\OrderService::class);
+            $order = $orderService->updateStatus($order, 'waiting_confirmation', 'Seller mengirim produk', 'seller');
+            
+            // Set download expiry (30 days) for digital products
+            $order->setDownloadExpiry(30);
+            
+            // Notify buyer
+            $notificationService = app(\App\Services\NotificationService::class);
+            $notificationService->createNotificationIfNotExists(
+                $order->user,
+                'product_sent',
+                "📦 Produk untuk pesanan #{$order->order_number} telah dikirim! File dapat langsung diunduh.",
+                $order,
+                10
+            );
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk berhasil dikirim! Buyer dapat langsung mengunduh file.',
+                'order' => $order->fresh(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send product', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim produk: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

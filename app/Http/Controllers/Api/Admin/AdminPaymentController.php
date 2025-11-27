@@ -113,21 +113,32 @@ class AdminPaymentController extends BaseApiController
                 'verified_by' => auth()->id(),
             ]);
 
-            // Update order status
+            // 🔒 REKBER FLOW: Update order status sesuai alur rekber
             $order = $payment->order;
             
             if ($order->type === 'product') {
-                // Product orders: Complete immediately after payment
-                $this->orderService->updateStatus($order, 'completed', 'Payment verified by admin', 'admin');
+                // Step 1: Payment verified → status: 'paid' (Sudah Dibayar)
+                $this->orderService->updateStatus($order, 'paid', 'Pembayaran diverifikasi oleh admin', 'admin');
+                $order = $order->fresh();
+                
+                // Step 2: Create rekber (jika belum ada)
+                if (!$order->escrow) {
+                    $escrowService = app(\App\Services\EscrowService::class);
+                    $escrowService->createEscrow($order, $payment);
+                }
+                
+                // Step 3: Update to 'processing' (Diproses)
+                $this->orderService->updateStatus($order, 'processing', 'Order diproses, seller dapat mengirim produk', 'admin');
             } else {
                 // Service orders: Move to paid, waiting for seller to accept
                 $this->orderService->updateStatus($order, 'paid', 'Payment verified by admin', 'admin');
-            }
-
-            // Create escrow if needed
-            if (!$order->escrow) {
-                $escrowService = app(\App\Services\EscrowService::class);
-                $escrowService->createEscrow($order, $payment);
+                $order = $order->fresh();
+                
+                // Create escrow if needed
+                if (!$order->escrow) {
+                    $escrowService = app(\App\Services\EscrowService::class);
+                    $escrowService->createEscrow($order, $payment);
+                }
             }
 
             DB::commit();

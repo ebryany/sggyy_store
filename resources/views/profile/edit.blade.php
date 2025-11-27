@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('title', 'Edit Profile - Ebrystoree')
 
 @section('content')
-<div class="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12 max-w-4xl">
+<div class="space-y-4 sm:space-y-6 max-w-4xl mx-auto">
     <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Edit Profile</h1>
     
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">

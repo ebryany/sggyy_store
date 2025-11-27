@@ -197,15 +197,15 @@ class ChatController extends Controller
             // Update chat last message timestamp
             $chat->updateLastMessageAt();
 
-            // Create notification for recipient
-            \App\Models\Notification::create([
-                'user_id' => $otherUser->id,
-                'message' => "💬 Pesan baru dari {$currentUser->name}",
-                'type' => 'chat_message',
-                'is_read' => false,
-                'notifiable_type' => Chat::class,
-                'notifiable_id' => $chat->id,
-            ]);
+            // 🔒 FIX: Use NotificationService with idempotency check
+            $notificationService = app(\App\Services\NotificationService::class);
+            $notificationService->createNotificationIfNotExists(
+                $otherUser,
+                'chat_message',
+                "💬 Pesan baru dari {$currentUser->name}",
+                $chat,
+                2 // 2 minutes window for duplicate check (chat messages can be frequent)
+            );
 
             // Broadcast message via Laravel Echo (real-time)
             broadcast(new MessageSent($message, $chat, $otherUser))->toOthers();

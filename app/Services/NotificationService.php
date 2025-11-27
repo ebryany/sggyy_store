@@ -120,7 +120,67 @@ class NotificationService
     }
 
     /**
-     * Create a notification
+     * Create a notification with idempotency check
+     * 
+     * @param User $user
+     * @param string $type
+     * @param string $message
+     * @param Model|null $notifiable
+     * @param int $withinMinutes Time window for duplicate check (default: 5 minutes)
+     * @return Notification|null Returns null if duplicate notification exists
+     * @throws \Exception
+     */
+    public function createNotificationIfNotExists(
+        User $user,
+        string $type,
+        string $message,
+        ?Model $notifiable = null,
+        int $withinMinutes = 5
+    ): ?Notification {
+        // 🔒 SECURITY: Validate user exists
+        if (!User::find($user->id)) {
+            Log::warning('Notification skipped - user not found', [
+                'user_id' => $user->id,
+                'type' => $type,
+            ]);
+            return null;
+        }
+
+        // 🔒 SECURITY: Validate order status if notifiable is Order
+        if ($notifiable instanceof \App\Models\Order) {
+            if ($notifiable->status === 'cancelled') {
+                Log::info('Notification skipped - order cancelled', [
+                    'order_id' => $notifiable->id,
+                    'type' => $type,
+                ]);
+                return null;
+            }
+        }
+
+        // 🔒 IDEMPOTENCY: Check for duplicate notification within time window
+        $exists = Notification::where('user_id', $user->id)
+            ->where('type', $type)
+            ->where('notifiable_type', $notifiable ? get_class($notifiable) : null)
+            ->where('notifiable_id', $notifiable?->id)
+            ->where('created_at', '>=', now()->subMinutes($withinMinutes))
+            ->exists();
+
+        if ($exists) {
+            Log::info('Duplicate notification prevented (idempotency check)', [
+                'user_id' => $user->id,
+                'type' => $type,
+                'notifiable_type' => $notifiable ? get_class($notifiable) : null,
+                'notifiable_id' => $notifiable?->id,
+                'within_minutes' => $withinMinutes,
+            ]);
+            return null;
+        }
+
+        return $this->createNotification($user, $type, $message, $notifiable);
+    }
+
+    /**
+     * Create a notification (without idempotency check - use createNotificationIfNotExists for safety)
      * 
      * @param User $user
      * @param string $type

@@ -713,6 +713,28 @@
                 <x-icon name="mail" class="w-6 h-6 text-primary" />
                 Pengaturan Email
             </h2>
+            
+            <!-- Mail Driver Info -->
+            <div class="mb-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                <div class="flex items-start gap-2">
+                    <x-icon name="info" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <h4 class="font-semibold text-blue-400 mb-1">Mail Driver yang Digunakan</h4>
+                        <p class="text-sm text-white/80 mb-2">
+                            <strong>Driver:</strong> <code class="px-2 py-1 rounded bg-white/10 text-primary">{{ config('mail.default', 'log') }}</code>
+                        </p>
+                        <p class="text-xs text-white/60">
+                            Laravel mendukung berbagai mail driver: <strong>SMTP</strong>, <strong>Mailgun</strong>, <strong>SES</strong>, <strong>Postmark</strong>, <strong>Resend</strong>, <strong>Sendmail</strong>, atau <strong>Log</strong> (untuk testing).
+                            Konfigurasi mail driver dilakukan di file <code>.env</code> dengan variabel <code>MAIL_MAILER</code>.
+                        </p>
+                        <p class="text-xs text-white/60 mt-2">
+                            <strong>Catatan:</strong> Pengaturan di bawah ini hanya mengontrol <strong>apakah email dikirim</strong>, bukan <strong>bagaimana email dikirim</strong>. 
+                            Untuk mengubah mail driver (SMTP, Mailgun, dll), edit file <code>.env</code>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
             <form method="POST" action="{{ route('admin.settings.email') }}">
                 @csrf
                 <div class="space-y-4">
@@ -721,6 +743,7 @@
                         <input type="email" name="admin_email" value="{{ $emailSettings['admin_email'] ?? '' }}"
                                placeholder="admin@ebrystoree.com"
                                class="w-full glass border border-white/10 rounded-lg px-4 py-2.5 bg-white/5 focus:outline-none focus:border-primary">
+                        <p class="text-xs text-white/60 mt-1">Email admin untuk menerima notifikasi (opsional)</p>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -732,6 +755,61 @@
                             <label class="block text-sm font-medium mb-2">From Address</label>
                             <input type="email" name="email_from_address" value="{{ $emailSettings['email_from_address'] ?? 'noreply@ebrystoree.com' }}"
                                    class="w-full glass border border-white/10 rounded-lg px-4 py-2.5 bg-white/5 focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+                    
+                    <!-- Escrow Email Notifications -->
+                    <div class="mt-6 pt-6 border-t border-white/10">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <x-icon name="shield" class="w-5 h-5 text-primary" />
+                            Notifikasi Email Escrow / Rekber
+                        </h3>
+                        <p class="text-sm text-white/70 mb-4">
+                            Konfigurasi pengiriman email untuk event escrow (created, released, disputed, refunded)
+                        </p>
+                        
+                        <div class="space-y-3">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" name="enable_escrow_emails" value="1" 
+                                       {{ ($emailSettings['enable_escrow_emails'] ?? true) ? 'checked' : '' }}
+                                       class="w-5 h-5 rounded border-white/20 bg-white/5 text-primary focus:ring-primary focus:ring-offset-0">
+                                <div>
+                                    <span class="font-medium">Aktifkan Email Notifications Escrow</span>
+                                    <p class="text-xs text-white/60">Nonaktifkan untuk mematikan semua email escrow</p>
+                                </div>
+                            </label>
+                            
+                            <div class="pl-8 space-y-3 border-l-2 border-white/10 ml-2">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="escrow_email_buyer" value="1" 
+                                           {{ ($emailSettings['escrow_email_buyer'] ?? true) ? 'checked' : '' }}
+                                           class="w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary focus:ring-offset-0">
+                                    <div>
+                                        <span class="text-sm font-medium">Kirim Email ke Buyer</span>
+                                        <p class="text-xs text-white/60">Buyer akan menerima email untuk setiap event escrow</p>
+                                    </div>
+                                </label>
+                                
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="escrow_email_seller" value="1" 
+                                           {{ ($emailSettings['escrow_email_seller'] ?? true) ? 'checked' : '' }}
+                                           class="w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary focus:ring-offset-0">
+                                    <div>
+                                        <span class="text-sm font-medium">Kirim Email ke Seller</span>
+                                        <p class="text-xs text-white/60">Seller akan menerima email untuk setiap event escrow</p>
+                                    </div>
+                                </label>
+                                
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="checkbox" name="escrow_email_admin" value="1" 
+                                           {{ ($emailSettings['escrow_email_admin'] ?? false) ? 'checked' : '' }}
+                                           class="w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary focus:ring-offset-0">
+                                    <div>
+                                        <span class="text-sm font-medium">Kirim Email ke Admin (Opsional)</span>
+                                        <p class="text-xs text-white/60">Admin akan menerima email untuk setiap event escrow (untuk monitoring)</p>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>

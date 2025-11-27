@@ -57,7 +57,7 @@
                         </span>
                     @elseif($isDisputed)
                         <span class="px-3 py-1 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                            Dispute
+                            Refund
                         </span>
                     @elseif($isRefunded)
                         <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
@@ -69,13 +69,22 @@
                             <x-icon name="shield-check" class="w-3 h-3" />
                             xenPlatform
                         </span>
-        @endif
-    </div>
+                    @endif
+                </div>
     
     <!-- Escrow Timeline -->
     <x-escrow-timeline :escrow="$escrow" :order="$order" />
-</div>
-</div>
+    
+    <!-- Info: Perbedaan Timeline -->
+    <div class="mt-4 p-3 rounded-lg bg-white/5 border border-white/10">
+        <p class="text-xs text-white/60 leading-relaxed">
+            <strong>Perbedaan Timeline:</strong><br>
+            • <strong>Timeline Pesanan</strong> (di sidebar kanan): Menampilkan status order (pending → paid → processing → completed)<br>
+            • <strong>Timeline Escrow</strong> (di atas): Menampilkan status escrow/rekber (dibuat → ditahan → dilepas/refund)
+        </p>
+    </div>
+            </div>
+        </div>
     </div>
 
     @if($isHolding)
@@ -189,20 +198,20 @@
                                 Batal
                             </button>
                             <form action="{{ route('orders.confirm', $order) }}" method="POST" @submit="submitting = true">
-                                @csrf
+                @csrf
                                 <button 
                                     type="submit"
                                     :disabled="submitting || !confirmed"
                                     class="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     <span x-show="!submitting">Ya, Lepas Escrow</span>
-                                    <span x-show="submitting" class="flex items-center gap-2">
-                                        <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Memproses...
-                                    </span>
+                    <span x-show="submitting" class="flex items-center gap-2">
+                        <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Memproses...
+                    </span>
                                 </button>
                             </form>
                         </div>
@@ -229,10 +238,10 @@
                 class="block w-full px-4 py-3 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 hover:border-orange-500/50 rounded-lg font-semibold transition-all hover:scale-105 flex items-center justify-center gap-2 text-orange-400"
             >
                 <x-icon name="alert" class="w-5 h-5" />
-                Buat Dispute
+                Ajukan Refund
             </a>
             <p class="text-xs text-white/60 text-center">
-                Jika ada masalah dengan pesanan, Anda bisa membuat dispute
+                Jika ada masalah dengan pesanan, Anda bisa mengajukan refund
             </p>
             @endif
         </div>
@@ -270,16 +279,16 @@
         <div class="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
             <div class="flex items-center gap-2 mb-2">
                 <x-icon name="alert" class="w-5 h-5 text-orange-400" />
-                <span class="font-semibold text-orange-400">Escrow Sedang Dispute</span>
+                <span class="font-semibold text-orange-400">Escrow Sedang Refund</span>
             </div>
             <p class="text-sm text-white/70 mb-2">
-                {{ $escrow->dispute_reason ?? 'Escrow sedang dalam proses dispute' }}
+                {{ $escrow->dispute_reason ?? 'Escrow sedang dalam proses refund' }}
             </p>
             <p class="text-xs text-white/60">
-                Dispute pada: {{ $escrow->disputed_at->format('d M Y, H:i') }}
+                Refund diajukan pada: {{ $escrow->disputed_at->format('d M Y, H:i') }}
             </p>
             <p class="text-xs text-white/60 mt-2">
-                Admin akan meninjau dan menyelesaikan dispute ini.
+                Admin akan meninjau dan menyelesaikan refund ini.
             </p>
         </div>
 

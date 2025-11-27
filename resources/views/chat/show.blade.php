@@ -64,9 +64,9 @@
             <p class="text-white/40 text-sm">Mulai percakapan dengan mengirim pesan pertama!</p>
         </div>
         @else
-        @foreach($messages as $message)
+            @foreach($messages as $message)
             @include('chat.partials.message', ['message' => $message])
-        @endforeach
+            @endforeach
         @endif
     </div>
 
@@ -110,7 +110,7 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                 </svg>
-            </button>
+                </button>
         </div>
     </form>
 </div>
@@ -147,8 +147,8 @@
         console.log('✅ Inline form protection attached');
     } else {
         console.warn('⚠️ Chat form not found in inline script');
-    }
-})();
+        }
+    })();
 </script>
 
 <!-- Chat module will be loaded via app.js -->
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Verify ChatHandler is initialized
     if (window.chatHandler) {
         console.log('✅ ChatHandler is initialized');
-    } else {
+                } else {
         console.error('❌ ChatHandler is NOT initialized!');
     }
 });

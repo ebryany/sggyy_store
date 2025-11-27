@@ -33,18 +33,31 @@
                 </div>
             </div>
             <div class="h-64 sm:h-80 flex items-end justify-between gap-2 sm:gap-3 min-w-[400px] pb-4">
-                @foreach($revenueChart as $data)
-                <div class="flex-1 flex flex-col items-center group">
-                    <div class="w-full bg-gradient-to-t from-primary via-primary/80 to-primary/60 rounded-t-xl mb-2 hover:from-primary hover:via-primary/90 hover:to-primary/80 transition-all duration-300 cursor-pointer relative" 
-                         style="height: {{ $data['revenue'] > 0 ? max(40, ($data['revenue'] / max(array_column($revenueChart, 'revenue'))) * 100) : 0 }}%"
-                         title="Rp {{ number_format($data['revenue'], 0, ',', '.') }}">
-                        <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-dark/90 px-2 py-1 rounded-lg text-xs font-semibold text-primary whitespace-nowrap pointer-events-none">
-                            Rp {{ number_format($data['revenue'] / 1000, 0) }}k
+                @php
+                    $revenueValues = !empty($revenueChart) ? array_column($revenueChart, 'revenue') : [];
+                    $maxRevenue = !empty($revenueValues) && max($revenueValues) > 0 ? max($revenueValues) : 1;
+                @endphp
+                @if(!empty($revenueChart))
+                    @foreach($revenueChart as $data)
+                    <div class="flex-1 flex flex-col items-center group">
+                        @php
+                            $heightPercent = $maxRevenue > 0 && $data['revenue'] > 0 ? max(40, ($data['revenue'] / $maxRevenue) * 100) : ($data['revenue'] > 0 ? 40 : 0);
+                        @endphp
+                        <div class="w-full bg-gradient-to-t from-primary via-primary/80 to-primary/60 rounded-t-xl mb-2 hover:from-primary hover:via-primary/90 hover:to-primary/80 transition-all duration-300 cursor-pointer relative" 
+                             style="height: {{ $heightPercent }}%"
+                             title="Rp {{ number_format($data['revenue'], 0, ',', '.') }}">
+                            <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-dark/90 px-2 py-1 rounded-lg text-xs font-semibold text-primary whitespace-nowrap pointer-events-none z-10">
+                                Rp {{ number_format($data['revenue'], 0, ',', '.') }}
+                            </div>
                         </div>
+                        <p class="text-xs sm:text-sm text-white/60 truncate w-full text-center font-medium">{{ $data['month'] }}</p>
                     </div>
-                    <p class="text-xs sm:text-sm text-white/60 truncate w-full text-center font-medium">{{ $data['month'] }}</p>
-                </div>
-                @endforeach
+                    @endforeach
+                @else
+                    <div class="flex-1 flex items-center justify-center h-full">
+                        <p class="text-white/40 text-sm">Belum ada data revenue</p>
+                    </div>
+                @endif
             </div>
         </div>
         
@@ -62,21 +75,36 @@
                 </div>
             </div>
             <div class="h-64 sm:h-80 flex items-end justify-between gap-1 sm:gap-2 min-w-[500px] pb-4">
-                @foreach(array_slice($orderTrend, -14) as $data)
-                <div class="flex-1 flex flex-col items-center group">
-                    <div class="w-full bg-gradient-to-t from-blue-500 via-blue-400 to-blue-300 rounded-t-lg mb-2 hover:from-blue-400 hover:via-blue-300 hover:to-blue-200 transition-all duration-300 cursor-pointer relative" 
-                         style="height: {{ $data['orders'] > 0 ? max(30, ($data['orders'] / max(array_column($orderTrend, 'orders'))) * 100) : 0 }}%"
-                         title="{{ $data['orders'] }} orders">
-                        <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-dark/90 px-2 py-1 rounded-lg text-xs font-semibold text-blue-400 whitespace-nowrap pointer-events-none">
-                            {{ $data['orders'] }} orders
+                @php
+                    $last14Days = !empty($orderTrend) ? array_slice($orderTrend, -14) : [];
+                    $orderValues = !empty($orderTrend) ? array_column($orderTrend, 'orders') : [];
+                    $maxOrders = !empty($orderValues) && max($orderValues) > 0 ? max($orderValues) : 1;
+                @endphp
+                @if(!empty($last14Days))
+                    @foreach($last14Days as $data)
+                    <div class="flex-1 flex flex-col items-center group">
+                        @php
+                            $heightPercent = $maxOrders > 0 && $data['orders'] > 0 ? max(30, ($data['orders'] / $maxOrders) * 100) : ($data['orders'] > 0 ? 30 : 0);
+                        @endphp
+                        <div class="w-full bg-gradient-to-t from-blue-500 via-blue-400 to-blue-300 rounded-t-lg mb-2 hover:from-blue-400 hover:via-blue-300 hover:to-blue-200 transition-all duration-300 cursor-pointer relative" 
+                             style="height: {{ $heightPercent }}%"
+                             title="{{ $data['orders'] }} pesanan">
+                            <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-dark/90 px-2 py-1 rounded-lg text-xs font-semibold text-blue-400 whitespace-nowrap pointer-events-none z-10">
+                                {{ $data['orders'] }} pesanan
+                            </div>
                         </div>
+                        <p class="text-[10px] sm:text-xs text-white/60 transform -rotate-45 origin-bottom-left whitespace-nowrap" style="writing-mode: vertical-rl;">{{ $data['date'] }}</p>
                     </div>
-                    <p class="text-[10px] sm:text-xs text-white/60 transform -rotate-45 origin-bottom-left whitespace-nowrap" style="writing-mode: vertical-rl;">{{ \Carbon\Carbon::parse($data['date'])->format('d M') }}</p>
-                </div>
-                @endforeach
+                    @endforeach
+                @else
+                    <div class="flex-1 flex items-center justify-center h-full">
+                        <p class="text-white/40 text-sm">Belum ada data pesanan</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
 @endsection
+
 

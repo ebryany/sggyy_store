@@ -260,6 +260,11 @@ class SettingController extends Controller
             'admin_email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'email_from_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'email_from_address' => ['sometimes', 'nullable', 'email', 'max:255'],
+            // Escrow email settings
+            'enable_escrow_emails' => ['sometimes', 'boolean'],
+            'escrow_email_buyer' => ['sometimes', 'boolean'],
+            'escrow_email_seller' => ['sometimes', 'boolean'],
+            'escrow_email_admin' => ['sometimes', 'boolean'],
         ]);
 
         try {
@@ -272,6 +277,12 @@ class SettingController extends Controller
             if ($request->has('email_from_address')) {
                 $this->settingsService->set('email_from_address', $request->email_from_address);
             }
+            
+            // Escrow email settings
+            $this->settingsService->set('enable_escrow_emails', $request->boolean('enable_escrow_emails', true));
+            $this->settingsService->set('escrow_email_buyer', $request->boolean('escrow_email_buyer', true));
+            $this->settingsService->set('escrow_email_seller', $request->boolean('escrow_email_seller', true));
+            $this->settingsService->set('escrow_email_admin', $request->boolean('escrow_email_admin', false));
 
             return back()->with('success', 'Pengaturan email berhasil diperbarui');
         } catch (\Exception $e) {

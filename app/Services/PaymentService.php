@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Payment;
 use App\Models\Order;
 use App\Services\OrderService;
+use App\Events\PaymentVerified;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -92,11 +93,20 @@ class PaymentService
                 }
             }
             
-            // For digital products, directly complete order (skip 'paid' status)
-            // This prevents double update and creates cleaner audit trail
+            // 🔒 REKBER FLOW: Update order status sesuai alur rekber
             if ($order->type === 'product') {
-                // Direct transition: pending → completed (valid for digital products)
-                $this->orderService->updateStatus($order, 'completed', 'Digital product - payment verified, order completed automatically', 'admin');
+                // Step 1: Payment verified → status: 'paid' (Sudah Dibayar)
+                $this->orderService->updateStatus($order, 'paid', 'Pembayaran diverifikasi oleh admin', 'admin');
+                $order = $order->fresh();
+                
+                // Step 2: Create rekber (jika belum ada)
+                if (!$order->escrow) {
+                    $escrowService = app(\App\Services\EscrowService::class);
+                    $escrowService->createEscrow($order, $payment);
+                }
+                
+                // Step 3: Update to 'processing' (Diproses) - seller dapat mengirim produk
+                $this->orderService->updateStatus($order, 'processing', 'Order diproses, seller dapat mengirim produk', 'admin');
             } else {
                 // For services, update to 'paid' status (seller needs to work on it)
                 $this->orderService->updateStatus($order, 'paid', 'Payment verified by admin', 'admin');
@@ -104,20 +114,12 @@ class PaymentService
                 
                 // Auto-set deadline using centralized method
                 $order = $this->orderService->applyDeadlineRules($order);
-                
-                // Notify seller about new paid order
-                $sellerId = $order->service?->user_id;
-                if ($sellerId) {
-                    \App\Models\Notification::create([
-                        'user_id' => $sellerId,
-                        'message' => "💰 Pembayaran untuk pesanan jasa #{$order->order_number} sudah diverifikasi! Segera mulai proses pesanan. Deadline: " . ($order->deadline_at ? $order->deadline_at->format('d M Y, H:i') : 'Belum ditetapkan'),
-                        'type' => 'payment_verified_seller',
-                        'is_read' => false,
-                        'notifiable_type' => \App\Models\Order::class,
-                        'notifiable_id' => $order->id,
-                    ]);
-                }
             }
+
+            // 🔒 FIX: Dispatch PaymentVerified event to trigger listener (which will create notifications)
+            // This ensures notifications are created consistently via listener, preventing duplication
+            // Note: Order status already updated above, listener will handle notifications only
+            event(new PaymentVerified($payment));
 
             return $payment->fresh();
         });

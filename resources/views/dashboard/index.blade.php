@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('title', 'Dashboard - Ebrystoree')
 
 @section('content')
-<div class="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12">
+<div class="space-y-4 sm:space-y-6">
     <!-- Welcome Banner - Modern & Attractive -->
     <div class="relative overflow-hidden rounded-2xl p-6 sm:p-8 lg:p-10 bg-gradient-to-br from-primary/20 via-primary/10 to-blue-500/10 border border-primary/30 mb-6 sm:mb-8">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
@@ -59,7 +59,7 @@
     <!-- Quick Actions - Modern Cards (Hidden on mobile, available in profile dropdown) -->
     <div class="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <a href="{{ route('wallet.topUp') }}" 
-           class="group relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-transparent border border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-yellow-500/20 text-center touch-target">
+           class="group relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-transparent border border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-yellow-500/20 text-center touch-target min-h-[120px] flex flex-col items-center justify-center">
             <div class="relative z-10">
                 <div class="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 rounded-2xl bg-yellow-500/20 backdrop-blur-lg flex items-center justify-center border border-yellow-500/30 group-hover:scale-110 transition-transform">
                     <x-icon name="currency" class="w-8 h-8 sm:w-10 sm:h-10 text-yellow-400" />
@@ -69,7 +69,7 @@
         </a>
         
         <a href="{{ route('profile.edit') }}" 
-           class="group relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-orange-500/20 text-center touch-target">
+           class="group relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-orange-500/20 text-center touch-target min-h-[120px] flex flex-col items-center justify-center">
             <div class="relative z-10">
                 <div class="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 rounded-2xl bg-orange-500/20 backdrop-blur-lg flex items-center justify-center border border-orange-500/30 group-hover:scale-110 transition-transform">
                     <x-icon name="paint" class="w-8 h-8 sm:w-10 sm:h-10 text-orange-400" />
@@ -79,7 +79,7 @@
         </a>
         
         <a href="{{ route('products.index') }}" 
-           class="group relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20 text-center touch-target">
+           class="group relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20 text-center touch-target min-h-[120px] flex flex-col items-center justify-center">
             <div class="relative z-10">
                 <div class="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 rounded-2xl bg-blue-500/20 backdrop-blur-lg flex items-center justify-center border border-blue-500/30 group-hover:scale-110 transition-transform">
                     <x-icon name="shopping-bag" class="w-8 h-8 sm:w-10 sm:h-10 text-blue-400" />
@@ -89,7 +89,7 @@
         </a>
         
         <a href="{{ route('notifications.index') }}" 
-           class="group relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20 text-center touch-target">
+           class="group relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20 text-center touch-target min-h-[120px] flex flex-col items-center justify-center">
             <div class="relative z-10">
                 @if($unreadCount > 0)
                 <span class="absolute top-2 right-2 bg-primary text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center font-bold border-2 border-dark z-20">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>

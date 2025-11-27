@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('title', 'Daftar Dispute - Ebrystoree')
 
 @section('content')
-<div class="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12 max-w-6xl">
+<div class="space-y-4 sm:space-y-6 max-w-6xl mx-auto">
     <div class="mb-6">
         <h1 class="text-2xl sm:text-3xl font-bold mb-2">Daftar Dispute</h1>
         <p class="text-white/70">Semua dispute yang Anda buat atau terlibat</p>

@@ -387,6 +387,7 @@ Route::middleware(['auth', 'seller'])->prefix('seller')->name('seller.')->group(
     // 🔒 SECURITY: Orders (Seller Only - with seller layout & sidebar)
     Route::get('/orders', [SellerDashboardController::class, 'orders'])->name('orders.index');
     Route::get('/orders/{order}', [SellerDashboardController::class, 'orderShow'])->name('orders.show');
+    Route::post('/orders/{order}/send-product', [SellerDashboardController::class, 'sendProduct'])->name('orders.sendProduct');
     
     // 🔒 SECURITY: Wallet (Seller Only - with seller layout & sidebar)
     Route::get('/wallet', [SellerDashboardController::class, 'wallet'])->name('wallet.index');

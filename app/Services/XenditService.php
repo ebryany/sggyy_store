@@ -562,12 +562,18 @@ class XenditService
                 'xendit_metadata' => $payload,
             ]);
 
-            // Update order status
+            // 🔒 REKBER FLOW: Update order status sesuai alur rekber
             $order = $payment->order;
             $orderService = app(OrderService::class);
             
             if ($order->type === 'product') {
-                $orderService->updateStatus($order, 'completed', 'Payment verified via Xendit', 'system');
+                // Step 1: Payment verified → status: 'paid' (Sudah Dibayar)
+                $orderService->updateStatus($order, 'paid', 'Pembayaran diverifikasi via Xendit', 'system');
+                $order = $order->fresh();
+                
+                // Step 2: Create rekber (akan dibuat di bawah)
+                // Step 3: Update to 'processing' (Diproses)
+                $orderService->updateStatus($order, 'processing', 'Order diproses, seller dapat mengirim produk', 'system');
             } else {
                 $orderService->updateStatus($order, 'paid', 'Payment verified via Xendit', 'system');
             }

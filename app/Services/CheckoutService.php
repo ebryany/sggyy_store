@@ -203,27 +203,30 @@ class CheckoutService
             'verified_at' => now(),
         ]);
 
-        // Update order status
-        // For digital products, auto-complete order after wallet payment
-        // This allows immediate download access
+        // 🔒 REKBER FLOW: Update order status sesuai alur rekber
         if ($order->type === 'product') {
-            $order->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-            ]);
+            // Step 1: Payment verified → status: 'paid' (Sudah Dibayar)
+            $this->orderService->updateStatus($order, 'paid', 'Pembayaran via wallet berhasil', 'system');
+            $order = $order->fresh();
             
-            // 🔒 CRITICAL SECURITY: Set download expiry (30 days) for digital products
-            $order->setDownloadExpiry(30);
+            // Step 2: Create rekber (jika belum ada)
+            if (!$order->escrow) {
+                $escrowService = app(\App\Services\EscrowService::class);
+                $escrowService->createEscrow($order, $payment);
+            }
             
-            // Create notification for buyer
-            \App\Models\Notification::create([
-                'user_id' => $order->user_id,
-                'message' => "Pembayaran untuk produk #{$order->order_number} berhasil! File dapat langsung diunduh.",
-                'type' => 'payment_verified',
-                'is_read' => false,
-                'notifiable_type' => \App\Models\Order::class,
-                'notifiable_id' => $order->id,
-            ]);
+            // Step 3: Update to 'processing' (Diproses)
+            $this->orderService->updateStatus($order, 'processing', 'Order diproses, seller dapat mengirim produk', 'system');
+            
+            // 🔒 FIX: Use NotificationService with idempotency check
+            $notificationService = app(\App\Services\NotificationService::class);
+            $notificationService->createNotificationIfNotExists(
+                $order->user,
+                'payment_verified',
+                "Pembayaran untuk produk #{$order->order_number} berhasil! Seller akan mengirim produk.",
+                $order,
+                10 // 10 minutes window for duplicate check
+            );
         } else {
             // For services, keep status as 'paid' (seller needs to work on it)
             $order->update(['status' => 'paid']);
@@ -231,17 +234,20 @@ class CheckoutService
             // Auto-set deadline using centralized method
             $order = $this->orderService->applyDeadlineRules($order->fresh());
             
-            // Notify seller about new paid order
+            // 🔒 FIX: Use NotificationService with idempotency check
+            $notificationService = app(\App\Services\NotificationService::class);
             $sellerId = $order->service?->user_id;
             if ($sellerId) {
-                \App\Models\Notification::create([
-                    'user_id' => $sellerId,
-                    'message' => "💰 Pembayaran untuk pesanan jasa #{$order->order_number} sudah diverifikasi! Segera mulai proses pesanan. " . ($order->deadline_at ? "Deadline: " . $order->deadline_at->format('d M Y, H:i') : 'Deadline: Belum ditetapkan'),
-                    'type' => 'payment_verified_seller',
-                    'is_read' => false,
-                    'notifiable_type' => \App\Models\Order::class,
-                    'notifiable_id' => $order->id,
-                ]);
+                $seller = \App\Models\User::find($sellerId);
+                if ($seller) {
+                    $notificationService->createNotificationIfNotExists(
+                        $seller,
+                        'payment_verified_seller',
+                        "💰 Pembayaran untuk pesanan jasa #{$order->order_number} sudah diverifikasi! Segera mulai proses pesanan. " . ($order->deadline_at ? "Deadline: " . $order->deadline_at->format('d M Y, H:i') : 'Deadline: Belum ditetapkan'),
+                        $order,
+                        10 // 10 minutes window for duplicate check
+                    );
+                }
             }
         }
     }

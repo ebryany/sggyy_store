@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.user')
 
 @section('title', 'Profile Saya - Ebrystoree')
 
 @section('content')
-<div class="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12 max-w-4xl">
+<div class="space-y-4 sm:space-y-6 max-w-4xl mx-auto">
     <!-- Profile Completion Section -->
     <div class="glass p-4 sm:p-6 rounded-xl mb-4 sm:mb-6 border border-white/10">
         <div class="flex items-center justify-between mb-3 sm:mb-4">

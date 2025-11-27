@@ -61,14 +61,12 @@ return [
         ],
 
         'oss' => [
-            'driver' => 's3',
+            'driver' => 'oss', // Custom driver menggunakan Alibaba Cloud OSS SDK
             'key' => env('OSS_ACCESS_KEY_ID'),
             'secret' => env('OSS_ACCESS_KEY_SECRET'),
-            'region' => env('OSS_REGION', 'ap-southeast-1'),
             'bucket' => env('OSS_BUCKET'),
             'url' => env('OSS_URL'),
             'endpoint' => env('OSS_ENDPOINT'),
-            'use_path_style_endpoint' => true,
             'throw' => false,
             'report' => false,
         ],

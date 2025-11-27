@@ -414,12 +414,12 @@ class ProductController extends Controller
             return redirect($signedUrl);
         }
         
-        // Find user's completed order for this product
+        // 🔒 REKBER FLOW: Find user's order (processing or completed) for this product
         $order = \App\Models\Order::where('user_id', $user->id)
             ->where('type', 'product')
             ->where('product_id', $productModel->id)
-            ->where('status', 'completed')
-            ->latest('completed_at')
+            ->whereIn('status', ['processing', 'waiting_confirmation', 'completed'])
+            ->latest('created_at')
             ->first();
         
         if (!$order) {
@@ -546,8 +546,8 @@ class ProductController extends Controller
             abort(403, 'Invalid order for this product');
         }
         
-        // Verify order status is completed
-        if ($order->status !== 'completed') {
+        // 🔒 REKBER FLOW: Verify order status is processing or completed
+        if (!in_array($order->status, ['processing', 'waiting_confirmation', 'completed'])) {
             \App\Models\ProductDownload::logDenied(
                 $user,
                 $product,

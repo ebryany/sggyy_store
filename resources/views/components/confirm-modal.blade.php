@@ -3,6 +3,7 @@
 <div id="{{ $id }}" 
      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
      style="display: none;"
+     x-cloak
      onclick="
          if (event.target === this) {
              this.style.display = 'none';
