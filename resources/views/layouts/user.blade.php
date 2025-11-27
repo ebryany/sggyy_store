@@ -56,7 +56,7 @@
             </div>
             
             <!-- Main Content Area -->
-            <main class="flex-1 overflow-y-auto pt-safe pb-safe">
+            <main class="flex-1 overflow-y-auto pt-safe pb-safe pb-20 lg:pb-safe">
                 @include('components.alert', ['type' => 'success'])
                 @include('components.alert', ['type' => 'error'])
                 @include('components.notification-toast')
@@ -67,6 +67,9 @@
                     @yield('content')
                 </div>
             </main>
+            
+            <!-- Mobile Bottom Navigation -->
+            @include('components.bottom-nav')
         </div>
     </div>
     
