@@ -89,7 +89,18 @@ class OssAdapter implements FilesystemAdapter
     public function write(string $path, string $contents, Config $config): void
     {
         try {
-            $this->client->putObject($this->bucket, $path, $contents);
+            // Get visibility from config (default to public for OSS)
+            $visibility = $config->get('visibility', 'public');
+            $options = [];
+            
+            // Set ACL to public-read if visibility is public
+            if ($visibility === 'public') {
+                $options[OssClient::OSS_HEADERS] = [
+                    OssClient::OSS_OBJECT_ACL => OssClient::OSS_ACL_TYPE_PUBLIC_READ,
+                ];
+            }
+            
+            $this->client->putObject($this->bucket, $path, $contents, $options);
         } catch (OssException $e) {
             // Provide more detailed error information
             $errorMessage = $e->getMessage();
@@ -129,7 +140,19 @@ class OssAdapter implements FilesystemAdapter
     {
         try {
             $streamContents = stream_get_contents($contents);
-            $this->client->putObject($this->bucket, $path, $streamContents);
+            
+            // Get visibility from config (default to public for OSS)
+            $visibility = $config->get('visibility', 'public');
+            $options = [];
+            
+            // Set ACL to public-read if visibility is public
+            if ($visibility === 'public') {
+                $options[OssClient::OSS_HEADERS] = [
+                    OssClient::OSS_OBJECT_ACL => OssClient::OSS_ACL_TYPE_PUBLIC_READ,
+                ];
+            }
+            
+            $this->client->putObject($this->bucket, $path, $streamContents, $options);
         } catch (OssException $e) {
             throw UnableToWriteFile::atLocation($path, $e->getMessage());
         }

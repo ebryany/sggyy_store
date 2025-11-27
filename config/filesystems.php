@@ -67,6 +67,7 @@ return [
             'bucket' => env('OSS_BUCKET'),
             'url' => env('OSS_URL'),
             'endpoint' => env('OSS_ENDPOINT'),
+            'visibility' => 'public', // Default visibility untuk file yang diupload ke OSS
             'throw' => false,
             'report' => false,
         ],

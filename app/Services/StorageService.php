@@ -123,6 +123,10 @@ class StorageService
         }
 
         try {
+            // For OSS, ensure files are uploaded with public visibility
+            if ($disk === 'oss') {
+                return $file->storeAs($path, $file->hashName(), $disk);
+            }
             return $file->store($path, $disk);
         } catch (Exception $e) {
             Log::error('File storage failed', [
