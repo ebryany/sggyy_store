@@ -136,12 +136,13 @@ class ProfileService
             }
 
             // Delete old avatar if exists
-            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
-                Storage::disk('public')->delete($user->avatar);
+            $storageService = app(\App\Services\StorageService::class);
+            if ($user->avatar) {
+                $storageService->delete($user->avatar);
             }
 
-            // Store new avatar
-            $path = $file->store('avatars', 'public');
+            // Store new avatar - Use StorageService for proper OSS integration
+            $path = $storageService->store($file, 'avatars');
 
             // Update user
             $user->update(['avatar' => $path]);
@@ -172,8 +173,9 @@ class ProfileService
     public function removeAvatar(User $user): User
     {
         try {
-            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
-                Storage::disk('public')->delete($user->avatar);
+            $storageService = app(\App\Services\StorageService::class);
+            if ($user->avatar) {
+                $storageService->delete($user->avatar);
             }
 
             $user->update(['avatar' => null]);
@@ -250,12 +252,13 @@ class ProfileService
             }
 
             // Delete old banner if exists
-            if ($user->store_banner && Storage::disk('public')->exists($user->store_banner)) {
-                Storage::disk('public')->delete($user->store_banner);
+            $storageService = app(\App\Services\StorageService::class);
+            if ($user->store_banner) {
+                $storageService->delete($user->store_banner);
             }
 
-            // Store new banner
-            $path = $file->store('store/banners', 'public');
+            // Store new banner - Use StorageService for proper OSS integration
+            $path = $storageService->store($file, 'store/banners');
 
             // Update user
             $user->update(['store_banner' => $path]);
@@ -296,12 +299,13 @@ class ProfileService
             }
 
             // Delete old logo if exists
-            if ($user->store_logo && Storage::disk('public')->exists($user->store_logo)) {
-                Storage::disk('public')->delete($user->store_logo);
+            $storageService = app(\App\Services\StorageService::class);
+            if ($user->store_logo) {
+                $storageService->delete($user->store_logo);
             }
 
-            // Store new logo
-            $path = $file->store('store/logos', 'public');
+            // Store new logo - Use StorageService for proper OSS integration
+            $path = $storageService->store($file, 'store/logos');
 
             // Update user
             $user->update(['store_logo' => $path]);

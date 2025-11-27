@@ -94,13 +94,29 @@ class OssAdapter implements FilesystemAdapter
             $options = [];
             
             // Set ACL to public-read if visibility is public
+            // OSS SDK expects ACL in headers array
             if ($visibility === 'public') {
                 $options[OssClient::OSS_HEADERS] = [
-                    OssClient::OSS_OBJECT_ACL => OssClient::OSS_ACL_TYPE_PUBLIC_READ,
+                    'x-oss-object-acl' => OssClient::OSS_ACL_TYPE_PUBLIC_READ,
                 ];
             }
             
+            // Upload file
             $this->client->putObject($this->bucket, $path, $contents, $options);
+            
+            // Double-check: Set ACL after upload to ensure it's applied
+            // This is a fallback in case the header method doesn't work
+            if ($visibility === 'public') {
+                try {
+                    $this->client->putObjectAcl($this->bucket, $path, OssClient::OSS_ACL_TYPE_PUBLIC_READ);
+                } catch (OssException $aclException) {
+                    // Log but don't fail the upload
+                    \Illuminate\Support\Facades\Log::warning('Failed to set ACL after upload', [
+                        'path' => $path,
+                        'error' => $aclException->getMessage(),
+                    ]);
+                }
+            }
         } catch (OssException $e) {
             // Provide more detailed error information
             $errorMessage = $e->getMessage();
@@ -146,13 +162,29 @@ class OssAdapter implements FilesystemAdapter
             $options = [];
             
             // Set ACL to public-read if visibility is public
+            // OSS SDK expects ACL in headers array
             if ($visibility === 'public') {
                 $options[OssClient::OSS_HEADERS] = [
-                    OssClient::OSS_OBJECT_ACL => OssClient::OSS_ACL_TYPE_PUBLIC_READ,
+                    'x-oss-object-acl' => OssClient::OSS_ACL_TYPE_PUBLIC_READ,
                 ];
             }
             
+            // Upload file
             $this->client->putObject($this->bucket, $path, $streamContents, $options);
+            
+            // Double-check: Set ACL after upload to ensure it's applied
+            // This is a fallback in case the header method doesn't work
+            if ($visibility === 'public') {
+                try {
+                    $this->client->putObjectAcl($this->bucket, $path, OssClient::OSS_ACL_TYPE_PUBLIC_READ);
+                } catch (OssException $aclException) {
+                    // Log but don't fail the upload
+                    \Illuminate\Support\Facades\Log::warning('Failed to set ACL after upload', [
+                        'path' => $path,
+                        'error' => $aclException->getMessage(),
+                    ]);
+                }
+            }
         } catch (OssException $e) {
             throw UnableToWriteFile::atLocation($path, $e->getMessage());
         }
