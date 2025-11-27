@@ -39,22 +39,63 @@ class SettingsService
             return $path;
         }
         
-        // Get default disk from config
+        // Use StorageService for proper OSS/S3 URL generation with error handling
+        try {
+            $storageService = app(\App\Services\StorageService::class);
+            $url = $storageService->url($path);
+            
+            if ($url) {
+                return $url;
+            }
+        } catch (\Exception $e) {
+            // Log error but continue with fallback
+            Log::warning('StorageService URL generation failed, using fallback', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+        }
+        
+        // Fallback: Try to generate URL directly (for local/public disks)
         $disk = config('filesystems.default');
         
-        // Use default disk (can be 'oss', 's3', or 'public')
-        // For backward compatibility, check if file exists in 'public' first
-        if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->url($path);
-        }
-        
-        // Try default disk
-        if (Storage::disk($disk)->exists($path)) {
+        try {
+            // For OSS, try to generate URL using adapter's publicUrl method
+            if ($disk === 'oss') {
+                $ossConfig = config('filesystems.disks.oss');
+                if ($ossConfig && isset($ossConfig['url'])) {
+                    // Use custom OSS URL if configured
+                    return rtrim($ossConfig['url'], '/') . '/' . ltrim($path, '/');
+                }
+                // Generate OSS public URL
+                $endpoint = $ossConfig['endpoint'] ?? env('OSS_ENDPOINT');
+                $bucket = $ossConfig['bucket'] ?? env('OSS_BUCKET');
+                if ($endpoint && $bucket) {
+                    // Handle endpoint format
+                    if (str_starts_with($endpoint, 'http://') || str_starts_with($endpoint, 'https://')) {
+                        $endpoint = parse_url($endpoint, PHP_URL_HOST) ?: str_replace(['http://', 'https://'], '', $endpoint);
+                    }
+                    return "https://{$bucket}.{$endpoint}/" . ltrim($path, '/');
+                }
+            }
+            
+            // For other disks, try direct URL generation
+            if (Storage::disk('public')->exists($path)) {
+                return Storage::disk('public')->url($path);
+            }
+            
+            // Last resort: try default disk (might fail for OSS, but we'll catch it)
             return Storage::disk($disk)->url($path);
+        } catch (\Exception $e) {
+            // If URL generation fails, return empty string or path as-is
+            Log::error('Failed to generate storage URL', [
+                'path' => $path,
+                'disk' => $disk,
+                'error' => $e->getMessage(),
+            ]);
+            
+            // Return path as-is if URL generation fails (might be used as relative path)
+            return $path;
         }
-        
-        // If file doesn't exist, still return URL (for OSS/S3, URL might still work)
-        return Storage::disk($disk)->url($path);
     }
 
     public function get(string $key, $default = null)

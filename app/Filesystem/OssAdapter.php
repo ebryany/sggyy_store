@@ -302,6 +302,17 @@ class OssAdapter implements FilesystemAdapter
         }
     }
 
+    /**
+     * Get URL for file (used by Laravel FilesystemAdapter)
+     * 
+     * @param string $path
+     * @return string
+     */
+    public function getUrl(string $path): string
+    {
+        return $this->publicUrl($path, new Config());
+    }
+
     public function publicUrl(string $path, Config $config): string
     {
         // Remove leading slash if present

@@ -253,12 +253,39 @@ class StorageService
 
             // For OSS/S3, URL might still work even if exists() returns false
             // (due to eventual consistency or permissions)
-            return Storage::disk($disk)->url($path);
+            try {
+                return Storage::disk($disk)->url($path);
+            } catch (\Exception $urlError) {
+                // If url() method fails (e.g., "This driver does not support retrieving URLs")
+                // Try to generate URL manually for OSS
+                if ($disk === 'oss') {
+                    $ossConfig = config('filesystems.disks.oss');
+                    if ($ossConfig) {
+                        // Use custom OSS URL if configured
+                        if (!empty($ossConfig['url'])) {
+                            return rtrim($ossConfig['url'], '/') . '/' . ltrim($path, '/');
+                        }
+                        // Generate OSS public URL manually
+                        $endpoint = $ossConfig['endpoint'] ?? env('OSS_ENDPOINT');
+                        $bucket = $ossConfig['bucket'] ?? env('OSS_BUCKET');
+                        if ($endpoint && $bucket) {
+                            // Handle endpoint format
+                            if (str_starts_with($endpoint, 'http://') || str_starts_with($endpoint, 'https://')) {
+                                $endpoint = parse_url($endpoint, PHP_URL_HOST) ?: str_replace(['http://', 'https://'], '', $endpoint);
+                            }
+                            return "https://{$bucket}.{$endpoint}/" . ltrim($path, '/');
+                        }
+                    }
+                }
+                // Re-throw if we can't handle it
+                throw $urlError;
+            }
         } catch (Exception $e) {
+            $errorMsg = $e->getMessage();
             Log::error('File URL generation failed', [
                 'disk' => $disk,
                 'path' => $path,
-                'error' => $e->getMessage(),
+                'error' => $errorMsg,
             ]);
 
             // Fallback to public disk
