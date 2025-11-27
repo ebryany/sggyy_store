@@ -401,14 +401,14 @@ class SettingController extends Controller
                 $file = $request->file('owner_photo_file');
                 
                 // Delete old photo if exists
-                $disk = config('filesystems.default');
+                $storageService = app(\App\Services\StorageService::class);
                 $oldPhoto = $this->settingsService->get('owner_photo', '');
-                if ($oldPhoto && Storage::disk($disk)->exists($oldPhoto)) {
-                    Storage::disk($disk)->delete($oldPhoto);
+                if ($oldPhoto && !str_starts_with($oldPhoto, 'http')) {
+                    $storageService->delete($oldPhoto);
                 }
                 
-                // Store new photo
-                $path = $file->store('owner/photos', $disk);
+                // Store new photo - Use StorageService for proper OSS integration
+                $path = $storageService->store($file, 'owner/photos');
                 $this->settingsService->set('owner_photo', $path);
                 
                 // Clear cache to ensure new photo is visible

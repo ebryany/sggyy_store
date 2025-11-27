@@ -334,9 +334,9 @@ class SettingsService
                 }
             }
 
-            // Store new logo
-            $disk = config('filesystems.default');
-            $path = $file->store('settings/logo', $disk);
+            // Store new logo - Use StorageService for proper OSS integration
+            $storageService = app(\App\Services\StorageService::class);
+            $path = $storageService->store($file, 'settings/logo');
 
             Log::info('Logo uploaded', [
                 'path' => $path,
@@ -377,15 +377,13 @@ class SettingsService
             if ($oldFavicon && !str_starts_with($oldFavicon, 'http')) {
                 // Only delete if it's a local file (not external URL)
                 $oldFaviconPath = ltrim($oldFavicon, '/');
-                $disk = config('filesystems.default');
-                if (Storage::disk($disk)->exists($oldFaviconPath)) {
-                    Storage::disk($disk)->delete($oldFaviconPath);
-                }
+                $storageService = app(\App\Services\StorageService::class);
+                $storageService->delete($oldFaviconPath);
             }
 
-            // Store new favicon
-            $disk = config('filesystems.default');
-            $path = $file->store('settings/favicon', $disk);
+            // Store new favicon - Use StorageService for proper OSS integration
+            $storageService = app(\App\Services\StorageService::class);
+            $path = $storageService->store($file, 'settings/favicon');
 
             Log::info('Favicon uploaded', [
                 'path' => $path,
