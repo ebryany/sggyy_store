@@ -13,22 +13,38 @@
     <div class="relative flex items-start justify-between min-w-max px-2">
         <!-- Connecting Line (horizontal line connecting all steps) -->
         @if(count($timeline) > 1)
-        <div class="absolute top-6 left-0 right-0 h-0.5 z-0" 
-             style="left: 24px; right: 24px;">
+        @php
+            // Calculate line position: start from center of first circle to center of last circle
+            // Each step takes 1/n of the width, circle is at center of each step
+            // Line should start from center of first circle (at 1/(2*n) from left)
+            // and end at center of last circle (at 1 - 1/(2*n) from left)
+            $totalSteps = count($timeline);
+            $stepWidth = 100 / $totalSteps; // Percentage width per step
+            $circleCenterOffset = $stepWidth / 2; // Center of circle within step
+            $lineStart = $circleCenterOffset; // Start from center of first circle
+            $lineEnd = 100 - $circleCenterOffset; // End at center of last circle
+            $lineWidth = $lineEnd - $lineStart; // Total line width
+        @endphp
+        <div class="absolute top-6 h-0.5 z-0" 
+             style="left: {{ $lineStart }}%; width: {{ $lineWidth }}%;">
             <!-- Background line (gray) - full width from first to last step -->
             <div class="h-full w-full bg-white/20"></div>
-            @if($lastCompletedIndex >= 0 && count($timeline) > 1)
+            @if($lastCompletedIndex >= 0)
             <!-- Progress line (red) - from first step to last completed step -->
             @php
-                // Calculate progress percentage
-                // If all steps completed, show 100%
-                // Otherwise, show progress up to the last completed step
-                $totalSteps = count($timeline);
+                // Calculate progress: from start to center of last completed step
                 $completedSteps = $lastCompletedIndex + 1;
-                $progressPercent = $completedSteps >= $totalSteps ? 100 : ($completedSteps / ($totalSteps - 1)) * 100;
+                if ($completedSteps >= $totalSteps) {
+                    // All steps completed, show full line
+                    $progressPercent = 100;
+                } else {
+                    // Progress to center of last completed step
+                    $progressEnd = ($completedSteps * $stepWidth) - $circleCenterOffset;
+                    $progressPercent = (($progressEnd - $lineStart) / $lineWidth) * 100;
+                }
             @endphp
             <div class="absolute top-0 left-0 h-full bg-primary transition-all duration-300" 
-                 style="width: {{ $progressPercent }}%;">
+                 style="width: {{ max(0, min(100, $progressPercent)) }}%;">
             </div>
             @endif
         </div>
