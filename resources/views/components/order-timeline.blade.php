@@ -11,15 +11,28 @@
 
 <div class="w-full overflow-x-auto pb-2">
     <div class="relative flex items-start justify-between min-w-max px-2">
-        <!-- Connecting Line (full width) -->
-        <div class="absolute top-6 left-0 right-0 h-0.5 z-0" style="margin: 0 24px;">
+        <!-- Connecting Line (horizontal line connecting all steps) -->
+        @if(count($timeline) > 1)
+        <div class="absolute top-6 left-0 right-0 h-0.5 z-0" 
+             style="left: 24px; right: 24px;">
+            <!-- Background line (gray) - full width from first to last step -->
             <div class="h-full w-full bg-white/20"></div>
-            @if($lastCompletedIndex >= 0)
+            @if($lastCompletedIndex >= 0 && count($timeline) > 1)
+            <!-- Progress line (red) - from first step to last completed step -->
+            @php
+                // Calculate progress percentage
+                // If all steps completed, show 100%
+                // Otherwise, show progress up to the last completed step
+                $totalSteps = count($timeline);
+                $completedSteps = $lastCompletedIndex + 1;
+                $progressPercent = $completedSteps >= $totalSteps ? 100 : ($completedSteps / ($totalSteps - 1)) * 100;
+            @endphp
             <div class="absolute top-0 left-0 h-full bg-primary transition-all duration-300" 
-                 style="width: {{ (($lastCompletedIndex + 1) / (count($timeline) - 1)) * 100 }}%;">
+                 style="width: {{ $progressPercent }}%;">
             </div>
             @endif
         </div>
+        @endif
         
         @foreach($timeline as $index => $item)
         <div class="flex flex-col items-center flex-shrink-0 relative z-10" style="flex: 1; max-width: {{ 100 / count($timeline) }}%;">
