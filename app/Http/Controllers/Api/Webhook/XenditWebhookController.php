@@ -185,15 +185,88 @@ class XenditWebhookController extends Controller
     }
 
     /**
+     * Generic webhook handler (for /webhooks/xendit route)
+     * 
+     * POST /webhooks/xendit
+     * 
+     * Handles all Xendit webhook events and routes to appropriate handler
+     * Based on event type in payload
+     */
+    public function handle(Request $request): JsonResponse
+    {
+        // Log raw payload for audit
+        $rawPayload = $request->getContent();
+        Log::info("Xendit webhook received (generic handler)", [
+            'headers' => $request->headers->all(),
+            'payload_size' => strlen($rawPayload),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        try {
+            // Parse payload to determine event type
+            $payload = $request->json()->all();
+            
+            if (empty($payload)) {
+                Log::warning("Xendit webhook: Empty payload");
+                return response()->json(['error' => 'Empty payload'], 400);
+            }
+
+            // Determine webhook type from event or payload structure
+            $eventType = $payload['event'] ?? $payload['type'] ?? null;
+            $webhookType = 'payment'; // Default
+
+            // Route based on event type
+            if ($eventType) {
+                if (str_contains($eventType, 'invoice')) {
+                    $webhookType = 'invoice';
+                } elseif (str_contains($eventType, 'disbursement')) {
+                    $webhookType = 'disbursement';
+                } elseif (str_contains($eventType, 'report')) {
+                    // Reports webhook - log but don't process (usually for balance history)
+                    Log::info("Xendit reports webhook received", [
+                        'event' => $eventType,
+                        'payload' => $payload,
+                    ]);
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'Report webhook received (no action needed)',
+                    ], 200);
+                } elseif (str_contains($eventType, 'payment') || isset($payload['payment_method'])) {
+                    $webhookType = 'payment';
+                }
+            }
+
+            // Use the appropriate handler
+            return $this->processWebhook($request, $webhookType);
+
+        } catch (\Exception $e) {
+            Log::error("Xendit webhook (generic handler) processing failed", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'payload' => $request->json()->all(),
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Webhook processing failed',
+                'error' => app()->environment('production') ? 'Internal server error' : $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Health check endpoint for webhook
      * 
      * GET /api/v1/webhooks/xendit/health
+     * GET /webhooks/xendit/health
      */
     public function health(): JsonResponse
     {
         return response()->json([
             'status' => 'ok',
-            'service' => 'Xendit Webhook Handler (API v1)',
+            'service' => 'Xendit Webhook Handler',
             'timestamp' => now()->toISOString(),
             'version' => '1.0.0',
         ]);
