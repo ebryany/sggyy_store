@@ -57,8 +57,6 @@
             
             <!-- Main Content Area -->
             <main class="flex-1 overflow-y-auto pt-safe pb-safe pb-20 lg:pb-safe">
-                @include('components.alert', ['type' => 'success'])
-                @include('components.alert', ['type' => 'error'])
                 @include('components.notification-toast')
                 @include('components.system-announcement')
                 @include('components.maintenance-banner')

@@ -180,9 +180,9 @@ class OssAdapter implements FilesystemAdapter
                 } catch (OssException $aclException) {
                     // Log but don't fail the upload
                     \Illuminate\Support\Facades\Log::warning('Failed to set ACL after upload', [
-                        'path' => $path,
+                'path' => $path,
                         'error' => $aclException->getMessage(),
-                    ]);
+            ]);
                 }
             }
         } catch (OssException $e) {
