@@ -36,8 +36,11 @@ class FilesystemServiceProvider extends ServiceProvider
             // Create Flysystem instance
             $flysystem = new Filesystem($adapter, $config);
             
-            // Wrap with Laravel FilesystemAdapter (like other drivers)
-            return new FilesystemAdapter($flysystem, $adapter, $config);
+            // Wrap with Laravel FilesystemAdapter
+            // Laravel FilesystemAdapter automatically uses publicUrl() from adapter for url() method
+            $filesystemAdapter = new FilesystemAdapter($flysystem, $adapter, $config);
+            
+            return $filesystemAdapter;
         });
     }
 }

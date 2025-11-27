@@ -46,10 +46,15 @@ class OssAdapter implements FilesystemAdapter
             // Enable SSL (HTTPS) - OSS SDK defaults to HTTP, we need HTTPS
             $this->client->setUseSSL(true);
             
+            // Set timeouts to handle network issues better
+            $this->client->setTimeout(30); // Request timeout: 30 seconds
+            $this->client->setConnectTimeout(10); // Connection timeout: 10 seconds
+            
             // Note: If SSL connection fails, it might be due to:
             // 1. Windows Firewall/Antivirus blocking SSL connections
             // 2. Network proxy requirements
             // 3. SSL certificate verification issues
+            // 4. Network connectivity problems
             // For production, ensure proper SSL configuration
         } catch (OssException $e) {
             throw new \RuntimeException("Failed to initialize OSS client: " . $e->getMessage());
@@ -299,10 +304,24 @@ class OssAdapter implements FilesystemAdapter
 
     public function publicUrl(string $path, Config $config): string
     {
+        // Remove leading slash if present
+        $path = ltrim($path, '/');
+        
+        // If custom URL is configured, use it
         if ($this->url) {
-            return rtrim($this->url, '/') . '/' . ltrim($path, '/');
+            return rtrim($this->url, '/') . '/' . $path;
         }
-        return "https://{$this->bucket}.{$this->endpoint}/" . ltrim($path, '/');
+        
+        // Generate OSS public URL
+        // Format: https://bucket-name.endpoint/path
+        // Handle endpoint format (with or without protocol)
+        $endpoint = $this->endpoint;
+        if (str_starts_with($endpoint, 'http://') || str_starts_with($endpoint, 'https://')) {
+            // Endpoint already has protocol, extract domain
+            $endpoint = parse_url($endpoint, PHP_URL_HOST) ?: str_replace(['http://', 'https://'], '', $endpoint);
+        }
+        
+        return "https://{$this->bucket}.{$endpoint}/{$path}";
     }
 
     public function temporaryUrl(string $path, \DateTimeInterface $expiresAt, Config $config): string

@@ -41,75 +41,6 @@
         </div>
     </div>
 
-    <!-- Alert untuk upload bukti pembayaran -->
-    @if(session('upload_proof_required') || ($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending' && !$order->payment->proof_path))
-    <div class="mb-4 sm:mb-6 glass p-4 sm:p-6 rounded-lg border-2 border-yellow-500/50 bg-yellow-500/10" 
-         x-data="{ show: true }"
-         x-show="show"
-         x-transition>
-        <div class="flex items-start gap-4">
-            <x-icon name="alert" class="w-8 h-8 text-yellow-400 flex-shrink-0" />
-            <div class="flex-1">
-                <h3 class="font-bold text-yellow-400 mb-2 text-lg">Upload Bukti Pembayaran Diperlukan!</h3>
-                <p class="text-white/90 mb-3">
-                    Anda menggunakan metode pembayaran <strong>{{ $order->payment->getMethodDisplayName() }}</strong>. 
-                    Silakan upload bukti pembayaran Anda untuk melanjutkan proses verifikasi.
-                </p>
-                @if($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending')
-                <label class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-colors cursor-pointer inline-block"
-                       x-data="{ uploading: false }"
-                       @change="
-                           uploading = true;
-                           const form = new FormData();
-                           form.append('proof_path', $event.target.files[0]);
-                           form.append('_token', document.querySelector('meta[name=csrf-token]').content);
-                           
-                           fetch('{{ route('payments.upload', $order->payment) }}', {
-                               method: 'POST',
-                               body: form,
-                               headers: {
-                                   'X-Requested-With': 'XMLHttpRequest'
-                               }
-                           })
-                           .then(response => {
-                               if (response.ok) {
-                                   window.location.reload();
-                               } else {
-                                   return response.json().then(data => {
-                                       throw new Error(data.message || 'Upload gagal');
-                                   });
-                               }
-                           })
-                               .catch(error => {
-                                   window.dispatchEvent(new CustomEvent('toast', { 
-                                       detail: { 
-                                           message: error.message || 'Upload gagal. Silakan coba lagi.', 
-                                           type: 'error' 
-                                       } 
-                                   }));
-                                   uploading = false;
-                               });
-                       ">
-                    <input type="file" 
-                           name="proof_path" 
-                           accept="image/jpeg,image/png,image/jpg,application/pdf" 
-                           class="hidden"
-                           x-bind:disabled="uploading">
-                    <span x-show="!uploading">📤 Upload Bukti Pembayaran Sekarang</span>
-                    <span x-show="uploading" class="flex items-center gap-2">
-                        <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                    </span>
-                </label>
-                @endif
-            </div>
-            <button @click="show = false" class="text-white/60 hover:text-white flex-shrink-0">✕</button>
-        </div>
-    </div>
-    @endif
     
     
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -804,183 +735,76 @@
              <!-- Order Management Controls (Seller/Admin Only) -->
             <x-order-progress-control :order="$order" />
             
-            <!-- Actions -->
-            <div class="glass p-6 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Aksi</h2>
-                <div class="flex flex-wrap gap-3">
-                    @if($order->type === 'product' && in_array($order->status, ['processing', 'waiting_confirmation', 'completed']))
-                        @php
-                            $canDownload = $order->product && $order->product->file_path && $order->canDownload();
-                            $paymentVerified = $order->payment && $order->payment->status === 'verified';
-                        @endphp
-                        
-                        @if($canDownload && $paymentVerified)
-                        <a href="{{ route('products.download', $order->product) }}" 
-                           class="px-6 py-3 bg-primary hover:bg-primary-dark rounded-lg transition-colors font-semibold">
-                            <x-icon name="download" class="w-5 h-5 inline mr-2" />
-                            Download File Produk
-                        </a>
-                        @elseif(!$canDownload && $order->product && !$order->product->file_path)
-                        <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
-                            <p class="font-semibold flex items-center gap-2">
-                                <x-icon name="alert" class="w-5 h-5" />
-                                File belum tersedia
-                            </p>
-                            <p class="text-sm text-yellow-300/80 mt-1">Seller belum mengupload file untuk produk ini. Silakan hubungi seller atau admin.</p>
-                        </div>
-                        @elseif(!$paymentVerified)
-                        <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
-                            <p class="font-semibold">⏳ Menunggu verifikasi pembayaran</p>
-                            <p class="text-sm text-yellow-300/80 mt-1">File akan tersedia setelah pembayaran diverifikasi oleh admin.</p>
-                        </div>
-                        @elseif($order->status === 'processing')
-                        <div class="px-6 py-3 bg-blue-500/20 text-blue-400 rounded-lg border border-blue-500/30">
-                            <p class="font-semibold">📦 Produk sedang diproses</p>
-                            <p class="text-sm text-blue-300/80 mt-1">Seller sedang menyiapkan produk. File akan tersedia setelah seller mengirim produk.</p>
-                        </div>
-                        @endif
-                    @endif
-                    
-                    @if($order->type === 'service' && $order->status === 'completed')
-                        @php
-                            // Refresh order to get latest deliverable_path
-                            $order->refresh();
-                            $canDownloadDeliverable = $order->deliverable_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($order->deliverable_path);
-                            $paymentVerified = $order->payment && $order->payment->status === 'verified';
-                        @endphp
-                        
-                        @if($canDownloadDeliverable && $paymentVerified)
-                        <a href="{{ route('orders.downloadDeliverable', $order) }}" 
-                           target="_blank"
-                           class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-lg transition-colors font-semibold">
-                            <x-icon name="download" class="w-5 h-5 inline mr-2" />
-                            Download Hasil Pekerjaan
-                        </a>
-                        @elseif(!$canDownloadDeliverable)
-                        <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
-                            <p class="font-semibold flex items-center gap-2">
-                                <x-icon name="alert" class="w-5 h-5" />
-                                Hasil pekerjaan belum tersedia
-                            </p>
-                            <p class="text-sm text-yellow-300/80 mt-1">Seller belum mengupload hasil pekerjaan. Silakan hubungi seller atau admin.</p>
-                        </div>
-                        @elseif(!$paymentVerified)
-                        <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
-                            <p class="font-semibold flex items-center gap-2">
-                                <x-icon name="clock" class="w-5 h-5" />
-                                Menunggu verifikasi pembayaran
-                            </p>
-                            <p class="text-sm text-yellow-300/80 mt-1">Hasil pekerjaan akan tersedia setelah pembayaran diverifikasi oleh admin.</p>
-                        </div>
-                        @endif
-                    @endif
-                    
-                    @if($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending')
-                    <label class="px-6 py-3 bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 rounded-lg font-semibold border border-yellow-500/30 cursor-pointer inline-block"
-                           x-data="{ uploading: false }"
-                           @change="
-                               uploading = true;
-                               const form = new FormData();
-                               form.append('proof_path', $event.target.files[0]);
-                               form.append('_token', document.querySelector('meta[name=csrf-token]').content);
-                               
-                               fetch('{{ route('payments.upload', $order->payment) }}', {
-                                   method: 'POST',
-                                   body: form,
-                                   headers: {
-                                       'X-Requested-With': 'XMLHttpRequest'
-                                   }
-                               })
-                               .then(response => {
-                                   if (response.ok) {
-                                       window.location.reload();
-                                   } else {
-                                       return response.json().then(data => {
-                                           throw new Error(data.message || 'Upload gagal');
+            <!-- Alert untuk upload bukti pembayaran -->
+            @if(session('upload_proof_required') || ($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending' && !$order->payment->proof_path))
+            <div class="mb-4 sm:mb-6 glass p-4 sm:p-6 rounded-lg border-2 border-yellow-500/50 bg-yellow-500/10" 
+                 x-data="{ show: true }"
+                 x-show="show"
+                 x-transition>
+                <div class="flex items-start gap-4">
+                    <x-icon name="alert" class="w-8 h-8 text-yellow-400 flex-shrink-0" />
+                    <div class="flex-1">
+                        <h3 class="font-bold text-yellow-400 mb-2 text-lg">Upload Bukti Pembayaran Diperlukan!</h3>
+                        <p class="text-white/90 mb-3">
+                            Anda menggunakan metode pembayaran <strong>{{ $order->payment->getMethodDisplayName() }}</strong>. 
+                            Silakan upload bukti pembayaran Anda untuk melanjutkan proses verifikasi.
+                        </p>
+                        @if($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending')
+                        <label class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-colors cursor-pointer inline-block"
+                               x-data="{ uploading: false }"
+                               @change="
+                                   uploading = true;
+                                   const form = new FormData();
+                                   form.append('proof_path', $event.target.files[0]);
+                                   form.append('_token', document.querySelector('meta[name=csrf-token]').content);
+                                   
+                                   fetch('{{ route('payments.upload', $order->payment) }}', {
+                                       method: 'POST',
+                                       body: form,
+                                       headers: {
+                                           'X-Requested-With': 'XMLHttpRequest'
+                                       }
+                                   })
+                                   .then(response => {
+                                       if (response.ok) {
+                                           window.location.reload();
+                                       } else {
+                                           return response.json().then(data => {
+                                               throw new Error(data.message || 'Upload gagal');
+                                           });
+                                       }
+                                   })
+                                       .catch(error => {
+                                           window.dispatchEvent(new CustomEvent('toast', { 
+                                               detail: { 
+                                                   message: error.message || 'Upload gagal. Silakan coba lagi.', 
+                                                   type: 'error' 
+                                               } 
+                                           }));
+                                           uploading = false;
                                        });
-                                   }
-                               })
-                               .catch(error => {
-                                   window.dispatchEvent(new CustomEvent('toast', { 
-                                       detail: { 
-                                           message: error.message || 'Upload gagal. Silakan coba lagi.', 
-                                           type: 'error' 
-                                       } 
-                                   }));
-                                   uploading = false;
-                               });
-                           ">
-                        <input type="file" 
-                               name="proof_path" 
-                               accept="image/jpeg,image/png,image/jpg,application/pdf" 
-                               class="hidden"
-                               x-bind:disabled="uploading">
-                        <span x-show="!uploading">📤 Upload Bukti Pembayaran</span>
-                        <span x-show="uploading" class="flex items-center gap-2">
-                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Uploading...
-                        </span>
-                    </label>
-                    @endif
-                    
-                    @php
-                        // 🔒 REKBER FLOW: Buyer dapat konfirmasi saat status processing, waiting_confirmation, atau completed dengan escrow holding
-                        $canConfirmProduct = $isOwner && (
-                            ($order->type === 'product' && in_array($order->status, ['processing', 'waiting_confirmation'])) ||
-                            ($order->type === 'service' && $order->status === 'waiting_confirmation') ||
-                            ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding())
-                        );
-                    @endphp
-                    
-                    @if($canConfirmProduct)
-                    <form id="confirm-product-form-{{ $order->id }}" 
-                          action="{{ route('orders.confirm', $order) }}" 
-                          method="POST" 
-                          x-data="{ confirming: false }">
-                        @csrf
-                        <button type="button" 
-                                onclick="
-                                    const modal = document.getElementById('confirm-product-modal-{{ $order->id }}');
-                                    if (modal) {
-                                        modal.style.display = 'flex';
-                                        document.body.style.overflow = 'hidden';
-                                    }
-                                "
-                                class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 touch-target">
-                            <x-icon name="check" class="w-5 h-5" />
-                            <span>Konfirmasi Produk</span>
-                        </button>
-                    </form>
-                    
-                    <x-confirm-modal 
-                        id="confirm-product-modal-{{ $order->id }}"
-                        title="Konfirmasi Penerimaan Produk"
-                        message="Apakah Anda yakin produk sudah diterima? Dana rekber akan otomatis diteruskan ke seller."
-                        confirmText="Ya, Konfirmasi"
-                        cancelText="Batal"
-                        type="warning"
-                        formId="confirm-product-form-{{ $order->id }}" />
-                    @endif
-                    
-                    @if(auth()->user()->isAdmin())
-                    <form method="POST" action="{{ route('orders.updateStatus', $order) }}" class="inline">
-                        @csrf
-                        @method('PATCH')
-                        <select name="status" onchange="this.form.submit()" 
-                                class="glass border border-white/10 rounded-lg px-4 py-2 bg-white/5">
-                            <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="paid" {{ $order->status === 'paid' ? 'selected' : '' }}>Paid</option>
-                            <option value="processing" {{ $order->status === 'processing' ? 'selected' : '' }}>Processing</option>
-                            <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Completed</option>
-                            <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                        </select>
-                    </form>
-                    @endif
+                               ">
+                            <input type="file" 
+                                   name="proof_path" 
+                                   accept="image/jpeg,image/png,image/jpg,application/pdf" 
+                                   class="hidden"
+                                   x-bind:disabled="uploading">
+                            <span x-show="!uploading">📤 Upload Bukti Pembayaran Sekarang</span>
+                            <span x-show="uploading" class="flex items-center gap-2">
+                                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Uploading...
+                            </span>
+                        </label>
+                        @endif
+                    </div>
+                    <button @click="show = false" class="text-white/60 hover:text-white flex-shrink-0">✕</button>
                 </div>
             </div>
+            @endif
+            
         </div>
         
         <!-- Sidebar: Action Buttons -->
@@ -1033,30 +857,33 @@
                     formId="confirm-product-form-sidebar-{{ $order->id }}" />
                 @endif
                 
-                @if($seller)
-                <a href="{{ route('chat.show', '@' . $seller->username) }}" 
-                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
-                    Hubungi Penjual
-                </a>
-                @endif
-                
-                @if($order->type === 'product' && $order->product)
-                <a href="{{ route('products.show', $order->product) }}" 
-                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
-                    Beli Lagi
-                </a>
-                @elseif($order->type === 'service' && $order->service)
-                <a href="{{ route('services.show', $order->service) }}" 
-                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
-                    Beli Lagi
-                </a>
-                @endif
-                
-                @if($order->payment)
-                <a href="{{ route('orders.show', $order) }}#payment" 
-                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
-                    Lihat Tagihan
-                </a>
+                {{-- Tombol-tombol ini hanya muncul jika buyer sudah memberikan rating --}}
+                @if($order->rating)
+                    @if($seller)
+                    <a href="{{ route('chat.show', '@' . $seller->username) }}" 
+                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Hubungi Penjual
+                    </a>
+                    @endif
+                    
+                    @if($order->type === 'product' && $order->product)
+                    <a href="{{ route('products.show', $order->product) }}" 
+                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Beli Lagi
+                    </a>
+                    @elseif($order->type === 'service' && $order->service)
+                    <a href="{{ route('services.show', $order->service) }}" 
+                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Beli Lagi
+                    </a>
+                    @endif
+                    
+                    @if($order->payment)
+                    <a href="{{ route('orders.show', $order) }}#payment" 
+                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Lihat Tagihan
+                    </a>
+                    @endif
                 @endif
             </div>
         </div>

@@ -40,94 +40,6 @@
         </div>
     </div>
 
-    <!-- Alert untuk upload bukti pembayaran -->
-    <?php if(session('upload_proof_required') || ($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending' && !$order->payment->proof_path)): ?>
-    <div class="mb-4 sm:mb-6 glass p-4 sm:p-6 rounded-lg border-2 border-yellow-500/50 bg-yellow-500/10" 
-         x-data="{ show: true }"
-         x-show="show"
-         x-transition>
-        <div class="flex items-start gap-4">
-            <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'alert','class' => 'w-8 h-8 text-yellow-400 flex-shrink-0']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['name' => 'alert','class' => 'w-8 h-8 text-yellow-400 flex-shrink-0']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-            <div class="flex-1">
-                <h3 class="font-bold text-yellow-400 mb-2 text-lg">Upload Bukti Pembayaran Diperlukan!</h3>
-                <p class="text-white/90 mb-3">
-                    Anda menggunakan metode pembayaran <strong><?php echo e($order->payment->getMethodDisplayName()); ?></strong>. 
-                    Silakan upload bukti pembayaran Anda untuk melanjutkan proses verifikasi.
-                </p>
-                <?php if($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending'): ?>
-                <label class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-colors cursor-pointer inline-block"
-                       x-data="{ uploading: false }"
-                       @change="
-                           uploading = true;
-                           const form = new FormData();
-                           form.append('proof_path', $event.target.files[0]);
-                           form.append('_token', document.querySelector('meta[name=csrf-token]').content);
-                           
-                           fetch('<?php echo e(route('payments.upload', $order->payment)); ?>', {
-                               method: 'POST',
-                               body: form,
-                               headers: {
-                                   'X-Requested-With': 'XMLHttpRequest'
-                               }
-                           })
-                           .then(response => {
-                               if (response.ok) {
-                                   window.location.reload();
-                               } else {
-                                   return response.json().then(data => {
-                                       throw new Error(data.message || 'Upload gagal');
-                                   });
-                               }
-                           })
-                               .catch(error => {
-                                   window.dispatchEvent(new CustomEvent('toast', { 
-                                       detail: { 
-                                           message: error.message || 'Upload gagal. Silakan coba lagi.', 
-                                           type: 'error' 
-                                       } 
-                                   }));
-                                   uploading = false;
-                               });
-                       ">
-                    <input type="file" 
-                           name="proof_path" 
-                           accept="image/jpeg,image/png,image/jpg,application/pdf" 
-                           class="hidden"
-                           x-bind:disabled="uploading">
-                    <span x-show="!uploading">📤 Upload Bukti Pembayaran Sekarang</span>
-                    <span x-show="uploading" class="flex items-center gap-2">
-                        <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                    </span>
-                </label>
-                <?php endif; ?>
-            </div>
-            <button @click="show = false" class="text-white/60 hover:text-white flex-shrink-0">✕</button>
-        </div>
-    </div>
-    <?php endif; ?>
     
     
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -1538,29 +1450,23 @@
 <?php unset($__componentOriginalf9290ecd8e6a3362f336ef1e5497992f); ?>
 <?php endif; ?>
             
-            <!-- Actions -->
-            <div class="glass p-6 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Aksi</h2>
-                <div class="flex flex-wrap gap-3">
-                    <?php if($order->type === 'product' && in_array($order->status, ['processing', 'waiting_confirmation', 'completed'])): ?>
-                        <?php
-                            $canDownload = $order->product && $order->product->file_path && $order->canDownload();
-                            $paymentVerified = $order->payment && $order->payment->status === 'verified';
-                        ?>
-                        
-                        <?php if($canDownload && $paymentVerified): ?>
-                        <a href="<?php echo e(route('products.download', $order->product)); ?>" 
-                           class="px-6 py-3 bg-primary hover:bg-primary-dark rounded-lg transition-colors font-semibold">
-                            <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
+            <!-- Alert untuk upload bukti pembayaran -->
+            <?php if(session('upload_proof_required') || ($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending' && !$order->payment->proof_path)): ?>
+            <div class="mb-4 sm:mb-6 glass p-4 sm:p-6 rounded-lg border-2 border-yellow-500/50 bg-yellow-500/10" 
+                 x-data="{ show: true }"
+                 x-show="show"
+                 x-transition>
+                <div class="flex items-start gap-4">
+                    <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'download','class' => 'w-5 h-5 inline mr-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'alert','class' => 'w-8 h-8 text-yellow-400 flex-shrink-0']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('icon'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['name' => 'download','class' => 'w-5 h-5 inline mr-2']); ?>
+<?php $component->withAttributes(['name' => 'alert','class' => 'w-8 h-8 text-yellow-400 flex-shrink-0']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
@@ -1571,276 +1477,68 @@
 <?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
 <?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
 <?php endif; ?>
-                            Download File Produk
-                        </a>
-                        <?php elseif(!$canDownload && $order->product && !$order->product->file_path): ?>
-                        <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
-                            <p class="font-semibold flex items-center gap-2">
-                                <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'alert','class' => 'w-5 h-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['name' => 'alert','class' => 'w-5 h-5']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-                                File belum tersedia
-                            </p>
-                            <p class="text-sm text-yellow-300/80 mt-1">Seller belum mengupload file untuk produk ini. Silakan hubungi seller atau admin.</p>
-                        </div>
-                        <?php elseif(!$paymentVerified): ?>
-                        <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
-                            <p class="font-semibold">⏳ Menunggu verifikasi pembayaran</p>
-                            <p class="text-sm text-yellow-300/80 mt-1">File akan tersedia setelah pembayaran diverifikasi oleh admin.</p>
-                        </div>
-                        <?php elseif($order->status === 'processing'): ?>
-                        <div class="px-6 py-3 bg-blue-500/20 text-blue-400 rounded-lg border border-blue-500/30">
-                            <p class="font-semibold">📦 Produk sedang diproses</p>
-                            <p class="text-sm text-blue-300/80 mt-1">Seller sedang menyiapkan produk. File akan tersedia setelah seller mengirim produk.</p>
-                        </div>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                    
-                    <?php if($order->type === 'service' && $order->status === 'completed'): ?>
-                        <?php
-                            // Refresh order to get latest deliverable_path
-                            $order->refresh();
-                            $canDownloadDeliverable = $order->deliverable_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($order->deliverable_path);
-                            $paymentVerified = $order->payment && $order->payment->status === 'verified';
-                        ?>
-                        
-                        <?php if($canDownloadDeliverable && $paymentVerified): ?>
-                        <a href="<?php echo e(route('orders.downloadDeliverable', $order)); ?>" 
-                           target="_blank"
-                           class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-lg transition-colors font-semibold">
-                            <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'download','class' => 'w-5 h-5 inline mr-2']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['name' => 'download','class' => 'w-5 h-5 inline mr-2']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-                            Download Hasil Pekerjaan
-                        </a>
-                        <?php elseif(!$canDownloadDeliverable): ?>
-                        <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
-                            <p class="font-semibold flex items-center gap-2">
-                                <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'alert','class' => 'w-5 h-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['name' => 'alert','class' => 'w-5 h-5']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-                                Hasil pekerjaan belum tersedia
-                            </p>
-                            <p class="text-sm text-yellow-300/80 mt-1">Seller belum mengupload hasil pekerjaan. Silakan hubungi seller atau admin.</p>
-                        </div>
-                        <?php elseif(!$paymentVerified): ?>
-                        <div class="px-6 py-3 bg-yellow-500/20 text-yellow-400 rounded-lg border border-yellow-500/30">
-                            <p class="font-semibold flex items-center gap-2">
-                                <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'clock','class' => 'w-5 h-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['name' => 'clock','class' => 'w-5 h-5']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-                                Menunggu verifikasi pembayaran
-                            </p>
-                            <p class="text-sm text-yellow-300/80 mt-1">Hasil pekerjaan akan tersedia setelah pembayaran diverifikasi oleh admin.</p>
-                        </div>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                    
-                    <?php if($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending'): ?>
-                    <label class="px-6 py-3 bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 rounded-lg font-semibold border border-yellow-500/30 cursor-pointer inline-block"
-                           x-data="{ uploading: false }"
-                           @change="
-                               uploading = true;
-                               const form = new FormData();
-                               form.append('proof_path', $event.target.files[0]);
-                               form.append('_token', document.querySelector('meta[name=csrf-token]').content);
-                               
-                               fetch('<?php echo e(route('payments.upload', $order->payment)); ?>', {
-                                   method: 'POST',
-                                   body: form,
-                                   headers: {
-                                       'X-Requested-With': 'XMLHttpRequest'
-                                   }
-                               })
-                               .then(response => {
-                                   if (response.ok) {
-                                       window.location.reload();
-                                   } else {
-                                       return response.json().then(data => {
-                                           throw new Error(data.message || 'Upload gagal');
+                    <div class="flex-1">
+                        <h3 class="font-bold text-yellow-400 mb-2 text-lg">Upload Bukti Pembayaran Diperlukan!</h3>
+                        <p class="text-white/90 mb-3">
+                            Anda menggunakan metode pembayaran <strong><?php echo e($order->payment->getMethodDisplayName()); ?></strong>. 
+                            Silakan upload bukti pembayaran Anda untuk melanjutkan proses verifikasi.
+                        </p>
+                        <?php if($order->payment && in_array($order->payment->method, ['bank_transfer', 'qris']) && $order->payment->status === 'pending'): ?>
+                        <label class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-colors cursor-pointer inline-block"
+                               x-data="{ uploading: false }"
+                               @change="
+                                   uploading = true;
+                                   const form = new FormData();
+                                   form.append('proof_path', $event.target.files[0]);
+                                   form.append('_token', document.querySelector('meta[name=csrf-token]').content);
+                                   
+                                   fetch('<?php echo e(route('payments.upload', $order->payment)); ?>', {
+                                       method: 'POST',
+                                       body: form,
+                                       headers: {
+                                           'X-Requested-With': 'XMLHttpRequest'
+                                       }
+                                   })
+                                   .then(response => {
+                                       if (response.ok) {
+                                           window.location.reload();
+                                       } else {
+                                           return response.json().then(data => {
+                                               throw new Error(data.message || 'Upload gagal');
+                                           });
+                                       }
+                                   })
+                                       .catch(error => {
+                                           window.dispatchEvent(new CustomEvent('toast', { 
+                                               detail: { 
+                                                   message: error.message || 'Upload gagal. Silakan coba lagi.', 
+                                                   type: 'error' 
+                                               } 
+                                           }));
+                                           uploading = false;
                                        });
-                                   }
-                               })
-                               .catch(error => {
-                                   window.dispatchEvent(new CustomEvent('toast', { 
-                                       detail: { 
-                                           message: error.message || 'Upload gagal. Silakan coba lagi.', 
-                                           type: 'error' 
-                                       } 
-                                   }));
-                                   uploading = false;
-                               });
-                           ">
-                        <input type="file" 
-                               name="proof_path" 
-                               accept="image/jpeg,image/png,image/jpg,application/pdf" 
-                               class="hidden"
-                               x-bind:disabled="uploading">
-                        <span x-show="!uploading">📤 Upload Bukti Pembayaran</span>
-                        <span x-show="uploading" class="flex items-center gap-2">
-                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Uploading...
-                        </span>
-                    </label>
-                    <?php endif; ?>
-                    
-                    <?php
-                        // 🔒 REKBER FLOW: Buyer dapat konfirmasi saat status processing, waiting_confirmation, atau completed dengan escrow holding
-                        $canConfirmProduct = $isOwner && (
-                            ($order->type === 'product' && in_array($order->status, ['processing', 'waiting_confirmation'])) ||
-                            ($order->type === 'service' && $order->status === 'waiting_confirmation') ||
-                            ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding())
-                        );
-                    ?>
-                    
-                    <?php if($canConfirmProduct): ?>
-                    <form id="confirm-product-form-<?php echo e($order->id); ?>" 
-                          action="<?php echo e(route('orders.confirm', $order)); ?>" 
-                          method="POST" 
-                          x-data="{ confirming: false }">
-                        <?php echo csrf_field(); ?>
-                        <button type="button" 
-                                onclick="
-                                    const modal = document.getElementById('confirm-product-modal-<?php echo e($order->id); ?>');
-                                    if (modal) {
-                                        modal.style.display = 'flex';
-                                        document.body.style.overflow = 'hidden';
-                                    }
-                                "
-                                class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 touch-target">
-                            <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'check','class' => 'w-5 h-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('icon'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['name' => 'check','class' => 'w-5 h-5']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
-<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
-<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
-<?php endif; ?>
-                            <span>Konfirmasi Produk</span>
-                        </button>
-                    </form>
-                    
-                    <?php if (isset($component)) { $__componentOriginal2cfaf2d8c559a20e3495c081df2d0b10 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal2cfaf2d8c559a20e3495c081df2d0b10 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.confirm-modal','data' => ['id' => 'confirm-product-modal-'.e($order->id).'','title' => 'Konfirmasi Penerimaan Produk','message' => 'Apakah Anda yakin produk sudah diterima? Dana rekber akan otomatis diteruskan ke seller.','confirmText' => 'Ya, Konfirmasi','cancelText' => 'Batal','type' => 'warning','formId' => 'confirm-product-form-'.e($order->id).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('confirm-modal'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['id' => 'confirm-product-modal-'.e($order->id).'','title' => 'Konfirmasi Penerimaan Produk','message' => 'Apakah Anda yakin produk sudah diterima? Dana rekber akan otomatis diteruskan ke seller.','confirmText' => 'Ya, Konfirmasi','cancelText' => 'Batal','type' => 'warning','formId' => 'confirm-product-form-'.e($order->id).'']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal2cfaf2d8c559a20e3495c081df2d0b10)): ?>
-<?php $attributes = $__attributesOriginal2cfaf2d8c559a20e3495c081df2d0b10; ?>
-<?php unset($__attributesOriginal2cfaf2d8c559a20e3495c081df2d0b10); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal2cfaf2d8c559a20e3495c081df2d0b10)): ?>
-<?php $component = $__componentOriginal2cfaf2d8c559a20e3495c081df2d0b10; ?>
-<?php unset($__componentOriginal2cfaf2d8c559a20e3495c081df2d0b10); ?>
-<?php endif; ?>
-                    <?php endif; ?>
-                    
-                    <?php if(auth()->user()->isAdmin()): ?>
-                    <form method="POST" action="<?php echo e(route('orders.updateStatus', $order)); ?>" class="inline">
-                        <?php echo csrf_field(); ?>
-                        <?php echo method_field('PATCH'); ?>
-                        <select name="status" onchange="this.form.submit()" 
-                                class="glass border border-white/10 rounded-lg px-4 py-2 bg-white/5">
-                            <option value="pending" <?php echo e($order->status === 'pending' ? 'selected' : ''); ?>>Pending</option>
-                            <option value="paid" <?php echo e($order->status === 'paid' ? 'selected' : ''); ?>>Paid</option>
-                            <option value="processing" <?php echo e($order->status === 'processing' ? 'selected' : ''); ?>>Processing</option>
-                            <option value="completed" <?php echo e($order->status === 'completed' ? 'selected' : ''); ?>>Completed</option>
-                            <option value="cancelled" <?php echo e($order->status === 'cancelled' ? 'selected' : ''); ?>>Cancelled</option>
-                        </select>
-                    </form>
-                    <?php endif; ?>
+                               ">
+                            <input type="file" 
+                                   name="proof_path" 
+                                   accept="image/jpeg,image/png,image/jpg,application/pdf" 
+                                   class="hidden"
+                                   x-bind:disabled="uploading">
+                            <span x-show="!uploading">📤 Upload Bukti Pembayaran Sekarang</span>
+                            <span x-show="uploading" class="flex items-center gap-2">
+                                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Uploading...
+                            </span>
+                        </label>
+                        <?php endif; ?>
+                    </div>
+                    <button @click="show = false" class="text-white/60 hover:text-white flex-shrink-0">✕</button>
                 </div>
             </div>
+            <?php endif; ?>
+            
         </div>
         
         <!-- Sidebar: Action Buttons -->
@@ -1924,30 +1622,33 @@
 <?php endif; ?>
                 <?php endif; ?>
                 
-                <?php if($seller): ?>
-                <a href="<?php echo e(route('chat.show', '@' . $seller->username)); ?>" 
-                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
-                    Hubungi Penjual
-                </a>
-                <?php endif; ?>
                 
-                <?php if($order->type === 'product' && $order->product): ?>
-                <a href="<?php echo e(route('products.show', $order->product)); ?>" 
-                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
-                    Beli Lagi
-                </a>
-                <?php elseif($order->type === 'service' && $order->service): ?>
-                <a href="<?php echo e(route('services.show', $order->service)); ?>" 
-                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
-                    Beli Lagi
-                </a>
-                <?php endif; ?>
-                
-                <?php if($order->payment): ?>
-                <a href="<?php echo e(route('orders.show', $order)); ?>#payment" 
-                   class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
-                    Lihat Tagihan
-                </a>
+                <?php if($order->rating): ?>
+                    <?php if($seller): ?>
+                    <a href="<?php echo e(route('chat.show', '@' . $seller->username)); ?>" 
+                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Hubungi Penjual
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if($order->type === 'product' && $order->product): ?>
+                    <a href="<?php echo e(route('products.show', $order->product)); ?>" 
+                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Beli Lagi
+                    </a>
+                    <?php elseif($order->type === 'service' && $order->service): ?>
+                    <a href="<?php echo e(route('services.show', $order->service)); ?>" 
+                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Beli Lagi
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if($order->payment): ?>
+                    <a href="<?php echo e(route('orders.show', $order)); ?>#payment" 
+                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Lihat Tagihan
+                    </a>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>

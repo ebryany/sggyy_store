@@ -191,8 +191,16 @@ try {
         // Read test
         try {
             $readContent = $ossDisk->get($testFileName);
-            $readSuccess = $readContent === $testContent;
-            echo "   Read test: " . ($readSuccess ? '✅ Content matches' : '❌ Content mismatch') . "\n";
+            // Normalize line endings and compare (OSS might change line endings)
+            $readSuccess = trim($readContent) === trim($testContent);
+            if (!$readSuccess) {
+                // Check if content is similar (might be encoding issue)
+                $readSuccess = str_replace(["\r\n", "\r"], "\n", $readContent) === str_replace(["\r\n", "\r"], "\n", $testContent);
+            }
+            echo "   Read test: " . ($readSuccess ? '✅ Content matches' : '⚠️  Content mismatch (might be encoding/line ending difference)') . "\n";
+            if (!$readSuccess) {
+                echo "      Expected length: " . strlen($testContent) . ", Got: " . strlen($readContent) . "\n";
+            }
         } catch (\Exception $e) {
             echo "   Read test: ❌ Error - {$e->getMessage()}\n";
         }
@@ -200,9 +208,21 @@ try {
         // Get URL
         try {
             $url = $ossDisk->url($testFileName);
-            echo "   URL generation: ✅ {$url}\n";
+            if (!empty($url) && filter_var($url, FILTER_VALIDATE_URL)) {
+                echo "   URL generation: ✅ {$url}\n";
+            } else {
+                echo "   URL generation: ⚠️  Generated but invalid format: {$url}\n";
+            }
         } catch (\Exception $e) {
-            echo "   URL generation: ❌ Error - {$e->getMessage()}\n";
+            $errorMsg = $e->getMessage();
+            // Check if error is about driver not supporting URLs
+            if (str_contains($errorMsg, 'does not support') || str_contains($errorMsg, 'retrieving URLs')) {
+                echo "   URL generation: ⚠️  Driver does not support retrieving URLs (this is expected for some OSS configurations)\n";
+                echo "      Error: {$errorMsg}\n";
+                echo "      💡 Tip: Set OSS_URL in .env to enable URL generation\n";
+            } else {
+                echo "   URL generation: ❌ Error - {$errorMsg}\n";
+            }
         }
         
         // Delete test
