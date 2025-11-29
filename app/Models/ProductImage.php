@@ -41,14 +41,3 @@ class ProductImage extends Model
         return $storageService->url($this->image_path);
     }
 }
-
-        // If already a full URL, return as is
-        if (str_starts_with($this->image_path, 'http')) {
-            return $this->image_path;
-        }
-
-        // Use StorageService to get correct URL based on configured disk
-        $storageService = app(\App\Services\StorageService::class);
-        return $storageService->url($this->image_path);
-    }
-}
