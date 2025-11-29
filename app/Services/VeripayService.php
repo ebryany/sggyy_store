@@ -27,7 +27,7 @@ class VeripayService
         $veripaySettings = $this->settingsService->getVeripaySettings();
         $this->apiKey = $veripaySettings['api_key'] ?? config('services.veripay.api_key', '');
         $this->secretKey = $veripaySettings['secret_key'] ?? config('services.veripay.secret_key', '');
-        $this->baseUrl = rtrim($veripaySettings['base_url'] ?? config('services.veripay.base_url', 'https://veripay.site/api/v1'), '/');
+        $this->baseUrl = rtrim($veripaySettings['base_url'] ?? config('services.veripay.base_url', 'https://veripay.site'), '/');
     }
 
     /**
@@ -139,31 +139,68 @@ class VeripayService
 
             // Validate API credentials before making request
             if (empty($this->apiKey) || empty($this->secretKey)) {
+                Log::error('Veripay API credentials missing', [
+                    'order_id' => $order->id,
+                    'has_api_key' => !empty($this->apiKey),
+                    'has_secret_key' => !empty($this->secretKey),
+                ]);
                 throw new \Exception('Veripay API credentials belum dikonfigurasi. Silakan hubungi administrator.');
             }
 
             // Make API request
-            $response = Http::withHeaders($this->prepareHeaders())
-                ->timeout(30)
-                ->post($this->baseUrl . '/merchant/payments', $paymentData);
+            try {
+                $response = Http::withHeaders($this->prepareHeaders())
+                    ->timeout(30)
+                    ->post($this->baseUrl . '/api/v1/merchant/payments', $paymentData);
+            } catch (\Exception $e) {
+                Log::error('Veripay API request failed (network/connection)', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                    'base_url' => $this->baseUrl,
+                ]);
+                throw new \Exception('Gagal membuat pembayaran Veripay: Koneksi ke server Veripay gagal. Silakan coba lagi.');
+            }
 
             if (!$response->successful()) {
                 $error = $response->json();
+                $responseBody = $response->body();
+                
                 Log::error('Veripay payment creation failed', [
                     'order_id' => $order->id,
+                    'order_number' => $order->order_number,
                     'status' => $response->status(),
                     'error' => $error,
-                    'response_body' => $response->body(),
+                    'response_body' => $responseBody,
+                    'api_key_prefix' => substr($this->apiKey, 0, 8) . '...',
                 ]);
 
-                $errorMessage = $error['message'] ?? 'Gagal membuat pembayaran Veripay';
-                if (isset($error['errors'])) {
-                    $errorMessage .= ': ' . json_encode($error['errors']);
-                } elseif ($response->body() && $response->status() !== 200) {
-                    // Include response body if available
-                    $body = $response->body();
-                    if (strlen($body) < 500) { // Only include if not too long
-                        $errorMessage .= ' (' . $body . ')';
+                // Build error message
+                $errorMessage = 'Gagal membuat pembayaran Veripay';
+                
+                if (isset($error['message'])) {
+                    $errorMessage .= ': ' . $error['message'];
+                } elseif (isset($error['errors']) && is_array($error['errors'])) {
+                    $errorMessage .= ': ' . implode(', ', array_values($error['errors']));
+                } elseif ($responseBody && strlen($responseBody) < 200) {
+                    // Include short response body for debugging
+                    $errorMessage .= ': ' . $responseBody;
+                } else {
+                    // Generic error based on HTTP status
+                    switch ($response->status()) {
+                        case 401:
+                            $errorMessage .= ': Autentikasi gagal. Periksa API Key dan Secret Key.';
+                            break;
+                        case 403:
+                            $errorMessage .= ': Akses ditolak. Periksa konfigurasi API.';
+                            break;
+                        case 422:
+                            $errorMessage .= ': Data tidak valid. Periksa format request.';
+                            break;
+                        case 500:
+                            $errorMessage .= ': Server error. Silakan coba lagi nanti.';
+                            break;
+                        default:
+                            $errorMessage .= ': HTTP ' . $response->status();
                     }
                 }
 
@@ -198,7 +235,7 @@ class VeripayService
     {
         $response = Http::withHeaders($this->prepareHeaders())
             ->timeout(30)
-            ->get($this->baseUrl . '/merchant/payments/' . $transactionRef);
+            ->get($this->baseUrl . '/api/v1/merchant/payments/' . $transactionRef);
 
         if (!$response->successful()) {
             $error = $response->json();
@@ -234,7 +271,7 @@ class VeripayService
     {
         $response = Http::withHeaders($this->prepareHeaders())
             ->timeout(30)
-            ->get($this->baseUrl . '/merchant/payments');
+            ->get($this->baseUrl . '/api/v1/merchant/payments');
 
         if (!$response->successful()) {
             throw new \Exception('Gagal mendapatkan daftar transaksi Veripay');
@@ -253,7 +290,7 @@ class VeripayService
     {
         $response = Http::withHeaders($this->prepareHeaders())
             ->timeout(30)
-            ->get($this->baseUrl . '/merchant/references/my-banks');
+            ->get($this->baseUrl . '/api/v1/merchant/references/my-banks');
 
         if (!$response->successful()) {
             throw new \Exception('Gagal mendapatkan daftar bank merchant');
@@ -273,7 +310,7 @@ class VeripayService
     {
         $response = Http::withHeaders($this->prepareHeaders())
             ->timeout(30)
-            ->post($this->baseUrl . '/merchant/payments/payout', $data);
+            ->post($this->baseUrl . '/api/v1/merchant/payments/payout', $data);
 
         if (!$response->successful()) {
             $error = $response->json();

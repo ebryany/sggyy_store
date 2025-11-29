@@ -208,7 +208,7 @@ class SettingsService
         return [
             'api_key' => $this->get('veripay_api_key', ''),
             'secret_key' => $this->get('veripay_secret_key', ''),
-            'base_url' => 'https://veripay.site/api/v1', // Fixed base URL
+            'base_url' => 'https://veripay.site', // Base URL without /api/v1
             'enabled' => (bool) $this->get('veripay_enabled', false),
         ];
     }

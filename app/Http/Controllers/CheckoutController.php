@@ -208,9 +208,13 @@ class CheckoutController extends Controller
             return $message;
         }
         
-        // Check if message starts with safe prefixes
-        if (str_starts_with($message, 'Gagal membuat pembayaran Veripay') || 
-            str_starts_with($message, 'Veripay API credentials')) {
+        // Check if message contains Veripay-related keywords (more flexible)
+        if (stripos($message, 'veripay') !== false || 
+            stripos($message, 'Veripay') !== false ||
+            str_starts_with($message, 'Gagal membuat pembayaran Veripay') || 
+            str_starts_with($message, 'Veripay API credentials') ||
+            str_contains($message, 'Veripay API credentials')) {
+            // Return Veripay error message (already sanitized by VeripayService)
             return $message;
         }
         
