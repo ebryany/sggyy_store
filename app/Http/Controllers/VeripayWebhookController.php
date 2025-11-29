@@ -628,4 +628,3 @@ class VeripayWebhookController extends Controller
         ]);
     }
 }
-

@@ -196,7 +196,3 @@ class SellerServiceController extends BaseApiController
     }
 }
 
-
-    }
-}
-

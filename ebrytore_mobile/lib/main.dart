@@ -40,4 +40,3 @@ class EbrystoreeApp extends StatelessWidget {
     );
   }
 }
-

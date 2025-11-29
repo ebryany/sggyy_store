@@ -126,4 +126,3 @@ class DownloadController extends BaseApiController
         );
     }
 }
-

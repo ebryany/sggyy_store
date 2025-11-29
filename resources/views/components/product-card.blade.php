@@ -65,11 +65,10 @@
     <a href="{{ route('products.show', $product->slug ?: $product->id) }}" class="flex flex-col h-full">
         <!-- Image Section -->
         <div class="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5">
-            @if($product->image && $product->image_url)
-            <img src="{{ $product->image_url }}" 
+            @if($product->image)
+            <img src="{{ asset('storage/' . $product->image) }}" 
                  alt="{{ $product->title }}" 
-                 class="w-full h-48 sm:h-56 object-cover group-hover:scale-110 transition-transform duration-500"
-                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-48 sm:h-56 flex items-center justify-center\'><div class=\'text-center\'><div class=\'w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-primary/20 flex items-center justify-center mx-auto mb-3 border border-primary/30\'><svg class=\'w-8 h-8 sm:w-10 sm:h-10 text-primary\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4\'/></svg></div><p class=\'text-primary font-bold text-lg sm:text-xl uppercase tracking-wider\'>@php $words = explode(\' \', $product->title); $initials = \'\'; foreach ($words as $word) { if (strlen($initials) < 3 && !empty($word)) { $initials .= strtoupper(substr($word, 0, 1)); } } if (empty($initials)) { $initials = \'PROD\'; } @endphp{{ $initials }}</p></div></div>'">
+                 class="w-full h-48 sm:h-56 object-cover group-hover:scale-110 transition-transform duration-500">
             @else
             <div class="w-full h-48 sm:h-56 flex items-center justify-center">
                 <div class="text-center">
@@ -168,4 +167,3 @@
         </div>
     </a>
 </div>
-

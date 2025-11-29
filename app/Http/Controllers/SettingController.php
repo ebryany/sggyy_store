@@ -744,27 +744,3 @@ class SettingController extends Controller
         }
     }
 }
-
-                $bannerPath = $this->settingsService->uploadBannerImage($request->file('banner_image_file'));
-                $this->settingsService->set('banner_image', $bannerPath);
-            } elseif ($request->has('banner_image') && $request->banner_image) {
-                // Use URL if provided and no file uploaded
-                $this->settingsService->set('banner_image', $request->banner_image);
-            }
-            
-            if ($request->has('banner_button_text')) {
-                $this->settingsService->set('banner_button_text', $request->banner_button_text);
-            }
-            if ($request->has('banner_button_link')) {
-                $this->settingsService->set('banner_button_link', $request->banner_button_link);
-            }
-            if ($request->has('banner_overlay_opacity')) {
-                $this->settingsService->set('banner_overlay_opacity', $request->banner_overlay_opacity, 'number');
-            }
-
-            return back()->with('success', 'Pengaturan banner berhasil diperbarui');
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()])->withInput();
-        }
-    }
-}

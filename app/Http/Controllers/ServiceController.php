@@ -311,28 +311,3 @@ class ServiceController extends Controller
         }
     }
 }
-            abort(404, 'Jasa tidak ditemukan');
-        }
-        
-        // 🔒 SECURITY: Use Policy for authorization
-        try {
-            $this->authorize('delete', $serviceModel);
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            \App\Services\SecurityLogger::logAuthorizationFailure('Service delete', [
-                'service_id' => $serviceModel->id,
-            ]);
-            throw $e;
-        }
-
-        try {
-            $this->jokiService->delete($serviceModel);
-
-            return redirect()
-                ->route('services.index')
-                ->with('success', 'Jasa berhasil dihapus');
-        } catch (\Exception $e) {
-            return back()
-                ->withErrors(['error' => $e->getMessage()]);
-        }
-    }
-}

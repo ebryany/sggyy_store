@@ -181,7 +181,3 @@ class SellerProductController extends BaseApiController
     }
 }
 
-
-    }
-}
-

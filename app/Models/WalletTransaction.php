@@ -101,7 +101,3 @@ class WalletTransaction extends Model
         });
     }
 }
-
-        });
-    }
-}

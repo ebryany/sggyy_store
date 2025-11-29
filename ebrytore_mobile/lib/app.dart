@@ -96,4 +96,3 @@ class _AppState extends State<App> {
         : const LoginScreen();
   }
 }
-
