@@ -79,6 +79,9 @@ class WalletController extends Controller
         if ($featureFlags['enable_qris']) {
             $availableMethods[] = 'qris';
         }
+        if ($featureFlags['enable_veripay'] ?? false) {
+            $availableMethods[] = 'veripay_qris';
+        }
 
         $validated = $request->validate([
             'amount' => ['required', 'numeric', "min:{$minTopup}", "max:{$maxTopup}"],
@@ -88,6 +91,11 @@ class WalletController extends Controller
         ]);
 
         try {
+            // Handle Veripay QRIS payment
+            if ($validated['payment_method'] === 'veripay_qris') {
+                return $this->handleVeripayTopUp($validated);
+            }
+            
             $transaction = $this->walletService->requestTopUp(
                 auth()->user(),
                 $validated,
@@ -201,5 +209,83 @@ class WalletController extends Controller
         ];
 
         return view('admin.wallet.index', compact('transactions', 'status', 'stats'));
+    }
+
+    /**
+     * Handle Veripay QRIS top-up
+     */
+    private function handleVeripayTopUp(array $validated): RedirectResponse
+    {
+        try {
+            $user = auth()->user();
+            
+            // Create wallet transaction first
+            $transaction = WalletTransaction::create([
+                'user_id' => $user->id,
+                'type' => 'top_up',
+                'amount' => $validated['amount'],
+                'status' => 'pending',
+                'payment_method' => 'veripay_qris',
+                'description' => $validated['description'] ?? 'Top up wallet via Veripay QRIS',
+            ]);
+            
+            // Create Veripay payment using reference_number as order_id
+            $veripayService = app(\App\Services\VeripayService::class);
+            
+            // Create a temporary Order-like object for VeripayService
+            // We'll use reference_number as order_id
+            $orderData = (object) [
+                'order_number' => $transaction->reference_number,
+                'total' => $validated['amount'],
+                'type' => 'top_up',
+                'user' => $user,
+            ];
+            
+            $veripayResponse = $veripayService->createPaymentForTopUp($orderData);
+            
+            if (!($veripayResponse['success'] ?? false)) {
+                throw new \Exception($veripayResponse['message'] ?? 'Gagal membuat pembayaran Veripay');
+            }
+            
+            $data = $veripayResponse['data'] ?? [];
+            
+            // Update transaction with Veripay data
+            $transaction->update([
+                'veripay_transaction_ref' => $data['transaction_ref'] ?? null,
+                'veripay_payment_url' => $data['payment_url'] ?? null,
+                'veripay_metadata' => [
+                    'transaction_ref' => $data['transaction_ref'] ?? null,
+                    'payment_url' => $data['payment_url'] ?? null,
+                    'qr_code' => $data['qr_code'] ?? null,
+                    'status' => $data['status'] ?? 'pending',
+                ],
+            ]);
+            
+            // Redirect to Veripay payment URL or show QR code
+            if ($data['payment_url'] ?? null) {
+                return redirect($data['payment_url'])
+                    ->with('success', 'Silakan scan QRIS untuk melakukan pembayaran. Saldo akan otomatis ditambahkan setelah pembayaran berhasil.');
+            }
+            
+            return redirect()
+                ->route('wallet.index')
+                ->with('success', 'Permintaan top-up berhasil dibuat. Silakan scan QRIS untuk melakukan pembayaran.');
+                
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Veripay top-up failed', [
+                'user_id' => auth()->id(),
+                'amount' => $validated['amount'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
+            
+            $errorMessage = str_contains($e->getMessage(), 'Veripay') 
+                ? $e->getMessage() 
+                : 'Gagal membuat pembayaran Veripay. Silakan coba lagi atau hubungi support.';
+            
+            return back()
+                ->withInput()
+                ->withErrors(['error' => $errorMessage])
+                ->with('error', $errorMessage);
+        }
     }
 }

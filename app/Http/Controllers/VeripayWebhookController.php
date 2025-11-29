@@ -69,7 +69,15 @@ class VeripayWebhookController extends Controller
                 return response()->json(['error' => 'Missing order_id'], 400);
             }
 
-            // Find order by order_number
+            // Check if this is a wallet top-up (reference_number starts with 'WT-')
+            $isTopUp = str_starts_with($orderNumber, 'WT-');
+            
+            if ($isTopUp) {
+                // Handle wallet top-up
+                return $this->handleTopUpWebhook($data, $orderNumber);
+            }
+            
+            // Handle order payment
             $order = Order::where('order_number', $orderNumber)->first();
             if (!$order) {
                 Log::warning('Veripay webhook: Order not found', [
@@ -216,6 +224,79 @@ class VeripayWebhookController extends Controller
 
             return response()->json(['error' => 'Internal server error'], 500);
         }
+    }
+
+    /**
+     * Handle wallet top-up webhook
+     */
+    private function handleTopUpWebhook(array $data, string $referenceNumber)
+    {
+        $status = strtoupper($data['status'] ?? '');
+        
+        // Find wallet transaction by reference_number
+        $transaction = \App\Models\WalletTransaction::where('reference_number', $referenceNumber)
+            ->where('payment_method', 'veripay_qris')
+            ->first();
+            
+        if (!$transaction) {
+            Log::warning('Veripay webhook: Wallet transaction not found', [
+                'reference_number' => $referenceNumber,
+            ]);
+            return response()->json(['error' => 'Wallet transaction not found'], 404);
+        }
+        
+        if ($status === 'PAID') {
+            DB::transaction(function () use ($transaction, $data) {
+                // Lock transaction to prevent race condition
+                $transaction = \App\Models\WalletTransaction::where('id', $transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+                
+                // Double-check idempotency
+                if ($transaction->status === 'completed') {
+                    Log::info('Veripay webhook: Top-up already completed (idempotent)', [
+                        'transaction_id' => $transaction->id,
+                    ]);
+                    return;
+                }
+                
+                // Update transaction metadata
+                $transaction->update([
+                    'veripay_metadata' => array_merge($transaction->veripay_metadata ?? [], [
+                        'status' => 'PAID',
+                        'payment_time' => $data['payment_time'] ?? null,
+                        'payment_method' => $data['payment_method'] ?? 'QRIS',
+                    ]),
+                ]);
+                
+                // Auto-approve and complete top-up
+                $walletService = app(\App\Services\WalletService::class);
+                $walletService->approveTopUp($transaction, null); // System approved
+                
+                // Mark as completed
+                $transaction->update(['status' => 'completed']);
+                
+                Log::info('Veripay webhook: Top-up completed', [
+                    'transaction_id' => $transaction->id,
+                    'amount' => $transaction->amount,
+                ]);
+            });
+        } elseif ($status === 'FAILED' || $status === 'CANCELLED') {
+            $transaction->update([
+                'status' => 'rejected',
+                'veripay_metadata' => array_merge($transaction->veripay_metadata ?? [], [
+                    'status' => $status,
+                    'payment_time' => $data['payment_time'] ?? null,
+                ]),
+            ]);
+            
+            Log::info('Veripay webhook: Top-up failed/cancelled', [
+                'transaction_id' => $transaction->id,
+                'status' => $status,
+            ]);
+        }
+        
+        return response()->json(['success' => true], 200);
     }
 
     /**

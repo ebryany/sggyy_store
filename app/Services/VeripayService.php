@@ -225,6 +225,94 @@ class VeripayService
     }
 
     /**
+     * Create payment for wallet top-up
+     * 
+     * @param object $orderData Object with order_number, total, user
+     * @return array Veripay response
+     * @throws \Exception
+     */
+    public function createPaymentForTopUp(object $orderData): array
+    {
+        // Validate API credentials before making request
+        if (empty($this->apiKey) || empty($this->secretKey)) {
+            Log::error('Veripay API credentials missing for top-up', [
+                'order_number' => $orderData->order_number ?? null,
+            ]);
+            throw new \Exception('Veripay API credentials belum dikonfigurasi. Silakan hubungi administrator.');
+        }
+
+        // Prepare payment data
+        $paymentData = [
+            'order_id' => $orderData->order_number,
+            'amount' => (int) $orderData->total,
+            'description' => "Top-up Wallet #{$orderData->order_number}",
+            'return_url' => route('wallet.index'),
+            'product_detail' => [
+                [
+                    'name' => 'Top-up Wallet',
+                    'price' => (int) $orderData->total,
+                    'qty' => 1,
+                ],
+            ],
+            'customer_detail' => [
+                'name' => $orderData->user->name ?? 'Customer',
+                'email' => $orderData->user->email ?? '',
+                'phone' => $orderData->user->phone ?? '',
+            ],
+        ];
+
+        // Make API request
+        try {
+            $response = Http::withHeaders($this->prepareHeaders())
+                ->timeout(30)
+                ->post($this->baseUrl . '/api/v1/merchant/payments', $paymentData);
+        } catch (\Exception $e) {
+            Log::error('Veripay top-up API request failed (network/connection)', [
+                'order_number' => $orderData->order_number ?? null,
+                'error' => $e->getMessage(),
+                'base_url' => $this->baseUrl,
+            ]);
+            throw new \Exception('Gagal membuat pembayaran Veripay: Koneksi ke server Veripay gagal. Silakan coba lagi.');
+        }
+
+        if (!$response->successful()) {
+            $error = $response->json();
+            $responseBody = $response->body();
+            
+            Log::error('Veripay top-up payment creation failed', [
+                'order_number' => $orderData->order_number ?? null,
+                'status' => $response->status(),
+                'error' => $error,
+                'response_body' => $responseBody,
+            ]);
+
+            $errorMessage = 'Gagal membuat pembayaran Veripay';
+            if (isset($error['message'])) {
+                $errorMessage .= ': ' . $error['message'];
+            } elseif ($responseBody && strlen($responseBody) < 200) {
+                $errorMessage .= ': ' . $responseBody;
+            }
+
+            throw new \Exception($errorMessage);
+        }
+
+        $responseData = $response->json();
+
+        if (!($responseData['success'] ?? false)) {
+            throw new \Exception(
+                $responseData['message'] ?? 'Gagal membuat pembayaran Veripay'
+            );
+        }
+
+        Log::info('Veripay top-up payment created', [
+            'order_number' => $orderData->order_number ?? null,
+            'transaction_ref' => $responseData['data']['transaction_ref'] ?? null,
+        ]);
+
+        return $responseData;
+    }
+
+    /**
      * Get payment status
      * 
      * @param string $transactionRef Transaction reference

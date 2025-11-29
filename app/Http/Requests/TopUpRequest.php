@@ -18,7 +18,7 @@ class TopUpRequest extends FormRequest
 
         return [
             'amount' => ['required', 'numeric', 'min:' . $minAmount, 'max:' . $maxAmount],
-            'payment_method' => ['required', 'in:bank_transfer,qris,manual'],
+            'payment_method' => ['required', 'in:bank_transfer,qris,veripay_qris,manual'],
             'proof_path' => ['required_if:payment_method,bank_transfer', 'nullable', 'image', 'mimes:jpeg,png,jpg,pdf', 'max:2048'],
             'description' => ['nullable', 'string', 'max:500'],
         ];

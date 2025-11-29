@@ -22,6 +22,9 @@ class WalletTransaction extends Model
         'approved_by',
         'approved_at',
         'reference_number',
+        'veripay_transaction_ref',
+        'veripay_payment_url',
+        'veripay_metadata',
     ];
 
     protected function casts(): array
@@ -29,6 +32,7 @@ class WalletTransaction extends Model
         return [
             'amount' => 'decimal:2',
             'approved_at' => 'datetime',
+            'veripay_metadata' => 'array',
         ];
     }
 
