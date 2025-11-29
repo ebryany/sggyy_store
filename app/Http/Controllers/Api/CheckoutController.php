@@ -30,7 +30,7 @@ class CheckoutController extends BaseApiController
                 'items' => ['required', 'array', 'min:1'],
                 'items.*.type' => ['required', 'in:product,service'],
                 'items.*.id' => ['required', 'integer'],
-                'payment_method' => ['required', 'in:wallet,bank_transfer,qris'],
+                'payment_method' => ['required', 'in:wallet,bank_transfer,qris,xendit_va,xendit_qris,veripay_qris'],
                 'notes' => ['nullable', 'string', 'max:1000'],
             ]);
 

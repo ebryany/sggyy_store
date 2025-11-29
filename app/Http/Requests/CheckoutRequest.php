@@ -25,7 +25,7 @@ class CheckoutRequest extends FormRequest
             'type' => ['required', 'in:product,service'],
             'product_id' => ['required_if:type,product', 'exists:products,id'],
             'service_id' => ['required_if:type,service', 'exists:services,id'],
-            'payment_method' => ['required', 'in:wallet,bank_transfer,qris'],
+            'payment_method' => ['required', 'in:wallet,bank_transfer,qris,xendit_va,xendit_qris,veripay_qris'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'task_file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt,jpg,jpeg,png', 'max:10240'], // Max 10MB, optional for service orders
         ];
