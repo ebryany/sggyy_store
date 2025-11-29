@@ -271,26 +271,3 @@ class Product extends Model
                ($this->published_at === null || $this->published_at <= now());
     }
 }
-
-
-
-
-
-
-        $storageService = app(\App\Services\StorageService::class);
-        return $storageService->url($this->image);
-    }
-
-    /**
-     * Check if product is published
-     */
-    public function isPublished(): bool
-    {
-        return !$this->is_draft && $this->is_active && 
-               ($this->published_at === null || $this->published_at <= now());
-    }
-}
-
-
-
-
