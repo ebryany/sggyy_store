@@ -74,6 +74,11 @@ class PaymentService
             // Update order status using OrderService for consistency
             $order = $payment->order;
             
+            // Load product relationship for auto-delivery check
+            if ($order && $order->type === 'product') {
+                $order->load('product');
+            }
+            
             // Check if payment is via Xendit (has escrow) or manual (no escrow)
             $isXenditPayment = $payment->isXenditPayment();
             
@@ -107,6 +112,32 @@ class PaymentService
                 
                 // Step 3: Update to 'processing' (Diproses) - seller dapat mengirim produk
                 $this->orderService->updateStatus($order, 'processing', 'Order diproses, seller dapat mengirim produk', 'admin');
+                $order = $order->fresh();
+                
+                // 🔒 AUTO-DELIVERY: Untuk produk digital yang sudah punya file, otomatis kirim
+                if ($order->product && $order->product->file_path) {
+                    // Auto-deliver digital product
+                    $this->orderService->updateStatus(
+                        $order,
+                        'waiting_confirmation',
+                        'Produk digital otomatis dikirim setelah pembayaran diverifikasi',
+                        'system'
+                    );
+                    $order = $order->fresh();
+                    
+                    // Set download expiry (30 days)
+                    $order->setDownloadExpiry(30);
+                    
+                    // Notify buyer
+                    $notificationService = app(\App\Services\NotificationService::class);
+                    $notificationService->createNotificationIfNotExists(
+                        $order->user,
+                        'product_sent',
+                        "📦 Produk digital untuk pesanan #{$order->order_number} telah otomatis dikirim! File dapat langsung diunduh.",
+                        $order,
+                        10
+                    );
+                }
             } else {
                 // For services, update to 'paid' status (seller needs to work on it)
                 $this->orderService->updateStatus($order, 'paid', 'Payment verified by admin', 'admin');

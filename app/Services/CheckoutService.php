@@ -203,6 +203,11 @@ class CheckoutService
             'verified_at' => now(),
         ]);
 
+        // Load product relationship for auto-delivery check
+        if ($order->type === 'product') {
+            $order->load('product');
+        }
+        
         // 🔒 REKBER FLOW: Update order status sesuai alur rekber
         if ($order->type === 'product') {
             // Step 1: Payment verified → status: 'paid' (Sudah Dibayar)
@@ -217,16 +222,42 @@ class CheckoutService
             
             // Step 3: Update to 'processing' (Diproses)
             $this->orderService->updateStatus($order, 'processing', 'Order diproses, seller dapat mengirim produk', 'system');
+            $order = $order->fresh();
             
-            // 🔒 FIX: Use NotificationService with idempotency check
-            $notificationService = app(\App\Services\NotificationService::class);
-            $notificationService->createNotificationIfNotExists(
-                $order->user,
-                'payment_verified',
-                "Pembayaran untuk produk #{$order->order_number} berhasil! Seller akan mengirim produk.",
-                $order,
-                10 // 10 minutes window for duplicate check
-            );
+            // 🔒 AUTO-DELIVERY: Untuk produk digital yang sudah punya file, otomatis kirim
+            if ($order->product && $order->product->file_path) {
+                // Auto-deliver digital product
+                $this->orderService->updateStatus(
+                    $order,
+                    'waiting_confirmation',
+                    'Produk digital otomatis dikirim setelah pembayaran diverifikasi',
+                    'system'
+                );
+                $order = $order->fresh();
+                
+                // Set download expiry (30 days)
+                $order->setDownloadExpiry(30);
+                
+                // Notify buyer
+                $notificationService = app(\App\Services\NotificationService::class);
+                $notificationService->createNotificationIfNotExists(
+                    $order->user,
+                    'product_sent',
+                    "📦 Produk digital untuk pesanan #{$order->order_number} telah otomatis dikirim! File dapat langsung diunduh.",
+                    $order,
+                    10
+                );
+            } else {
+                // 🔒 FIX: Use NotificationService with idempotency check
+                $notificationService = app(\App\Services\NotificationService::class);
+                $notificationService->createNotificationIfNotExists(
+                    $order->user,
+                    'payment_verified',
+                    "Pembayaran untuk produk #{$order->order_number} berhasil! Seller akan mengirim produk.",
+                    $order,
+                    10 // 10 minutes window for duplicate check
+                );
+            }
         } else {
             // For services, keep status as 'paid' (seller needs to work on it)
             $order->update(['status' => 'paid']);

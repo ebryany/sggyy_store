@@ -564,6 +564,12 @@ class XenditService
 
             // 🔒 REKBER FLOW: Update order status sesuai alur rekber
             $order = $payment->order;
+            
+            // Load product relationship for auto-delivery check
+            if ($order && $order->type === 'product') {
+                $order->load('product');
+            }
+            
             $orderService = app(OrderService::class);
             
             if ($order->type === 'product') {
@@ -574,6 +580,32 @@ class XenditService
                 // Step 2: Create rekber (akan dibuat di bawah)
                 // Step 3: Update to 'processing' (Diproses)
                 $orderService->updateStatus($order, 'processing', 'Order diproses, seller dapat mengirim produk', 'system');
+                $order = $order->fresh();
+                
+                // 🔒 AUTO-DELIVERY: Untuk produk digital yang sudah punya file, otomatis kirim
+                if ($order->product && $order->product->file_path) {
+                    // Auto-deliver digital product
+                    $orderService->updateStatus(
+                        $order,
+                        'waiting_confirmation',
+                        'Produk digital otomatis dikirim setelah pembayaran diverifikasi',
+                        'system'
+                    );
+                    $order = $order->fresh();
+                    
+                    // Set download expiry (30 days)
+                    $order->setDownloadExpiry(30);
+                    
+                    // Notify buyer
+                    $notificationService = app(\App\Services\NotificationService::class);
+                    $notificationService->createNotificationIfNotExists(
+                        $order->user,
+                        'product_sent',
+                        "📦 Produk digital untuk pesanan #{$order->order_number} telah otomatis dikirim! File dapat langsung diunduh.",
+                        $order,
+                        10
+                    );
+                }
             } else {
                 $orderService->updateStatus($order, 'paid', 'Payment verified via Xendit', 'system');
             }
