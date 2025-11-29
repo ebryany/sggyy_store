@@ -95,7 +95,15 @@
                         <td class="py-3 px-4 text-sm">
                             <div class="flex items-center gap-2">
                                 <x-icon name="{{ $payment->getMethodIcon() }}" class="w-4 h-4" />
-                                {{ $payment->getMethodDisplayName() }}
+                                <div class="flex flex-col">
+                                    <span>{{ $payment->getMethodDisplayName() }}</span>
+                                    @if($payment->isAutoVerified())
+                                        <span class="text-xs text-green-400 flex items-center gap-1">
+                                            <x-icon name="check-circle" class="w-3 h-3" />
+                                            Auto Verify
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                         <td class="py-3 px-4">
@@ -144,6 +152,12 @@
                                     <x-icon name="eye" class="w-4 h-4" />
                                     Lihat Detail
                                 </button>
+                                @if($payment->isAutoVerified())
+                                    <div class="px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-400 flex items-center gap-1">
+                                        <x-icon name="clock" class="w-4 h-4" />
+                                        Verifikasi Otomatis via Webhook
+                                    </div>
+                                @else
                                 <div class="flex gap-1" style="position: relative; z-index: 2;">
                                     <button type="button"
                                             class="px-3 py-1.5 bg-green-500/20 text-green-400 rounded text-xs hover:bg-green-500/30 active:bg-green-500/40 whitespace-nowrap transition-colors font-semibold cursor-pointer flex items-center gap-1"
@@ -171,6 +185,7 @@
                                         Tolak
                                     </button>
                                 </div>
+                                @endif
                             </div>
                             @elseif($payment->verifier)
                             <p class="text-xs text-white/60">

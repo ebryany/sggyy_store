@@ -97,6 +97,9 @@ class Payment extends Model
             'bank_transfer' => 'Transfer Bank',
             'qris' => 'QRIS',
             'manual' => 'Manual',
+            'veripay_qris' => 'QRIS (Veripay)',
+            'xendit_va' => 'Virtual Account (Xendit)',
+            'xendit_qris' => 'QRIS (Xendit)',
             default => ucfirst(str_replace('_', ' ', $this->method)),
         };
     }
@@ -114,7 +117,17 @@ class Payment extends Model
     
     public function requiresProof(): bool
     {
-        return in_array($this->method, ['bank_transfer', 'qris']);
+        // Veripay and Xendit payments don't require manual proof upload
+        return in_array($this->method, ['bank_transfer', 'qris']) && 
+               !in_array($this->method, ['veripay_qris', 'xendit_va', 'xendit_qris']);
+    }
+    
+    /**
+     * Check if payment is auto-verified (via payment gateway webhook)
+     */
+    public function isAutoVerified(): bool
+    {
+        return in_array($this->method, ['veripay_qris', 'xendit_va', 'xendit_qris', 'wallet']);
     }
     
     public function getProofUrl(): ?string
