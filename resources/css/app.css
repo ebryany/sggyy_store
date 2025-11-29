@@ -15,6 +15,12 @@
     --color-dark: #0E0E10;
     --color-dark-light: #1A1A1C;
     --color-dark-lighter: #262628;
+    
+    /* Consistent Color System for Dashboard */
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger: #EF4444;
+    --color-info: #3B82F6;
 }
 
 @layer base {

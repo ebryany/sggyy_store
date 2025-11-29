@@ -1,21 +1,66 @@
 <?php $__env->startSection('title', 'Detail Pesanan - Ebrystoree'); ?>
 
 <?php $__env->startSection('content'); ?>
-<div class="space-y-4 sm:space-y-6">
-    <div class="mb-4 sm:mb-6">
-        <a href="<?php echo e(route('orders.index')); ?>" class="text-primary hover:underline flex items-center space-x-2 touch-target text-sm sm:text-base">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-            <span>Kembali ke Daftar Pesanan</span>
+<div class="space-y-3 sm:space-y-6 pb-24 lg:pb-0">
+    <!-- Back Button - Compact Mobile -->
+    <div class="mb-3 sm:mb-6">
+        <a href="<?php echo e(route('orders.index')); ?>" class="text-primary hover:underline flex items-center space-x-2 touch-target text-xs sm:text-base">
+            <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'arrow-left','class' => 'w-4 h-4 sm:w-5 sm:h-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'arrow-left','class' => 'w-4 h-4 sm:w-5 sm:h-5']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+            <span>Kembali</span>
         </a>
     </div>
     
-    <!-- Horizontal Timeline (Shopee Style) - Pindah ke Paling Atas -->
-    <div class="mb-6 sm:mb-8">
-        <div class="glass p-4 sm:p-6 rounded-xl border border-white/10">
-            <div class="mb-4">
-                <div class="flex items-center justify-between mb-2">
+    <!-- Order Header Card -->
+    <div class="mb-3 sm:mb-4">
+        <div class="glass p-4 sm:p-6 rounded-xl border border-white/5">
+            <!-- Mobile: Compact Header -->
+            <div class="sm:hidden">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-sm font-semibold text-white/90 mb-1">No. Pesanan</h2>
+                        <p class="text-xs font-medium text-white truncate"><?php echo e($order->order_number); ?></p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <span class="px-2.5 py-1 bg-primary/20 text-primary rounded-lg text-[10px] font-semibold">
+                            <?php if($order->status === 'completed'): ?>
+                                SELESAI
+                            <?php elseif($order->status === 'processing'): ?>
+                                DIPROSES
+                            <?php elseif($order->status === 'paid'): ?>
+                                DIBAYAR
+                            <?php elseif($order->status === 'waiting_confirmation'): ?>
+                                MENUNGGU
+                            <?php else: ?>
+                                <?php echo e(strtoupper($order->status)); ?>
+
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Desktop: Original Header -->
+            <div class="hidden sm:block">
+                <div class="flex items-center justify-between">
                     <h2 class="text-lg sm:text-xl font-semibold">No. Pesanan. <?php echo e($order->order_number); ?></h2>
                     <div class="flex items-center gap-2">
                         <span class="text-xs sm:text-sm text-white/60">|</span>
@@ -33,21 +78,42 @@
 
                             <?php endif; ?>
                         </span>
+                    </div>
                 </div>
             </div>
-            </div>
+        </div>
+    </div>
+    
+    <!-- Timeline Card - Separate Card at Top -->
+    <div class="mb-4 sm:mb-8">
+        <div class="glass p-4 sm:p-6 rounded-xl border border-white/5">
+            <h3 class="text-sm sm:text-base font-semibold mb-4 text-white/90">Timeline Pesanan</h3>
             <?php echo $__env->make('components.order-timeline', ['timeline' => $timeline], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
         </div>
     </div>
 
     
     
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
         <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-4 sm:space-y-6">
-            <!-- Order Info -->
-            <div class="glass p-4 sm:p-6 rounded-lg">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-3 sm:gap-4 mb-4">
+        <div class="lg:col-span-2 space-y-3 sm:space-y-6">
+            <!-- Order Info - Optimized for Mobile -->
+            <div class="glass p-4 sm:p-6 rounded-xl border border-white/5">
+                <!-- Mobile: Compact Header -->
+                <div class="sm:hidden mb-4">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div class="flex-1 min-w-0">
+                            <h1 class="text-base font-bold mb-1 break-words text-white">Order #<?php echo e($order->order_number); ?></h1>
+                            <p class="text-xs text-white/50">Dibuat <?php echo e($order->created_at->format('d M Y, H:i')); ?></p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <?php echo $__env->make('components.order-status-badge', ['status' => $order->status], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Desktop: Original Header -->
+                <div class="hidden sm:flex flex-col sm:flex-row justify-between items-start sm:items-start gap-3 sm:gap-4 mb-4">
                     <div class="flex-1 min-w-0">
                         <h1 class="text-xl sm:text-2xl font-bold mb-2 break-words">Order #<?php echo e($order->order_number); ?></h1>
                         <p class="text-white/60 text-sm sm:text-base">Dibuat pada <?php echo e($order->created_at->format('d M Y, H:i')); ?></p>
@@ -58,8 +124,39 @@
                 </div>
                 
                 <div class="border-t border-white/10 pt-4 mt-4">
-                    <h3 class="font-semibold mb-3">Detail Item</h3>
-                    <div class="flex items-center space-x-4">
+                    <h3 class="font-semibold text-sm sm:text-base mb-3">Detail Item</h3>
+                    <!-- Mobile: Vertical Layout -->
+                    <div class="sm:hidden space-y-3">
+                        <div class="flex items-start gap-3">
+                            <?php if($order->type === 'product' && $order->product): ?>
+                                <?php if($order->product->image): ?>
+                                <img src="<?php echo e(asset('storage/' . $order->product->image)); ?>" 
+                                     alt="<?php echo e($order->product->title); ?>" 
+                                     class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+                                <?php endif; ?>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold text-sm mb-1 break-words text-white"><?php echo e($order->product->title); ?></h4>
+                                    <p class="text-white/50 text-xs"><?php echo e($order->product->category); ?></p>
+                                </div>
+                            <?php elseif($order->type === 'service' && $order->service): ?>
+                                <?php if($order->service->image): ?>
+                                <img src="<?php echo e(asset('storage/' . $order->service->image)); ?>" 
+                                     alt="<?php echo e($order->service->title); ?>" 
+                                     class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+                                <?php endif; ?>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold text-sm mb-1 break-words text-white"><?php echo e($order->service->title); ?></h4>
+                                    <p class="text-white/50 text-xs">Durasi: <?php echo e($order->service->duration_hours); ?> jam</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="pt-3 border-t border-white/10">
+                            <p class="text-lg font-bold text-primary">Rp <?php echo e(number_format($order->total, 0, ',', '.')); ?></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Desktop: Horizontal Layout -->
+                    <div class="hidden sm:flex items-center space-x-4">
                         <?php if($order->type === 'product' && $order->product): ?>
                             <?php if($order->product->image): ?>
                             <img src="<?php echo e(asset('storage/' . $order->product->image)); ?>" 
@@ -89,8 +186,8 @@
                 
                 <?php if($order->notes): ?>
                 <div class="border-t border-white/10 pt-4 mt-4">
-                    <h3 class="font-semibold mb-2">Catatan</h3>
-                    <p class="text-white/70"><?php echo e($order->notes); ?></p>
+                    <h3 class="font-semibold text-sm sm:text-base mb-2">Catatan</h3>
+                    <p class="text-white/70 text-sm sm:text-base"><?php echo e($order->notes); ?></p>
                 </div>
                 <?php endif; ?>
                 
@@ -540,8 +637,8 @@
             
             <!-- Payment Info -->
             <?php if($order->payment): ?>
-            <div class="glass p-6 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Informasi Pembayaran</h2>
+            <div class="glass p-4 sm:p-6 rounded-xl border border-white/5 mb-3 sm:mb-6">
+                <h2 class="text-lg sm:text-xl font-semibold mb-4">Informasi Pembayaran</h2>
                 <div class="space-y-3">
                     <div class="flex justify-between">
                         <span class="text-white/60">Metode Pembayaran</span>
@@ -1001,6 +1098,46 @@
                     </div>
                     <?php endif; ?>
                 </div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Action Buttons (Mobile: Below Payment Info) -->
+            <?php
+                $seller = null;
+                if ($order->type === 'product' && $order->product) {
+                    $seller = $order->product->user;
+                } elseif ($order->type === 'service' && $order->service) {
+                    $seller = $order->service->user;
+                }
+            ?>
+            
+            <?php if($order->rating): ?>
+            <div class="lg:hidden space-y-3">
+                <?php if($seller): ?>
+                <a href="<?php echo e(route('chat.show', '@' . $seller->username)); ?>" 
+                   class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Hubungi Penjual
+                </a>
+                <?php endif; ?>
+                
+                <?php if($order->type === 'product' && $order->product): ?>
+                <a href="<?php echo e(route('products.show', $order->product)); ?>" 
+                   class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Beli Lagi
+                </a>
+                <?php elseif($order->type === 'service' && $order->service): ?>
+                <a href="<?php echo e(route('services.show', $order->service)); ?>" 
+                   class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Beli Lagi
+                </a>
+                <?php endif; ?>
+                
+                <?php if($order->payment): ?>
+                <a href="<?php echo e(route('orders.show', $order)); ?>#payment" 
+                   class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Lihat Tagihan
+                </a>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
             
@@ -1543,7 +1680,9 @@
         
         <!-- Sidebar: Action Buttons -->
         <div class="lg:col-span-1">
-            <div class="glass p-6 rounded-lg sticky top-20 space-y-3">
+            <!-- Mobile: Sticky Bottom (Hidden - buttons now appear below Payment Info) -->
+            <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 p-4 z-40 pb-safe hidden">
+                <div class="max-w-md mx-auto space-y-2">
                 <?php
                     $seller = null;
                     if ($order->type === 'product' && $order->product) {
@@ -1626,30 +1765,143 @@
                 <?php if($order->rating): ?>
                     <?php if($seller): ?>
                     <a href="<?php echo e(route('chat.show', '@' . $seller->username)); ?>" 
-                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                       class="block w-full px-4 py-2.5 glass hover:bg-white/5 rounded-lg transition-all text-center font-medium touch-target border border-white/10 text-sm">
                         Hubungi Penjual
                     </a>
                     <?php endif; ?>
                     
                     <?php if($order->type === 'product' && $order->product): ?>
                     <a href="<?php echo e(route('products.show', $order->product)); ?>" 
-                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                       class="block w-full px-4 py-2.5 glass hover:bg-white/5 rounded-lg transition-all text-center font-medium touch-target border border-white/10 text-sm">
                         Beli Lagi
                     </a>
                     <?php elseif($order->type === 'service' && $order->service): ?>
                     <a href="<?php echo e(route('services.show', $order->service)); ?>" 
-                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                       class="block w-full px-4 py-2.5 glass hover:bg-white/5 rounded-lg transition-all text-center font-medium touch-target border border-white/10 text-sm">
                         Beli Lagi
                     </a>
                     <?php endif; ?>
                     
                     <?php if($order->payment): ?>
                     <a href="<?php echo e(route('orders.show', $order)); ?>#payment" 
-                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                       class="block w-full px-4 py-2.5 glass hover:bg-white/5 rounded-lg transition-all text-center font-medium touch-target border border-white/10 text-sm">
                         Lihat Tagihan
                     </a>
                     <?php endif; ?>
                 <?php endif; ?>
+                </div>
+            </div>
+            
+            <!-- Desktop: Sticky Sidebar -->
+            <div class="hidden lg:block">
+                <div class="glass p-6 rounded-xl border border-white/5 sticky top-20 space-y-3">
+                <?php
+                    $seller = null;
+                    if ($order->type === 'product' && $order->product) {
+                        $seller = $order->product->user;
+                    } elseif ($order->type === 'service' && $order->service) {
+                        $seller = $order->service->user;
+                    }
+                    
+                    // 🔒 REKBER FLOW: Buyer dapat konfirmasi saat status processing, waiting_confirmation, atau completed dengan escrow holding
+                    $canConfirmProduct = $isOwner && (
+                        ($order->type === 'product' && in_array($order->status, ['processing', 'waiting_confirmation'])) ||
+                        ($order->type === 'service' && $order->status === 'waiting_confirmation') ||
+                        ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding())
+                    );
+                ?>
+                
+                <?php if($canConfirmProduct): ?>
+                <form id="confirm-product-form-sidebar-desktop-<?php echo e($order->id); ?>" 
+                      action="<?php echo e(route('orders.confirm', $order)); ?>" 
+                      method="POST">
+                    <?php echo csrf_field(); ?>
+                    <button type="button" 
+                            onclick="
+                                const modal = document.getElementById('confirm-product-modal-sidebar-desktop-<?php echo e($order->id); ?>');
+                                if (modal) {
+                                    modal.style.display = 'flex';
+                                    document.body.style.overflow = 'hidden';
+                                }
+                            "
+                            class="block w-full px-4 py-3 bg-green-500 hover:bg-green-600 rounded-lg transition-all text-center font-semibold touch-target">
+                        <span class="flex items-center justify-center gap-2">
+                            <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'check','class' => 'w-5 h-5']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'check','class' => 'w-5 h-5']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+                            <span>Konfirmasi Produk</span>
+                        </span>
+                    </button>
+                </form>
+                
+                <?php if (isset($component)) { $__componentOriginal2cfaf2d8c559a20e3495c081df2d0b10 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal2cfaf2d8c559a20e3495c081df2d0b10 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.confirm-modal','data' => ['id' => 'confirm-product-modal-sidebar-desktop-'.e($order->id).'','title' => 'Konfirmasi Penerimaan Produk','message' => 'Apakah Anda yakin produk sudah diterima? Dana rekber akan otomatis diteruskan ke seller.','confirmText' => 'Ya, Konfirmasi','cancelText' => 'Batal','type' => 'warning','formId' => 'confirm-product-form-sidebar-desktop-'.e($order->id).'']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('confirm-modal'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['id' => 'confirm-product-modal-sidebar-desktop-'.e($order->id).'','title' => 'Konfirmasi Penerimaan Produk','message' => 'Apakah Anda yakin produk sudah diterima? Dana rekber akan otomatis diteruskan ke seller.','confirmText' => 'Ya, Konfirmasi','cancelText' => 'Batal','type' => 'warning','formId' => 'confirm-product-form-sidebar-desktop-'.e($order->id).'']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal2cfaf2d8c559a20e3495c081df2d0b10)): ?>
+<?php $attributes = $__attributesOriginal2cfaf2d8c559a20e3495c081df2d0b10; ?>
+<?php unset($__attributesOriginal2cfaf2d8c559a20e3495c081df2d0b10); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal2cfaf2d8c559a20e3495c081df2d0b10)): ?>
+<?php $component = $__componentOriginal2cfaf2d8c559a20e3495c081df2d0b10; ?>
+<?php unset($__componentOriginal2cfaf2d8c559a20e3495c081df2d0b10); ?>
+<?php endif; ?>
+                <?php endif; ?>
+                
+                
+                <?php if($order->rating): ?>
+                    <?php if($seller): ?>
+                    <a href="<?php echo e(route('chat.show', '@' . $seller->username)); ?>" 
+                       class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Hubungi Penjual
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if($order->type === 'product' && $order->product): ?>
+                    <a href="<?php echo e(route('products.show', $order->product)); ?>" 
+                       class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Beli Lagi
+                    </a>
+                    <?php elseif($order->type === 'service' && $order->service): ?>
+                    <a href="<?php echo e(route('services.show', $order->service)); ?>" 
+                       class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Beli Lagi
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if($order->payment): ?>
+                    <a href="<?php echo e(route('orders.show', $order)); ?>#payment" 
+                       class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Lihat Tagihan
+                    </a>
+                    <?php endif; ?>
+                <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>

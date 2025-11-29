@@ -42,6 +42,8 @@
     @include('components.maintenance-banner')
     
     <main class="pt-safe pb-safe">
+        @include('components.alert', ['type' => 'success'])
+        @include('components.alert', ['type' => 'error'])
         @yield('content')
     </main>
     

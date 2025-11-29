@@ -31,7 +31,7 @@
     }
     
 ?>
-<nav class="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-[9999] pb-safe pt-3"
+<nav class="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-[9999] pb-safe pt-3 lg:hidden"
      style="background: transparent;"
      x-data="{ activeTab: '<?php echo e($activeTab); ?>' }"
      id="mobile-bottom-nav">

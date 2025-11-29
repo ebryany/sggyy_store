@@ -3,21 +3,46 @@
 @section('title', 'Detail Pesanan - Ebrystoree')
 
 @section('content')
-<div class="space-y-4 sm:space-y-6">
-    <div class="mb-4 sm:mb-6">
-        <a href="{{ route('orders.index') }}" class="text-primary hover:underline flex items-center space-x-2 touch-target text-sm sm:text-base">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-            <span>Kembali ke Daftar Pesanan</span>
+<div class="space-y-3 sm:space-y-6 pb-24 lg:pb-0">
+    <!-- Back Button - Compact Mobile -->
+    <div class="mb-3 sm:mb-6">
+        <a href="{{ route('orders.index') }}" class="text-primary hover:underline flex items-center space-x-2 touch-target text-xs sm:text-base">
+            <x-icon name="arrow-left" class="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Kembali</span>
         </a>
     </div>
     
-    <!-- Horizontal Timeline (Shopee Style) - Pindah ke Paling Atas -->
-    <div class="mb-6 sm:mb-8">
-        <div class="glass p-4 sm:p-6 rounded-xl border border-white/10">
-            <div class="mb-4">
-                <div class="flex items-center justify-between mb-2">
+    <!-- Order Header Card -->
+    <div class="mb-3 sm:mb-4">
+        <div class="glass p-4 sm:p-6 rounded-xl border border-white/5">
+            <!-- Mobile: Compact Header -->
+            <div class="sm:hidden">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-sm font-semibold text-white/90 mb-1">No. Pesanan</h2>
+                        <p class="text-xs font-medium text-white truncate">{{ $order->order_number }}</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <span class="px-2.5 py-1 bg-primary/20 text-primary rounded-lg text-[10px] font-semibold">
+                            @if($order->status === 'completed')
+                                SELESAI
+                            @elseif($order->status === 'processing')
+                                DIPROSES
+                            @elseif($order->status === 'paid')
+                                DIBAYAR
+                            @elseif($order->status === 'waiting_confirmation')
+                                MENUNGGU
+                            @else
+                                {{ strtoupper($order->status) }}
+                            @endif
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Desktop: Original Header -->
+            <div class="hidden sm:block">
+                <div class="flex items-center justify-between">
                     <h2 class="text-lg sm:text-xl font-semibold">No. Pesanan. {{ $order->order_number }}</h2>
                     <div class="flex items-center gap-2">
                         <span class="text-xs sm:text-sm text-white/60">|</span>
@@ -34,21 +59,42 @@
                                 {{ strtoupper($order->status) }}
                             @endif
                         </span>
+                    </div>
                 </div>
             </div>
-            </div>
+        </div>
+    </div>
+    
+    <!-- Timeline Card - Separate Card at Top -->
+    <div class="mb-4 sm:mb-8">
+        <div class="glass p-4 sm:p-6 rounded-xl border border-white/5">
+            <h3 class="text-sm sm:text-base font-semibold mb-4 text-white/90">Timeline Pesanan</h3>
             @include('components.order-timeline', ['timeline' => $timeline])
         </div>
     </div>
 
     
     
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
         <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-4 sm:space-y-6">
-            <!-- Order Info -->
-            <div class="glass p-4 sm:p-6 rounded-lg">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-3 sm:gap-4 mb-4">
+        <div class="lg:col-span-2 space-y-3 sm:space-y-6">
+            <!-- Order Info - Optimized for Mobile -->
+            <div class="glass p-4 sm:p-6 rounded-xl border border-white/5">
+                <!-- Mobile: Compact Header -->
+                <div class="sm:hidden mb-4">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div class="flex-1 min-w-0">
+                            <h1 class="text-base font-bold mb-1 break-words text-white">Order #{{ $order->order_number }}</h1>
+                            <p class="text-xs text-white/50">Dibuat {{ $order->created_at->format('d M Y, H:i') }}</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            @include('components.order-status-badge', ['status' => $order->status])
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Desktop: Original Header -->
+                <div class="hidden sm:flex flex-col sm:flex-row justify-between items-start sm:items-start gap-3 sm:gap-4 mb-4">
                     <div class="flex-1 min-w-0">
                         <h1 class="text-xl sm:text-2xl font-bold mb-2 break-words">Order #{{ $order->order_number }}</h1>
                         <p class="text-white/60 text-sm sm:text-base">Dibuat pada {{ $order->created_at->format('d M Y, H:i') }}</p>
@@ -59,8 +105,39 @@
                 </div>
                 
                 <div class="border-t border-white/10 pt-4 mt-4">
-                    <h3 class="font-semibold mb-3">Detail Item</h3>
-                    <div class="flex items-center space-x-4">
+                    <h3 class="font-semibold text-sm sm:text-base mb-3">Detail Item</h3>
+                    <!-- Mobile: Vertical Layout -->
+                    <div class="sm:hidden space-y-3">
+                        <div class="flex items-start gap-3">
+                            @if($order->type === 'product' && $order->product)
+                                @if($order->product->image)
+                                <img src="{{ asset('storage/' . $order->product->image) }}" 
+                                     alt="{{ $order->product->title }}" 
+                                     class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+                                @endif
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold text-sm mb-1 break-words text-white">{{ $order->product->title }}</h4>
+                                    <p class="text-white/50 text-xs">{{ $order->product->category }}</p>
+                                </div>
+                            @elseif($order->type === 'service' && $order->service)
+                                @if($order->service->image)
+                                <img src="{{ asset('storage/' . $order->service->image) }}" 
+                                     alt="{{ $order->service->title }}" 
+                                     class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+                                @endif
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold text-sm mb-1 break-words text-white">{{ $order->service->title }}</h4>
+                                    <p class="text-white/50 text-xs">Durasi: {{ $order->service->duration_hours }} jam</p>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="pt-3 border-t border-white/10">
+                            <p class="text-lg font-bold text-primary">Rp {{ number_format($order->total, 0, ',', '.') }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Desktop: Horizontal Layout -->
+                    <div class="hidden sm:flex items-center space-x-4">
                         @if($order->type === 'product' && $order->product)
                             @if($order->product->image)
                             <img src="{{ asset('storage/' . $order->product->image) }}" 
@@ -90,8 +167,8 @@
                 
                 @if($order->notes)
                 <div class="border-t border-white/10 pt-4 mt-4">
-                    <h3 class="font-semibold mb-2">Catatan</h3>
-                    <p class="text-white/70">{{ $order->notes }}</p>
+                    <h3 class="font-semibold text-sm sm:text-base mb-2">Catatan</h3>
+                    <p class="text-white/70 text-sm sm:text-base">{{ $order->notes }}</p>
                 </div>
                 @endif
                 
@@ -281,8 +358,8 @@
             
             <!-- Payment Info -->
             @if($order->payment)
-            <div class="glass p-6 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Informasi Pembayaran</h2>
+            <div class="glass p-4 sm:p-6 rounded-xl border border-white/5 mb-3 sm:mb-6">
+                <h2 class="text-lg sm:text-xl font-semibold mb-4">Informasi Pembayaran</h2>
                 <div class="space-y-3">
                     <div class="flex justify-between">
                         <span class="text-white/60">Metode Pembayaran</span>
@@ -495,6 +572,46 @@
                     </div>
                     @endif
                 </div>
+            </div>
+            @endif
+            
+            <!-- Action Buttons (Mobile: Below Payment Info) -->
+            @php
+                $seller = null;
+                if ($order->type === 'product' && $order->product) {
+                    $seller = $order->product->user;
+                } elseif ($order->type === 'service' && $order->service) {
+                    $seller = $order->service->user;
+                }
+            @endphp
+            
+            @if($order->rating)
+            <div class="lg:hidden space-y-3">
+                @if($seller)
+                <a href="{{ route('chat.show', '@' . $seller->username) }}" 
+                   class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Hubungi Penjual
+                </a>
+                @endif
+                
+                @if($order->type === 'product' && $order->product)
+                <a href="{{ route('products.show', $order->product) }}" 
+                   class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Beli Lagi
+                </a>
+                @elseif($order->type === 'service' && $order->service)
+                <a href="{{ route('services.show', $order->service) }}" 
+                   class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Beli Lagi
+                </a>
+                @endif
+                
+                @if($order->payment)
+                <a href="{{ route('orders.show', $order) }}#payment" 
+                   class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                    Lihat Tagihan
+                </a>
+                @endif
             </div>
             @endif
             
@@ -809,7 +926,9 @@
         
         <!-- Sidebar: Action Buttons -->
         <div class="lg:col-span-1">
-            <div class="glass p-6 rounded-lg sticky top-20 space-y-3">
+            <!-- Mobile: Sticky Bottom (Hidden - buttons now appear below Payment Info) -->
+            <div class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/10 p-4 z-40 pb-safe hidden">
+                <div class="max-w-md mx-auto space-y-2">
                 @php
                     $seller = null;
                     if ($order->type === 'product' && $order->product) {
@@ -861,30 +980,112 @@
                 @if($order->rating)
                     @if($seller)
                     <a href="{{ route('chat.show', '@' . $seller->username) }}" 
-                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                       class="block w-full px-4 py-2.5 glass hover:bg-white/5 rounded-lg transition-all text-center font-medium touch-target border border-white/10 text-sm">
                         Hubungi Penjual
                     </a>
                     @endif
                     
                     @if($order->type === 'product' && $order->product)
                     <a href="{{ route('products.show', $order->product) }}" 
-                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                       class="block w-full px-4 py-2.5 glass hover:bg-white/5 rounded-lg transition-all text-center font-medium touch-target border border-white/10 text-sm">
                         Beli Lagi
                     </a>
                     @elseif($order->type === 'service' && $order->service)
                     <a href="{{ route('services.show', $order->service) }}" 
-                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                       class="block w-full px-4 py-2.5 glass hover:bg-white/5 rounded-lg transition-all text-center font-medium touch-target border border-white/10 text-sm">
                         Beli Lagi
                     </a>
                     @endif
                     
                     @if($order->payment)
                     <a href="{{ route('orders.show', $order) }}#payment" 
-                       class="block w-full px-4 py-3 glass glass-hover rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                       class="block w-full px-4 py-2.5 glass hover:bg-white/5 rounded-lg transition-all text-center font-medium touch-target border border-white/10 text-sm">
                         Lihat Tagihan
                     </a>
                     @endif
                 @endif
+                </div>
+            </div>
+            
+            <!-- Desktop: Sticky Sidebar -->
+            <div class="hidden lg:block">
+                <div class="glass p-6 rounded-xl border border-white/5 sticky top-20 space-y-3">
+                @php
+                    $seller = null;
+                    if ($order->type === 'product' && $order->product) {
+                        $seller = $order->product->user;
+                    } elseif ($order->type === 'service' && $order->service) {
+                        $seller = $order->service->user;
+                    }
+                    
+                    // 🔒 REKBER FLOW: Buyer dapat konfirmasi saat status processing, waiting_confirmation, atau completed dengan escrow holding
+                    $canConfirmProduct = $isOwner && (
+                        ($order->type === 'product' && in_array($order->status, ['processing', 'waiting_confirmation'])) ||
+                        ($order->type === 'service' && $order->status === 'waiting_confirmation') ||
+                        ($order->status === 'completed' && $order->escrow && $order->escrow->isHolding())
+                    );
+                @endphp
+                
+                @if($canConfirmProduct)
+                <form id="confirm-product-form-sidebar-desktop-{{ $order->id }}" 
+                      action="{{ route('orders.confirm', $order) }}" 
+                      method="POST">
+                    @csrf
+                    <button type="button" 
+                            onclick="
+                                const modal = document.getElementById('confirm-product-modal-sidebar-desktop-{{ $order->id }}');
+                                if (modal) {
+                                    modal.style.display = 'flex';
+                                    document.body.style.overflow = 'hidden';
+                                }
+                            "
+                            class="block w-full px-4 py-3 bg-green-500 hover:bg-green-600 rounded-lg transition-all text-center font-semibold touch-target">
+                        <span class="flex items-center justify-center gap-2">
+                            <x-icon name="check" class="w-5 h-5" />
+                            <span>Konfirmasi Produk</span>
+                        </span>
+                    </button>
+                </form>
+                
+                <x-confirm-modal 
+                    id="confirm-product-modal-sidebar-desktop-{{ $order->id }}"
+                    title="Konfirmasi Penerimaan Produk"
+                    message="Apakah Anda yakin produk sudah diterima? Dana rekber akan otomatis diteruskan ke seller."
+                    confirmText="Ya, Konfirmasi"
+                    cancelText="Batal"
+                    type="warning"
+                    formId="confirm-product-form-sidebar-desktop-{{ $order->id }}" />
+                @endif
+                
+                {{-- Tombol-tombol ini hanya muncul jika buyer sudah memberikan rating --}}
+                @if($order->rating)
+                    @if($seller)
+                    <a href="{{ route('chat.show', '@' . $seller->username) }}" 
+                       class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Hubungi Penjual
+                    </a>
+                    @endif
+                    
+                    @if($order->type === 'product' && $order->product)
+                    <a href="{{ route('products.show', $order->product) }}" 
+                       class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Beli Lagi
+                    </a>
+                    @elseif($order->type === 'service' && $order->service)
+                    <a href="{{ route('services.show', $order->service) }}" 
+                       class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Beli Lagi
+                    </a>
+                    @endif
+                    
+                    @if($order->payment)
+                    <a href="{{ route('orders.show', $order) }}#payment" 
+                       class="block w-full px-4 py-3 glass hover:bg-white/5 rounded-lg transition-all text-center font-semibold touch-target border border-white/10">
+                        Lihat Tagihan
+                    </a>
+                    @endif
+                @endif
+                </div>
             </div>
         </div>
     </div>
