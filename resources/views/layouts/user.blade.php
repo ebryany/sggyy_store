@@ -206,36 +206,8 @@
     </div>
     
     <script>
-    // Integrate session flash messages with notification toast
-    document.addEventListener('DOMContentLoaded', function() {
-        @if(session('success'))
-            window.dispatchEvent(new CustomEvent('notification-received', {
-                detail: {
-                    id: 'flash-' + Date.now(),
-                    type: 'success',
-                    message: '{{ session('success') }}',
-                    is_read: false,
-                    created_at: new Date().toISOString(),
-                    action_url: null,
-                    action_text: null
-                }
-            }));
-        @endif
-        
-        @if(session('error'))
-            window.dispatchEvent(new CustomEvent('notification-received', {
-                detail: {
-                    id: 'flash-' + Date.now(),
-                    type: 'error',
-                    message: '{{ session('error') }}',
-                    is_read: false,
-                    created_at: new Date().toISOString(),
-                    action_url: null,
-                    action_text: null
-                }
-            }));
-        @endif
-    });
+    // Flash messages are now only shown via alert components, not notification toast
+    // This prevents duplicate notifications (alert box + toast notification)
     </script>
     
     @include('components.toast')

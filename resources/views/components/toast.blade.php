@@ -102,6 +102,11 @@ function toast() {
                 if (manager.isShowing) {
                     return;
                 }
+                // Skip success type to prevent duplicate with alert components
+                // Success messages are shown via alert components, not toast
+                if (e.detail.type === 'success') {
+                    return;
+                }
                 this.show(e.detail.message, e.detail.type || 'info');
             };
             
