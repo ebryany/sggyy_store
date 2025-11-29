@@ -221,6 +221,22 @@
                                 </label>
                                 @endif
                                 
+                                @if(isset($featureFlags) && $featureFlags['enable_veripay'])
+                                <!-- Veripay QRIS -->
+                                <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
+                                       :class="paymentMethod === 'veripay_qris' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
+                                    <input type="radio" name="payment_method" value="veripay_qris" x-model="paymentMethod" class="mr-3 accent-primary">
+                                    <div class="flex-1">
+                                        <div class="font-semibold flex items-center gap-2 text-white mb-1">
+                                            <x-icon name="mobile" class="w-5 h-5 text-primary" />
+                                            QRIS (Veripay)
+                                            <span class="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">Auto Verify</span>
+                                        </div>
+                                        <div class="text-xs text-white/60">Scan QRIS, verifikasi otomatis setelah pembayaran</div>
+                                    </div>
+                                </label>
+                                @endif
+                                
                                 @if(isset($featureFlags) && $featureFlags['enable_bank_transfer'] && (!isset($featureFlags['enable_xendit']) || !$featureFlags['enable_xendit']))
                                 <label class="flex items-center p-4 rounded-xl bg-white/5 border-2 cursor-pointer transition-all group"
                                        :class="paymentMethod === 'bank_transfer' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'">
@@ -250,6 +266,29 @@
                                     </div>
                                 </label>
                                 @endif
+                            </div>
+                        </div>
+                        
+                        <!-- Veripay Payment Info -->
+                        <div x-show="paymentMethod === 'veripay_qris'" 
+                             x-transition
+                             class="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+                            <div class="flex items-start gap-3">
+                                <x-icon name="info" class="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                                <div class="text-sm text-white/90">
+                                    <p class="font-semibold text-green-400 mb-1 flex items-center gap-2">
+                                        Pembayaran Otomatis via Veripay
+                                        <span class="px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
+                                            <x-icon name="shield-check" class="w-3 h-3 inline" />
+                                            Auto Verify
+                                        </span>
+                                    </p>
+                                    <ul class="list-disc list-inside space-y-1 text-white/70 text-xs">
+                                        <li>Scan QRIS code yang akan muncul setelah checkout</li>
+                                        <li>Pembayaran akan diverifikasi otomatis oleh sistem</li>
+                                        <li>Order akan langsung diproses setelah pembayaran berhasil</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         
