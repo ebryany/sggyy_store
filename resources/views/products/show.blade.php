@@ -19,11 +19,12 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                 <!-- Image Section -->
                 <div class="relative">
-            @if($product->image)
+            @if($product->image && $product->image_url)
                     <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 border border-primary/30">
-            <img src="{{ asset('storage/' . $product->image) }}" 
+            <img src="{{ $product->image_url }}" 
                  alt="{{ $product->title }}" 
-                             class="w-full h-64 sm:h-80 lg:h-96 object-cover">
+                             class="w-full h-64 sm:h-80 lg:h-96 object-cover"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-64 sm:h-80 lg:h-96 flex items-center justify-center\'><div class=\'text-center\'><div class=\'w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-primary/20 flex items-center justify-center mx-auto mb-4 border border-primary/30\'><svg class=\'w-12 h-12 sm:w-14 sm:h-14 text-primary\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4\'/></svg></div><p class=\'text-primary font-bold text-xl sm:text-2xl uppercase tracking-wider\'>{{ Str::limit($product->title, 3) }}</p></div></div>'">
                     </div>
             @else
                     <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 border border-primary/30 h-64 sm:h-80 lg:h-96 flex items-center justify-center">
@@ -563,6 +564,46 @@
                                 "
                                 class="w-full px-4 py-3 rounded-lg bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/50 transition-all text-red-400 font-semibold flex items-center justify-center gap-2">
                             <x-icon name="x" class="w-5 h-5" />
+                            Hapus Produk
+                        </button>
+                        
+                        <x-confirm-modal 
+                            id="delete-product-modal"
+                            title="Hapus Produk"
+                            message="Yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan."
+                            confirm-text="Ya, Hapus"
+                            cancel-text="Batal"
+                            type="danger" />
+                        
+                        <form id="delete-product-form" method="POST" action="{{ route('seller.products.destroy', $product) }}" style="display: none;">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                        
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const confirmBtn = document.getElementById('delete-product-modal-confirm-btn');
+                                const modal = document.getElementById('delete-product-modal');
+                                const form = document.getElementById('delete-product-form');
+                                
+                                if (confirmBtn && modal && form) {
+                                    confirmBtn.addEventListener('click', function() {
+                                        modal.style.display = 'none';
+                                        document.body.style.overflow = '';
+                                        form.submit();
+                                    });
+                                }
+                            });
+                        </script>
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
                             Hapus Produk
                         </button>
                         

@@ -36,8 +36,8 @@
                     <h3 class="font-semibold mb-3">Detail Item</h3>
                     <div class="flex items-center space-x-4">
                         @if($order->type === 'product' && $order->product)
-                            @if($order->product->image)
-                            <img src="{{ asset('storage/' . $order->product->image) }}" 
+                            @if($order->product->image && $order->product->image_url)
+                            <img src="{{ $order->product->image_url }}" 
                                  alt="{{ $order->product->title }}" 
                                  class="w-20 h-20 object-cover rounded-lg">
                             @endif
@@ -46,8 +46,8 @@
                                 <p class="text-white/60 text-sm">{{ $order->product->category }}</p>
                             </div>
                         @elseif($order->type === 'service' && $order->service)
-                            @if($order->service->image)
-                            <img src="{{ asset('storage/' . $order->service->image) }}" 
+                            @if($order->service->image && $order->service->image_url)
+                            <img src="{{ $order->service->image_url }}" 
                                  alt="{{ $order->service->title }}" 
                                  class="w-20 h-20 object-cover rounded-lg">
                             @endif

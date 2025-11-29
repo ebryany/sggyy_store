@@ -4,10 +4,11 @@
     <a href="{{ route('services.show', $service->slug ?: $service->id) }}" class="flex flex-col h-full">
         <!-- Image Section -->
         <div class="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5">
-            @if($service->image)
-            <img src="{{ asset('storage/' . $service->image) }}" 
+            @if($service->image && $service->image_url)
+            <img src="{{ $service->image_url }}" 
                  alt="{{ $service->title }}" 
-                 class="w-full h-48 sm:h-56 object-cover group-hover:scale-110 transition-transform duration-500">
+                 class="w-full h-48 sm:h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-48 sm:h-56 flex items-center justify-center\'><div class=\'text-center\'><div class=\'w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-primary/20 flex items-center justify-center mx-auto mb-3 border border-primary/30\'><svg class=\'w-8 h-8 sm:w-10 sm:h-10 text-primary\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\'/></svg></div><p class=\'text-primary font-bold text-lg sm:text-xl uppercase tracking-wider\'>@php $words = explode(\' \', $service->title); $initials = \'\'; foreach ($words as $word) { if (strlen($initials) < 3 && !empty($word)) { $initials .= strtoupper(substr($word, 0, 1)); } } if (empty($initials)) { $initials = \'JASA\'; } @endphp{{ $initials }}</p></div></div>'">
             @else
             <div class="w-full h-48 sm:h-56 flex items-center justify-center">
                 <div class="text-center">

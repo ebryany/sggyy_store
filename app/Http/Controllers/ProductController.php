@@ -640,3 +640,26 @@ class ProductController extends Controller
         }
     }
 }
+
+            return $this->productService->getFileDownloadResponse($product);
+        } catch (\Exception $e) {
+            // Log download error
+            \Illuminate\Support\Facades\Log::error('Product download failed', [
+                'user_id' => $user->id,
+                'product_id' => $product->id,
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            
+            // Log denied attempt
+            \App\Models\ProductDownload::logDenied(
+                $user,
+                $product,
+                $order,
+                'File download error: ' . $e->getMessage()
+            );
+            
+            abort(500, 'Gagal mengunduh file');
+        }
+    }
+}

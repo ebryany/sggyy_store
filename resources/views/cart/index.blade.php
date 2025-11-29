@@ -14,8 +14,8 @@
                         <!-- Image/Icon -->
                         <div class="flex-shrink-0">
                             @if($item['type'] === 'product')
-                                @if($item['data']->image)
-                                    <img src="{{ asset('storage/' . $item['data']->image) }}" 
+                                @if($item['data']->image && $item['data']->image_url)
+                                    <img src="{{ $item['data']->image_url }}" 
                                          alt="{{ $item['data']->title }}" 
                                          class="w-full sm:w-24 h-24 object-cover rounded-lg">
                                 @else

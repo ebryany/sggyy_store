@@ -25,8 +25,30 @@ class ProductImage extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function getImageUrlAttribute(): string
+    public function getImageUrlAttribute(): ?string
     {
-        return asset('storage/' . $this->image_path);
+        if (!$this->image_path) {
+            return null;
+        }
+
+        // If already a full URL, return as is
+        if (str_starts_with($this->image_path, 'http')) {
+            return $this->image_path;
+        }
+
+        // Use StorageService to get correct URL based on configured disk
+        $storageService = app(\App\Services\StorageService::class);
+        return $storageService->url($this->image_path);
+    }
+}
+
+        // If already a full URL, return as is
+        if (str_starts_with($this->image_path, 'http')) {
+            return $this->image_path;
+        }
+
+        // Use StorageService to get correct URL based on configured disk
+        $storageService = app(\App\Services\StorageService::class);
+        return $storageService->url($this->image_path);
     }
 }

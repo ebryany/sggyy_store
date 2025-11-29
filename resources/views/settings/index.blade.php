@@ -1769,3 +1769,116 @@ function syncProducts() {
 }
 </script>
 @endsection
+
+                                <label for="enable_veripay" class="text-sm font-medium text-white cursor-pointer">
+                                    Enable Veripay Payment Gateway (QRIS)
+                                </label>
+                            </div>
+                            <p class="text-xs text-white/60 ml-7">
+                                Aktifkan untuk menampilkan opsi pembayaran Veripay QRIS di halaman checkout.
+                                <strong class="text-green-400">Wajib diaktifkan jika ingin menggunakan Veripay sebagai payment gateway.</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Webhook URL Info -->
+                    <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                        <div class="flex items-start gap-3">
+                            <x-icon name="info" class="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-green-400 mb-2">Veripay Webhook URL</h3>
+                                <p class="text-sm text-white/80 mb-2">
+                                    Salin URL berikut dan pasang di <strong>Veripay Dashboard > Settings > Webhooks</strong>:
+                                </p>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" 
+                                           readonly
+                                           value="{{ route('webhooks.veripay') }}"
+                                           class="flex-1 glass border border-white/10 rounded-lg px-4 py-2 bg-white/5 font-mono text-xs sm:text-sm"
+                                           id="veripay-webhook-url">
+                                    <button type="button" 
+                                            onclick="navigator.clipboard.writeText('{{ route('webhooks.veripay') }}').then(() => window.dispatchEvent(new CustomEvent('toast', {detail: {message: 'Webhook URL berhasil disalin!', type: 'success'}})))"
+                                            class="px-4 py-2 glass glass-hover rounded-lg text-sm font-semibold flex items-center gap-2 touch-target">
+                                        <x-icon name="copy" class="w-4 h-4" />
+                                        <span>Salin</span>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-white/60 mt-2">
+                                    Webhook ini akan menerima update status pembayaran secara real-time dari Veripay.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button type="submit" 
+                                class="px-6 py-3 bg-primary hover:bg-primary-dark rounded-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-primary/20">
+                            Simpan Veripay Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function syncProducts() {
+    const btn = document.getElementById('sync-products-btn');
+    const text = document.getElementById('sync-products-text');
+    const originalText = text.textContent;
+    
+    // Disable button dan show loading
+    btn.disabled = true;
+    text.textContent = 'Memproses...';
+    
+    fetch('{{ route('admin.settings.syncProducts') }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.dispatchEvent(new CustomEvent('toast', {
+                detail: {
+                    message: data.message || `Berhasil menambahkan ${data.count || 0} produk`,
+                    type: 'success'
+                }
+            }));
+            
+            // Optional: Redirect to quota page after successful sync
+            if (data.redirect && data.count > 0) {
+                setTimeout(() => {
+                    window.location.href = data.redirect;
+                }, 1500);
+            }
+        } else {
+            window.dispatchEvent(new CustomEvent('toast', {
+                detail: {
+                    message: data.message || 'Gagal menambahkan produk',
+                    type: 'error'
+                }
+            }));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        window.dispatchEvent(new CustomEvent('toast', {
+            detail: {
+                message: 'Terjadi kesalahan saat menambahkan produk',
+                type: 'error'
+            }
+        }));
+    })
+    .finally(() => {
+        btn.disabled = false;
+        text.textContent = originalText;
+    });
+}
+</script>
+@endsection

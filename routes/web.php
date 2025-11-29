@@ -406,3 +406,10 @@ Route::middleware(['auth', 'seller'])->prefix('seller')->name('seller.')->group(
     Route::get('/withdrawal', [SellerWithdrawalController::class, 'index'])->name('withdrawal.index');
     Route::post('/withdrawal', [SellerWithdrawalController::class, 'store'])->name('withdrawal.store');
 });
+    Route::get('/wallet/top-up', [WalletController::class, 'topUpForm'])->name('wallet.topUp');
+    Route::post('/wallet/top-up', [WalletController::class, 'topUp'])->name('wallet.topUp.store')->middleware('throttle:3,60');
+    
+    // Withdrawal
+    Route::get('/withdrawal', [SellerWithdrawalController::class, 'index'])->name('withdrawal.index');
+    Route::post('/withdrawal', [SellerWithdrawalController::class, 'store'])->name('withdrawal.store');
+});

@@ -161,8 +161,8 @@
                     <div class="glass glass-hover p-4 rounded-lg border border-white/10">
                         <div class="flex items-center gap-4">
                             <div class="w-16 h-16 rounded-lg bg-white/5 overflow-hidden flex items-center justify-center relative">
-                                @if($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" 
+                                @if($product->image && $product->image_url)
+                                <img src="{{ $product->image_url }}" 
                                      alt="{{ $product->title }}" 
                                      class="w-full h-full object-cover"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -201,8 +201,8 @@
                     <div class="glass glass-hover p-4 rounded-lg border border-white/10">
                         <div class="flex items-center gap-4">
                             <div class="w-16 h-16 rounded-lg bg-white/5 overflow-hidden flex items-center justify-center relative">
-                                @if($service->image)
-                                <img src="{{ asset('storage/' . $service->image) }}" 
+                                @if($service->image && $service->image_url)
+                                <img src="{{ $service->image_url }}" 
                                      alt="{{ $service->title }}" 
                                      class="w-full h-full object-cover"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">

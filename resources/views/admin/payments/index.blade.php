@@ -648,3 +648,18 @@
 
 @endsection
 
+
+        
+        <div class="mt-6">
+            {{ $payments->links() }}
+        </div>
+        @else
+        <div class="text-center py-12">
+            <p class="text-white/60 text-sm sm:text-base">Tidak ada payment dengan status ini.</p>
+        </div>
+        @endif
+    </div>
+</div>
+
+@endsection
+

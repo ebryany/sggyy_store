@@ -7,7 +7,7 @@
     <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Edit Produk</h1>
     
     <form method="POST" action="{{ route('seller.products.update', $product) }}" enctype="multipart/form-data" 
-          x-data="{ imagePreview: '{{ $product->image ? asset('storage/' . $product->image) : null }}', fileSelected: false }">
+          x-data="{ imagePreview: '{{ $product->image_url ?? null }}', fileSelected: false }">
         @csrf
         @method('PUT')
         
@@ -115,10 +115,10 @@
             <!-- Image Upload -->
             <div>
                 <label class="block text-sm font-medium mb-2">Gambar Produk</label>
-                @if($product->image)
+                @if($product->image && $product->image_url)
                 <div class="mb-3">
                     <p class="text-sm text-white/60 mb-2">Gambar saat ini:</p>
-                    <img src="{{ asset('storage/' . $product->image) }}" alt="Current" class="w-48 h-48 object-cover rounded-lg">
+                    <img src="{{ $product->image_url }}" alt="Current" class="w-48 h-48 object-cover rounded-lg">
                 </div>
                 @endif
                 <input type="file" name="image" accept="image/jpeg,image/png,image/jpg" 
@@ -128,7 +128,7 @@
                 @error('image')
                 <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
                 @enderror
-                <div x-show="imagePreview && imagePreview !== '{{ $product->image ? asset('storage/' . $product->image) : '' }}'" class="mt-4">
+                <div x-show="imagePreview && imagePreview !== '{{ $product->image_url ?? '' }}'" class="mt-4">
                     <p class="text-sm text-white/60 mb-2">Preview baru:</p>
                     <img :src="imagePreview" alt="Preview" class="w-48 h-48 object-cover rounded-lg">
                 </div>

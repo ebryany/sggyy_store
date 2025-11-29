@@ -507,3 +507,15 @@ class SettingsService
 
 
 
+
+                'uploaded_by' => auth()->id(),
+            ]);
+
+            throw new \Exception('Gagal mengupload banner: ' . $e->getMessage());
+        }
+    }
+}
+
+
+
+

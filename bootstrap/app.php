@@ -50,3 +50,13 @@ return Application::configure(basePath: dirname(__DIR__))
             });
         }
     })->create();
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        // 🔒 SECURITY: Don't expose sensitive information in production
+        if (!config('app.debug')) {
+            $exceptions->shouldRenderJsonWhen(function ($request, \Throwable $e) {
+                // Always return JSON for API requests
+                return $request->is('api/*') || $request->expectsJson();
+            });
+        }
+    })->create();

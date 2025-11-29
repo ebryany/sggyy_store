@@ -91,3 +91,7 @@ class SellerWithdrawal extends Model
         return $this->status === 'completed';
     }
 }
+
+        return $this->status === 'completed';
+    }
+}

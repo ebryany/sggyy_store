@@ -94,16 +94,14 @@
                 // Get image
                 $imageUrl = null;
                 if ($product) {
-                    $primaryImage = $product->primary_image;
-                    if ($primaryImage) {
-                        $imageUrl = str_starts_with($primaryImage, 'http') 
-                            ? $primaryImage 
-                            : asset('storage/' . $primaryImage);
+                    $firstImage = $product->images()->first();
+                    if ($firstImage && $firstImage->image_url) {
+                        $imageUrl = $firstImage->image_url;
+                    } elseif ($product->image_url) {
+                        $imageUrl = $product->image_url;
                     }
-                } elseif ($service && $service->image) {
-                    $imageUrl = str_starts_with($service->image, 'http') 
-                        ? $service->image 
-                        : asset('storage/' . $service->image);
+                } elseif ($service && $service->image_url) {
+                    $imageUrl = $service->image_url;
                 }
     @endphp
             
@@ -198,15 +196,11 @@
             @foreach($popularProducts as $product)
             @php
                 $imageUrl = null;
-                $primaryImage = $product->primary_image;
-                if ($primaryImage) {
-                    $imageUrl = str_starts_with($primaryImage, 'http') 
-                        ? $primaryImage 
-                        : asset('storage/' . $primaryImage);
-                } elseif ($product->image) {
-                    $imageUrl = str_starts_with($product->image, 'http') 
-                        ? $product->image 
-                        : asset('storage/' . $product->image);
+                $firstImage = $product->images()->first();
+                if ($firstImage && $firstImage->image_url) {
+                    $imageUrl = $firstImage->image_url;
+                } elseif ($product->image_url) {
+                    $imageUrl = $product->image_url;
                 }
                 
                 // Determine badges

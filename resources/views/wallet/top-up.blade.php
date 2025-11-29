@@ -486,3 +486,81 @@
     </form>
 </div>
 @endsection
+
+                        <p class="text-sm mb-2 font-medium text-white/80">Preview:</p>
+                        <img :src="proofPreview" 
+                             alt="Proof Preview" 
+                             class="w-full max-w-md rounded-lg border border-white/10" 
+                             x-show="proofPreview && !proofPreview.includes('pdf')">
+                        <div x-show="proofPreview && proofPreview.includes('pdf')" 
+                             class="flex items-center gap-2 p-4 bg-white/5 rounded-lg border border-white/10">
+                            <x-icon name="file-text" class="w-8 h-8 text-primary" />
+                            <span class="text-primary font-semibold">PDF File Selected</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="bg-[#1A1A1C] rounded-xl p-4 sm:p-6 border border-white/5">
+                <label class="block text-sm sm:text-base font-semibold mb-3 text-white flex items-center gap-2">
+                    <x-icon name="file-text" class="w-5 h-5 text-primary" />
+                    <span>Catatan (Opsional)</span>
+                </label>
+                <textarea name="description" 
+                          rows="3"
+                          placeholder="Tambahkan catatan untuk top-up ini..."
+                          class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm sm:text-base text-white placeholder-white/40 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none touch-target">{{ old('description') }}</textarea>
+                @error('description')
+                <p class="text-red-400 text-sm mt-2 flex items-center gap-1">
+                    <x-icon name="alert-circle" class="w-4 h-4" />
+                    {{ $message }}
+                </p>
+                @enderror
+            </div>
+            
+            <!-- Info Box -->
+            <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 sm:p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                        <x-icon name="info" class="w-5 h-5 text-blue-400" />
+                    </div>
+                    <h4 class="font-semibold text-blue-400 text-base sm:text-lg">Informasi Penting</h4>
+                </div>
+                <ul class="text-xs sm:text-sm text-white/80 space-y-2.5">
+                    <li class="flex items-start gap-2.5">
+                        <x-icon name="check-circle" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                        <span>Top-up di bawah Rp 1.000.000 akan langsung ditambahkan ke wallet</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <x-icon name="clock" class="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+                        <span>Top-up di atas Rp 1.000.000 memerlukan verifikasi admin (1-2 hari kerja)</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <x-icon name="image" class="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                        <span>Pastikan bukti pembayaran jelas dan valid</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                        <x-icon name="wallet" class="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                        <span>Saldo akan ditambahkan setelah pembayaran diverifikasi</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Submit Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button type="submit" 
+                        class="flex-1 px-6 py-3.5 sm:py-4 bg-primary hover:bg-primary-dark rounded-lg transition-all font-semibold text-white touch-target text-base sm:text-lg flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30">
+                    <x-icon name="check" class="w-5 h-5" />
+                    <span>Kirim Permintaan Top Up</span>
+                </button>
+                <a href="{{ route('wallet.index') }}" 
+                   class="px-6 py-3.5 sm:py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all text-center touch-target text-base sm:text-lg flex items-center justify-center gap-2 font-medium text-white">
+                    <x-icon name="x" class="w-5 h-5" />
+                    <span>Batal</span>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+@endsection

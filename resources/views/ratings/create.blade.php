@@ -23,8 +23,8 @@
         <div class="glass p-4 sm:p-6 rounded-lg mb-6 sm:mb-8 border border-white/10">
             <div class="flex items-start gap-4">
                 @if($order->product)
-                    @if($order->product->image)
-                        <img src="{{ asset('storage/' . $order->product->image) }}" 
+                    @if($order->product->image && $order->product->image_url)
+                        <img src="{{ $order->product->image_url }}" 
                              alt="{{ $order->product->title }}" 
                              class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover flex-shrink-0">
                     @else
@@ -38,8 +38,8 @@
                         <p class="text-white/60 text-sm">Selesai pada {{ $order->completed_at->format('d M Y, H:i') }}</p>
                     </div>
                 @elseif($order->service)
-                    @if($order->service->image)
-                        <img src="{{ asset('storage/' . $order->service->image) }}" 
+                    @if($order->service->image && $order->service->image_url)
+                        <img src="{{ $order->service->image_url }}" 
                              alt="{{ $order->service->title }}" 
                              class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover flex-shrink-0">
                     @else

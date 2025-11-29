@@ -110,8 +110,8 @@
                     <div class="sm:hidden space-y-3">
                         <div class="flex items-start gap-3">
                             @if($order->type === 'product' && $order->product)
-                                @if($order->product->image)
-                                <img src="{{ asset('storage/' . $order->product->image) }}" 
+                                @if($order->product->image && $order->product->image_url)
+                                <img src="{{ $order->product->image_url }}" 
                                      alt="{{ $order->product->title }}" 
                                      class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
                                 @endif
@@ -120,8 +120,8 @@
                                     <p class="text-white/50 text-xs">{{ $order->product->category }}</p>
                                 </div>
                             @elseif($order->type === 'service' && $order->service)
-                                @if($order->service->image)
-                                <img src="{{ asset('storage/' . $order->service->image) }}" 
+                                @if($order->service->image && $order->service->image_url)
+                                <img src="{{ $order->service->image_url }}" 
                                      alt="{{ $order->service->title }}" 
                                      class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
                                 @endif
@@ -139,8 +139,8 @@
                     <!-- Desktop: Horizontal Layout -->
                     <div class="hidden sm:flex items-center space-x-4">
                         @if($order->type === 'product' && $order->product)
-                            @if($order->product->image)
-                            <img src="{{ asset('storage/' . $order->product->image) }}" 
+                            @if($order->product->image && $order->product->image_url)
+                            <img src="{{ $order->product->image_url }}" 
                                  alt="{{ $order->product->title }}" 
                                  class="w-20 h-20 object-cover rounded-lg">
                             @endif
@@ -149,8 +149,8 @@
                                 <p class="text-white/60 text-sm">{{ $order->product->category }}</p>
                             </div>
                         @elseif($order->type === 'service' && $order->service)
-                            @if($order->service->image)
-                            <img src="{{ asset('storage/' . $order->service->image) }}" 
+                            @if($order->service->image && $order->service->image_url)
+                            <img src="{{ $order->service->image_url }}" 
                                  alt="{{ $order->service->title }}" 
                                  class="w-20 h-20 object-cover rounded-lg">
                             @endif

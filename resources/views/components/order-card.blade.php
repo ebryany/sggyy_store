@@ -9,15 +9,18 @@
     
     // Get product/service image
     $itemImage = null;
+    $itemImageUrl = null;
     $itemTitle = 'N/A';
     $itemCategory = null;
     
     if ($order->type === 'product' && $order->product) {
         $itemImage = $order->product->image;
+        $itemImageUrl = $order->product->image_url;
         $itemTitle = $order->product->title;
         $itemCategory = $order->product->category;
     } elseif ($order->type === 'service' && $order->service) {
         $itemImage = $order->service->image;
+        $itemImageUrl = $order->service->image_url;
         $itemTitle = $order->service->title;
         $itemCategory = 'Jasa';
     }
@@ -72,8 +75,8 @@
     
     <!-- Product/Service Info -->
     <div class="flex items-start gap-4 mb-4">
-        @if($itemImage)
-        <img src="{{ asset('storage/' . $itemImage) }}" 
+        @if($itemImageUrl)
+        <img src="{{ $itemImageUrl }}" 
              alt="{{ $itemTitle }}" 
              class="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover flex-shrink-0 border border-white/10">
         @else

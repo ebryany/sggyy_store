@@ -46,3 +46,23 @@ return new class extends Migration
         });
     }
 };
+
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('wallet_transactions', function (Blueprint $table) {
+            $table->dropIndex(['veripay_transaction_ref']);
+            $table->dropColumn([
+                'veripay_transaction_ref',
+                'veripay_payment_url',
+                'veripay_metadata',
+            ]);
+            
+            // Revert payment_method enum
+            DB::statement("ALTER TABLE `wallet_transactions` MODIFY COLUMN `payment_method` ENUM('bank_transfer', 'qris', 'manual', 'wallet') NULL");
+        });
+    }
+};

@@ -31,3 +31,8 @@ return new class extends Migration
         DB::statement("ALTER TABLE `payments` MODIFY COLUMN `method` ENUM('wallet', 'bank_transfer', 'qris', 'manual') NOT NULL DEFAULT 'wallet'");
     }
 };
+
+        // Convert back to enum (only with original values)
+        DB::statement("ALTER TABLE `payments` MODIFY COLUMN `method` ENUM('wallet', 'bank_transfer', 'qris', 'manual') NOT NULL DEFAULT 'wallet'");
+    }
+};

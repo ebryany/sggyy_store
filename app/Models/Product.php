@@ -244,6 +244,44 @@ class Product extends Model
     }
 
     /**
+     * Get image URL (supports OSS, S3, and local storage)
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        // If already a full URL, return as is
+        if (str_starts_with($this->image, 'http')) {
+            return $this->image;
+        }
+
+        // Use StorageService to get correct URL based on configured disk
+        $storageService = app(\App\Services\StorageService::class);
+        return $storageService->url($this->image);
+    }
+
+    /**
+     * Check if product is published
+     */
+    public function isPublished(): bool
+    {
+        return !$this->is_draft && $this->is_active && 
+               ($this->published_at === null || $this->published_at <= now());
+    }
+}
+
+
+
+
+
+
+        $storageService = app(\App\Services\StorageService::class);
+        return $storageService->url($this->image);
+    }
+
+    /**
      * Check if product is published
      */
     public function isPublished(): bool

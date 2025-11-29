@@ -111,3 +111,8 @@ class Escrow extends Model
     }
 }
 
+
+        return $this->isHolding() && !$this->is_disputed;
+    }
+}
+

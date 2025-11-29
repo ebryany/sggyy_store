@@ -124,6 +124,25 @@ class Service extends Model
         
         return $slug;
     }
+
+    /**
+     * Get image URL (supports OSS, S3, and local storage)
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        // If already a full URL, return as is
+        if (str_starts_with($this->image, 'http')) {
+            return $this->image;
+        }
+
+        // Use StorageService to get correct URL based on configured disk
+        $storageService = app(\App\Services\StorageService::class);
+        return $storageService->url($this->image);
+    }
 }
 
 
