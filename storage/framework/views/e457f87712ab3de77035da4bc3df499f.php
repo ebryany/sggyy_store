@@ -48,36 +48,8 @@
     </main>
     
     <script>
-    // Integrate session flash messages with notification toast
-    document.addEventListener('DOMContentLoaded', function() {
-        <?php if(session('success')): ?>
-            window.dispatchEvent(new CustomEvent('notification-received', {
-                detail: {
-                    id: 'flash-' + Date.now(),
-                    type: 'success',
-                    message: '<?php echo e(session('success')); ?>',
-                    is_read: false,
-                    created_at: new Date().toISOString(),
-                    action_url: null,
-                    action_text: null
-                }
-            }));
-        <?php endif; ?>
-        
-        <?php if(session('error')): ?>
-            window.dispatchEvent(new CustomEvent('notification-received', {
-                detail: {
-                    id: 'flash-' + Date.now(),
-                    type: 'error',
-                    message: '<?php echo e(session('error')); ?>',
-                    is_read: false,
-                    created_at: new Date().toISOString(),
-                    action_url: null,
-                    action_text: null
-                }
-            }));
-        <?php endif; ?>
-    });
+    // Flash messages are now only shown via alert components, not notification toast
+    // This prevents duplicate notifications (alert box + toast notification)
     </script>
     
     <?php echo $__env->make('components.toast', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>

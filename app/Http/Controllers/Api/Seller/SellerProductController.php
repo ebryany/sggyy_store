@@ -109,8 +109,10 @@ class SellerProductController extends BaseApiController
      */
     public function update(Request $request, Product $product)
     {
-        // Check authorization
-        if ($product->user_id !== auth()->id()) {
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('update', $product);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             return $this->forbidden('You do not have access to this product');
         }
 
@@ -156,8 +158,10 @@ class SellerProductController extends BaseApiController
      */
     public function destroy(Product $product)
     {
-        // Check authorization
-        if ($product->user_id !== auth()->id()) {
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('update', $product);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             return $this->forbidden('You do not have access to this product');
         }
 

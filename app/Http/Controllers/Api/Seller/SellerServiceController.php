@@ -97,8 +97,10 @@ class SellerServiceController extends BaseApiController
      */
     public function update(Request $request, Service $service)
     {
-        // Check authorization
-        if ($service->user_id !== auth()->id()) {
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('update', $service);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             return $this->forbidden('You do not have access to this service');
         }
 
@@ -156,8 +158,10 @@ class SellerServiceController extends BaseApiController
      */
     public function destroy(Service $service)
     {
-        // Check authorization
-        if ($service->user_id !== auth()->id()) {
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('update', $service);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             return $this->forbidden('You do not have access to this service');
         }
 

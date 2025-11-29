@@ -42,6 +42,11 @@ class Escrow extends Model
             'disputed_at' => 'datetime',
             'is_disputed' => 'boolean',
             'xendit_disbursement_metadata' => 'array',
+            // 🔒 SECURITY: Encrypt sensitive Xendit identifiers
+            'xendit_invoice_id' => \App\Casts\Encrypted::class,
+            'xendit_external_id' => \App\Casts\Encrypted::class,
+            'xendit_disbursement_id' => \App\Casts\Encrypted::class,
+            'xendit_disbursement_external_id' => \App\Casts\Encrypted::class,
         ];
     }
 

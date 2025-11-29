@@ -31,6 +31,30 @@
             <p class="text-white/60 text-sm sm:text-base">Manajemen dan analitik platform lengkap</p>
         </div>
         <div class="flex gap-2 sm:gap-3">
+            <a href="<?php echo e(route('admin.financial-report.index')); ?>" 
+               class="px-4 py-2 glass glass-hover rounded-lg text-sm font-semibold hover:scale-105 transition-all flex items-center gap-2">
+                <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.icon','data' => ['name' => 'dollar-sign','class' => 'w-4 h-4']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['name' => 'dollar-sign','class' => 'w-4 h-4']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $attributes = $__attributesOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__attributesOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc)): ?>
+<?php $component = $__componentOriginalce262628e3a8d44dc38fd1f3965181bc; ?>
+<?php unset($__componentOriginalce262628e3a8d44dc38fd1f3965181bc); ?>
+<?php endif; ?>
+                Laporan Keuangan
+            </a>
             <a href="<?php echo e(route('admin.settings.index')); ?>" 
                class="px-4 py-2 glass glass-hover rounded-lg text-sm font-semibold hover:scale-105 transition-all flex items-center gap-2">
                 <?php if (isset($component)) { $__componentOriginalce262628e3a8d44dc38fd1f3965181bc = $component; } ?>

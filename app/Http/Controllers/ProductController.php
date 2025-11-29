@@ -209,6 +209,14 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request): RedirectResponse
     {
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('create', Product::class);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \App\Services\SecurityLogger::logAuthorizationFailure('Product create');
+            throw $e;
+        }
+        
         try {
             $validated = $request->validated();
             
@@ -291,9 +299,14 @@ class ProductController extends Controller
             abort(404, 'Produk tidak ditemukan');
         }
         
-        // Authorization: only owner can edit
-        if ($productModel->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            abort(403);
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('update', $productModel);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \App\Services\SecurityLogger::logAuthorizationFailure('Product update', [
+                'product_id' => $productModel->id,
+            ]);
+            throw $e;
         }
 
         // Load relationships
@@ -316,9 +329,14 @@ class ProductController extends Controller
             abort(404, 'Produk tidak ditemukan');
         }
         
-        // Authorization: only owner can update
-        if ($productModel->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            abort(403);
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('update', $productModel);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \App\Services\SecurityLogger::logAuthorizationFailure('Product update', [
+                'product_id' => $productModel->id,
+            ]);
+            throw $e;
         }
 
         try {
@@ -366,9 +384,14 @@ class ProductController extends Controller
             abort(404, 'Produk tidak ditemukan');
         }
         
-        // Authorization: only owner or admin can delete
-        if ($productModel->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            abort(403);
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('delete', $productModel);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \App\Services\SecurityLogger::logAuthorizationFailure('Product delete', [
+                'product_id' => $productModel->id,
+            ]);
+            throw $e;
         }
 
         try {

@@ -81,6 +81,10 @@ class User extends Authenticatable
             'password' => 'hashed',
             'wallet_balance' => 'decimal:2',
             'xendit_subaccount_metadata' => 'array',
+            // 🔒 SECURITY: Encrypt sensitive financial data
+            'bank_account_number' => \App\Casts\Encrypted::class,
+            'xendit_subaccount_id' => \App\Casts\Encrypted::class,
+            'xendit_subaccount_email' => \App\Casts\Encrypted::class,
         ];
     }
 

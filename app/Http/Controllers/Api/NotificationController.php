@@ -51,7 +51,7 @@ class NotificationController extends BaseApiController
      */
     public function markAsRead(Notification $notification)
     {
-        // Check authorization
+        // 🔒 SECURITY: Verify notification belongs to user
         if ($notification->user_id !== auth()->id()) {
             return $this->forbidden('You do not have access to this notification');
         }

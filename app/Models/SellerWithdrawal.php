@@ -30,6 +30,10 @@ class SellerWithdrawal extends Model
         return [
             'amount' => 'decimal:2',
             'processed_at' => 'datetime',
+            // 🔒 SECURITY: Encrypt sensitive withdrawal account data
+            'account_number' => \App\Casts\Encrypted::class,
+            'account_name' => \App\Casts\Encrypted::class,
+            'bank_name' => \App\Casts\Encrypted::class,
         ];
     }
 

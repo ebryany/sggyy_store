@@ -17,8 +17,10 @@ class DownloadController extends BaseApiController
      */
     public function getDownloadLinks(Order $order)
     {
-        // Check authorization
-        if ($order->user_id !== auth()->id()) {
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('view', $order);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             return $this->forbidden('You do not have access to this order');
         }
 
@@ -124,4 +126,3 @@ class DownloadController extends BaseApiController
         );
     }
 }
-

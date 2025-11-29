@@ -14,6 +14,11 @@
             <p class="text-white/60 text-sm sm:text-base">Manajemen dan analitik platform lengkap</p>
         </div>
         <div class="flex gap-2 sm:gap-3">
+            <a href="{{ route('admin.financial-report.index') }}" 
+               class="px-4 py-2 glass glass-hover rounded-lg text-sm font-semibold hover:scale-105 transition-all flex items-center gap-2">
+                <x-icon name="dollar-sign" class="w-4 h-4" />
+                Laporan Keuangan
+            </a>
             <a href="{{ route('admin.settings.index') }}" 
                class="px-4 py-2 glass glass-hover rounded-lg text-sm font-semibold hover:scale-105 transition-all flex items-center gap-2">
                 <x-icon name="settings" class="w-4 h-4" />

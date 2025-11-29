@@ -164,6 +164,14 @@ class ServiceController extends Controller
 
     public function store(StoreServiceRequest $request): RedirectResponse
     {
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('create', Service::class);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \App\Services\SecurityLogger::logAuthorizationFailure('Service create');
+            throw $e;
+        }
+        
         try {
             $service = $this->jokiService->create(
                 $request->validated(),
@@ -219,8 +227,14 @@ class ServiceController extends Controller
             abort(404, 'Jasa tidak ditemukan');
         }
         
-        if ($serviceModel->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            abort(403);
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('update', $serviceModel);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \App\Services\SecurityLogger::logAuthorizationFailure('Service update', [
+                'service_id' => $serviceModel->id,
+            ]);
+            throw $e;
         }
 
         return view('services.edit', ['service' => $serviceModel]);
@@ -237,8 +251,14 @@ class ServiceController extends Controller
             abort(404, 'Jasa tidak ditemukan');
         }
         
-        if ($serviceModel->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            abort(403);
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('update', $serviceModel);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \App\Services\SecurityLogger::logAuthorizationFailure('Service update', [
+                'service_id' => $serviceModel->id,
+            ]);
+            throw $e;
         }
 
         try {
@@ -269,8 +289,40 @@ class ServiceController extends Controller
             abort(404, 'Jasa tidak ditemukan');
         }
         
-        if ($serviceModel->user_id !== auth()->id() && !auth()->user()->isAdmin()) {
-            abort(403);
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('delete', $serviceModel);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \App\Services\SecurityLogger::logAuthorizationFailure('Service delete', [
+                'service_id' => $serviceModel->id,
+            ]);
+            throw $e;
+        }
+
+        try {
+            $this->jokiService->delete($serviceModel);
+
+            return redirect()
+                ->route('services.index')
+                ->with('success', 'Jasa berhasil dihapus');
+        } catch (\Exception $e) {
+            return back()
+                ->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+}
+
+            abort(404, 'Jasa tidak ditemukan');
+        }
+        
+        // 🔒 SECURITY: Use Policy for authorization
+        try {
+            $this->authorize('delete', $serviceModel);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \App\Services\SecurityLogger::logAuthorizationFailure('Service delete', [
+                'service_id' => $serviceModel->id,
+            ]);
+            throw $e;
         }
 
         try {
