@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook.throttle' => \App\Http\Middleware\ThrottleWebhook::class,
         ]);
         
+        // 🔒 SECURITY: Add security headers to all responses
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        
         // Trust proxies for load balancer support
         $middleware->trustProxies(at: '*');
         
@@ -31,11 +34,19 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook/*',
             'webhooks/xendit',
             'webhooks/xendit/*',
+            'webhooks/veripay',
+            'webhooks/veripay/*',
             'quota.webhook',
             'quota.webhook.get',
             'api/v1/webhooks/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // 🔒 SECURITY: Don't expose sensitive information in production
+        if (!config('app.debug')) {
+            $exceptions->shouldRenderJsonWhen(function ($request, \Throwable $e) {
+                // Always return JSON for API requests
+                return $request->is('api/*') || $request->expectsJson();
+            });
+        }
     })->create();

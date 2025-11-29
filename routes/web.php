@@ -166,6 +166,10 @@ Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear')
 Route::post('/webhooks/xendit', [\App\Http\Controllers\XenditWebhookController::class, 'handle'])->name('webhooks.xendit');
 Route::get('/webhooks/xendit/health', [\App\Http\Controllers\XenditWebhookController::class, 'health'])->name('webhooks.xendit.health');
 
+// Veripay Webhook (public, no auth required - uses signature verification)
+Route::post('/webhooks/veripay', [\App\Http\Controllers\VeripayWebhookController::class, 'handle'])->name('webhooks.veripay');
+Route::get('/webhooks/veripay/health', [\App\Http\Controllers\VeripayWebhookController::class, 'health'])->name('webhooks.veripay.health');
+
 // Protected Routes (Buyer Actions)
 Route::middleware(['auth'])->group(function () {
     // Dashboard
@@ -300,6 +304,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Admin Dashboard
     Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
     
+    // Financial Report
+    Route::get('/financial-report', [\App\Http\Controllers\Admin\FinancialReportController::class, 'index'])->name('financial-report.index');
+    
     // Users Management
     Route::get('/users', [\App\Http\Controllers\Admin\AdminUserController::class, 'index'])->name('users.index');
     Route::get('/users/{user}', [\App\Http\Controllers\Admin\AdminUserController::class, 'show'])->name('users.show');
@@ -319,6 +326,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::post('/settings/home', [SettingController::class, 'updateHomeSettings'])->name('settings.home');
             Route::post('/settings/banner', [SettingController::class, 'updateBannerSettings'])->name('settings.banner');
     Route::post('/settings/xendit', [SettingController::class, 'updateXenditSettings'])->name('settings.xendit');
+    Route::post('/settings/veripay', [SettingController::class, 'updateVeripaySettings'])->name('settings.veripay');
             Route::post('/settings/owner', [SettingController::class, 'updateOwnerSettings'])->name('settings.owner');
             Route::post('/settings/featured', [SettingController::class, 'storeFeaturedItem'])->name('settings.featured');
             Route::delete('/settings/featured/{featuredItem}', [SettingController::class, 'deleteFeaturedItem'])->name('settings.featured.delete');

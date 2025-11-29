@@ -1593,6 +1593,119 @@
                     </div>
                 </form>
             </div>
+
+            <!-- Veripay Settings -->
+            <div class="glass p-6 sm:p-8 rounded-xl border border-white/10 mt-6">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-2 flex items-center gap-2">
+                        <x-icon name="qrcode" class="w-6 h-6 text-primary" />
+                        Veripay Payment Gateway Configuration
+                    </h2>
+                    <p class="text-white/60 text-sm">Kelola integrasi payment gateway Veripay untuk QRIS</p>
+                </div>
+
+                <form action="{{ route('admin.settings.veripay') }}" method="POST" class="space-y-6">
+                    @csrf
+
+                    <!-- Veripay Configuration -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <x-icon name="qrcode" class="w-5 h-5 text-primary" />
+                            Veripay API Configuration
+                        </h3>
+
+                        <!-- API Key -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">
+                                API Key <span class="text-red-400">*</span>
+                            </label>
+                            <input type="password" 
+                                   name="veripay_api_key" 
+                                   value="{{ $veripaySettings['api_key'] ?? '' }}"
+                                   class="w-full border rounded-lg px-4 py-2.5 bg-white/5 focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed @error('veripay_api_key') border-red-500/50 @else border-white/10 @enderror"
+                                   placeholder="Masukkan API Key Veripay"
+                                   required>
+                            @error('veripay_api_key')
+                                <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-white/60">Dapatkan dari Veripay Dashboard > Settings > API Keys</p>
+                        </div>
+
+                        <!-- Secret Key -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">
+                                Secret Key <span class="text-red-400">*</span>
+                            </label>
+                            <input type="password" 
+                                   name="veripay_secret_key" 
+                                   value="{{ $veripaySettings['secret_key'] ?? '' }}"
+                                   class="w-full border rounded-lg px-4 py-2.5 bg-white/5 focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed @error('veripay_secret_key') border-red-500/50 @else border-white/10 @enderror"
+                                   placeholder="Masukkan Secret Key Veripay"
+                                   required>
+                            @error('veripay_secret_key')
+                                <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-white/60">Dapatkan dari Veripay Dashboard > Settings > API Keys</p>
+                        </div>
+
+                        <!-- Enable Veripay Payment -->
+                        <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                            <div class="flex items-center gap-3 mb-2">
+                                <input type="checkbox" 
+                                       name="enable_veripay" 
+                                       value="1"
+                                       {{ ($featureFlags['enable_veripay'] ?? false) ? 'checked' : '' }}
+                                       id="enable_veripay"
+                                       class="w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary focus:ring-2">
+                                <label for="enable_veripay" class="text-sm font-medium text-white cursor-pointer">
+                                    Enable Veripay Payment Gateway (QRIS)
+                                </label>
+                            </div>
+                            <p class="text-xs text-white/60 ml-7">
+                                Aktifkan untuk menampilkan opsi pembayaran Veripay QRIS di halaman checkout.
+                                <strong class="text-green-400">Wajib diaktifkan jika ingin menggunakan Veripay sebagai payment gateway.</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Webhook URL Info -->
+                    <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                        <div class="flex items-start gap-3">
+                            <x-icon name="info" class="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-green-400 mb-2">Veripay Webhook URL</h3>
+                                <p class="text-sm text-white/80 mb-2">
+                                    Salin URL berikut dan pasang di <strong>Veripay Dashboard > Settings > Webhooks</strong>:
+                                </p>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" 
+                                           readonly
+                                           value="{{ route('webhooks.veripay') }}"
+                                           class="flex-1 glass border border-white/10 rounded-lg px-4 py-2 bg-white/5 font-mono text-xs sm:text-sm"
+                                           id="veripay-webhook-url">
+                                    <button type="button" 
+                                            onclick="navigator.clipboard.writeText('{{ route('webhooks.veripay') }}').then(() => window.dispatchEvent(new CustomEvent('toast', {detail: {message: 'Webhook URL berhasil disalin!', type: 'success'}})))"
+                                            class="px-4 py-2 glass glass-hover rounded-lg text-sm font-semibold flex items-center gap-2 touch-target">
+                                        <x-icon name="copy" class="w-4 h-4" />
+                                        <span>Salin</span>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-white/60 mt-2">
+                                    Webhook ini akan menerima update status pembayaran secara real-time dari Veripay.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button type="submit" 
+                                class="px-6 py-3 bg-primary hover:bg-primary-dark rounded-lg font-semibold transition-all hover:scale-105 shadow-lg shadow-primary/20">
+                            Simpan Veripay Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

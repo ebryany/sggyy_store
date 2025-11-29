@@ -60,6 +60,11 @@ class CheckoutController extends Controller
             if (in_array($paymentMethod, ['xendit_va', 'xendit_qris']) && !($featureFlags['enable_xendit'] ?? false)) {
                 throw new \Exception('Metode pembayaran Xendit tidak tersedia saat ini');
             }
+            
+            // Check Veripay feature flag
+            if ($paymentMethod === 'veripay_qris' && !($featureFlags['enable_veripay'] ?? false)) {
+                throw new \Exception('Metode pembayaran Veripay tidak tersedia saat ini');
+            }
 
             if ($validated['type'] === 'product') {
                 $product = Product::findOrFail($validated['product_id']);
@@ -84,6 +89,12 @@ class CheckoutController extends Controller
                 $xenditInvoiceUrl = $order->payment->xendit_metadata['invoice_url'] ?? null;
             }
             
+            // Check if payment is via Veripay and has payment URL
+            $veripayPaymentUrl = null;
+            if ($order->payment && $order->payment->method === 'veripay_qris' && $order->payment->xendit_metadata) {
+                $veripayPaymentUrl = $order->payment->xendit_metadata['payment_url'] ?? null;
+            }
+            
             if (in_array($paymentMethod, ['xendit_va', 'xendit_qris']) && $xenditInvoiceUrl) {
                 $message = 'Pesanan berhasil dibuat! Anda akan diarahkan ke halaman pembayaran Xendit.';
                 
@@ -94,6 +105,19 @@ class CheckoutController extends Controller
                         'message' => $message,
                         'redirect' => $xenditInvoiceUrl,
                         'xendit_redirect' => true,
+                    ]);
+                }
+            } elseif ($paymentMethod === 'veripay_qris' && $veripayPaymentUrl) {
+                $message = 'Pesanan berhasil dibuat! Silakan scan QRIS untuk melakukan pembayaran.';
+                
+                // If AJAX request, return JSON with Veripay redirect
+                if ($request->wantsJson() || $request->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $message,
+                        'redirect' => $veripayPaymentUrl,
+                        'veripay_redirect' => true,
+                        'qr_code' => $order->payment->xendit_metadata['qr_code'] ?? null,
                     ]);
                 }
                 

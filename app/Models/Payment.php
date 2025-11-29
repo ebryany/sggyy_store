@@ -47,6 +47,9 @@ class Payment extends Model
         return [
             'verified_at' => 'datetime',
             'xendit_metadata' => 'array',
+            // 🔒 SECURITY: Encrypt sensitive payment identifiers
+            'xendit_invoice_id' => \App\Casts\Encrypted::class,
+            'xendit_external_id' => \App\Casts\Encrypted::class,
         ];
     }
 
@@ -69,6 +72,11 @@ class Payment extends Model
     public function isXenditPayment(): bool
     {
         return !empty($this->xendit_invoice_id) || !empty($this->xendit_external_id);
+    }
+
+    public function isVeripayPayment(): bool
+    {
+        return $this->method === 'veripay_qris' && !empty($this->xendit_external_id);
     }
 
     // Helper methods

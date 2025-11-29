@@ -20,7 +20,7 @@ class CheckoutService
     {
         // Validate payment method
         $paymentMethod = $data['payment_method'] ?? 'wallet';
-        $validMethods = ['wallet', 'bank_transfer', 'qris', 'xendit_va', 'xendit_qris'];
+        $validMethods = ['wallet', 'bank_transfer', 'qris', 'xendit_va', 'xendit_qris', 'veripay_qris'];
         if (!in_array($paymentMethod, $validMethods)) {
             throw new \Exception('Metode pembayaran tidak valid');
         }
@@ -36,6 +36,9 @@ class CheckoutService
             // Process payment based on method
             if ($paymentMethod === 'wallet') {
                 $this->processWalletPayment($order, $payment);
+            } elseif ($paymentMethod === 'veripay_qris') {
+                // Veripay QRIS - create payment immediately
+                $this->createVeripayPayment($order, $payment);
             } elseif (in_array($paymentMethod, ['xendit_va', 'xendit_qris'])) {
                 // Xendit payment methods - create invoice immediately
                 $this->createXenditInvoice($order, $payment, $paymentMethod);
@@ -64,7 +67,7 @@ class CheckoutService
 
         // Validate payment method
         $paymentMethod = $data['payment_method'] ?? 'wallet';
-        $validMethods = ['wallet', 'bank_transfer', 'qris', 'xendit_va', 'xendit_qris'];
+        $validMethods = ['wallet', 'bank_transfer', 'qris', 'xendit_va', 'xendit_qris', 'veripay_qris'];
         if (!in_array($paymentMethod, $validMethods)) {
             throw new \Exception('Metode pembayaran tidak valid');
         }
@@ -158,6 +161,55 @@ class CheckoutService
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to create Xendit invoice', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't throw - payment can still be processed manually
+        }
+    }
+
+    /**
+     * Create Veripay payment (QRIS)
+     */
+    private function createVeripayPayment(Order $order, Payment $payment): void
+    {
+        try {
+            $veripayService = app(\App\Services\VeripayService::class);
+            
+            // Update payment method
+            $payment->update(['method' => 'veripay_qris']);
+            
+            $veripayResponse = $veripayService->createPayment($order);
+            
+            if (!($veripayResponse['success'] ?? false)) {
+                throw new \Exception($veripayResponse['message'] ?? 'Gagal membuat pembayaran Veripay');
+            }
+
+            $data = $veripayResponse['data'] ?? [];
+            
+            // Update payment with Veripay data
+            // Reuse xendit fields untuk compatibility (xendit_external_id = transaction_ref, xendit_invoice_id = order_id)
+            $payment->update([
+                'xendit_external_id' => $data['transaction_ref'] ?? null, // Transaction reference
+                'xendit_invoice_id' => $data['order_id'] ?? null, // Veripay order_id
+                'xendit_payment_method' => 'QRIS',
+                'xendit_metadata' => [
+                    'transaction_ref' => $data['transaction_ref'] ?? null,
+                    'payment_url' => $data['payment_url'] ?? null,
+                    'qr_code' => $data['qr_code'] ?? null,
+                    'status' => $data['status'] ?? 'pending',
+                ],
+            ]);
+            
+            \Illuminate\Support\Facades\Log::info('Veripay payment created during checkout', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'transaction_ref' => $data['transaction_ref'] ?? null,
+                'payment_url' => $data['payment_url'] ?? null,
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create Veripay payment', [
                 'order_id' => $order->id,
                 'payment_id' => $payment->id,
                 'error' => $e->getMessage(),

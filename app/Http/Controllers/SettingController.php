@@ -35,6 +35,7 @@ class SettingController extends Controller
         $ownerSettings = $this->settingsService->getOwnerSettings();
         $bannerSettings = $this->settingsService->getBannerSettings();
         $xenditSettings = $this->settingsService->getXenditSettings();
+        $veripaySettings = $this->settingsService->getVeripaySettings();
 
         return view('settings.index', compact(
             'settings',
@@ -50,7 +51,8 @@ class SettingController extends Controller
             'homeSettings',
             'ownerSettings',
             'bannerSettings',
-            'xenditSettings'
+            'xenditSettings',
+            'veripaySettings'
         ));
     }
 
@@ -668,6 +670,28 @@ class SettingController extends Controller
             return back()->with('success', 'Pengaturan Xendit berhasil diperbarui');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Gagal memperbarui pengaturan Xendit: ' . $e->getMessage()]);
+        }
+    }
+
+    public function updateVeripaySettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'veripay_api_key' => ['required', 'string', 'min:10'],
+            'veripay_secret_key' => ['required', 'string', 'min:10'],
+            'enable_veripay' => ['sometimes', 'boolean'],
+        ]);
+
+        try {
+            $this->settingsService->set('veripay_api_key', $request->veripay_api_key);
+            $this->settingsService->set('veripay_secret_key', $request->veripay_secret_key);
+            $this->settingsService->set('veripay_enabled', $request->has('enable_veripay') ? '1' : '0', 'boolean');
+
+            // Clear cache to reload settings
+            $this->settingsService->clearCache();
+
+            return back()->with('success', 'Pengaturan Veripay berhasil diperbarui');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Gagal memperbarui pengaturan Veripay: ' . $e->getMessage()]);
         }
     }
 

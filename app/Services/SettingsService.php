@@ -203,6 +203,16 @@ class SettingsService
         ];
     }
 
+    public function getVeripaySettings(): array
+    {
+        return [
+            'api_key' => $this->get('veripay_api_key', ''),
+            'secret_key' => $this->get('veripay_secret_key', ''),
+            'base_url' => 'https://veripay.site/api/v1', // Fixed base URL
+            'enabled' => (bool) $this->get('veripay_enabled', false),
+        ];
+    }
+
     public function getLimits(): array
     {
         return [
@@ -257,11 +267,13 @@ class SettingsService
     public function getFeatureFlags(): array
     {
         $xenditSettings = $this->getXenditSettings();
+        $veripaySettings = $this->getVeripaySettings();
         return [
             'enable_wallet' => (bool) $this->get('enable_wallet', true),
             'enable_bank_transfer' => (bool) $this->get('enable_bank_transfer', true),
             'enable_qris' => (bool) $this->get('enable_qris', true),
             'enable_xendit' => (bool) $this->get('enable_xendit', false),
+            'enable_veripay' => $veripaySettings['enabled'] ?? false,
             'enable_xenplatform' => $xenditSettings['enable_xenplatform'] ?? false,
             'enable_seller_registration' => (bool) $this->get('enable_seller_registration', true),
             'maintenance_mode' => (bool) $this->get('maintenance_mode', false),

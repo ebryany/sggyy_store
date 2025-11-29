@@ -79,14 +79,23 @@ class PaymentService
                 $order->load('product');
             }
             
-            // Check if payment is via Xendit (has escrow) or manual (no escrow)
+            // Check if payment is via Xendit/Veripay (has escrow) or manual (no escrow)
             $isXenditPayment = $payment->isXenditPayment();
+            $isVeripayPayment = $payment->isVeripayPayment();
             
             if ($isXenditPayment) {
                 // Xendit payment: escrow will be created by XenditService webhook handler
                 // This method is for manual verification only
                 // For Xendit, webhook handler already processed everything
-                Log::info('Payment verified manually but is Xendit payment - escrow should be handled by webhook', [
+                \Illuminate\Support\Facades\Log::info('Payment verified manually but is Xendit payment - escrow should be handled by webhook', [
+                    'payment_id' => $payment->id,
+                    'order_id' => $order->id,
+                ]);
+            } elseif ($isVeripayPayment) {
+                // Veripay payment: escrow will be created by VeripayWebhookController
+                // This method is for manual verification only
+                // For Veripay, webhook handler already processed everything
+                \Illuminate\Support\Facades\Log::info('Payment verified manually but is Veripay payment - escrow should be handled by webhook', [
                     'payment_id' => $payment->id,
                     'order_id' => $order->id,
                 ]);
