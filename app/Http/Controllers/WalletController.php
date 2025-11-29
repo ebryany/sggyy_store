@@ -66,7 +66,7 @@ class WalletController extends Controller
     {
         // Get limits from settings
         $limits = $this->settingsService->getLimits();
-        $minTopup = $limits['min_topup_amount'] ?? 10000;
+        $minTopup = $limits['min_topup_amount'] ?? 2000;
         $maxTopup = $limits['max_topup_amount'] ?? 10000000;
 
         // Check feature flags

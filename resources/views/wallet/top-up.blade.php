@@ -59,7 +59,7 @@
                     <span class="text-red-400">*</span>
                 </label>
                 @php
-                    $minTopup = $limits['min_topup_amount'] ?? 10000;
+                    $minTopup = $limits['min_topup_amount'] ?? 2000;
                     $maxTopup = $limits['max_topup_amount'] ?? 10000000;
                 @endphp
                 <div class="relative">

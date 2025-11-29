@@ -216,7 +216,7 @@ class SettingsService
     public function getLimits(): array
     {
         return [
-            'min_topup_amount' => (float) $this->get('min_topup_amount', 10000),
+            'min_topup_amount' => (float) $this->get('min_topup_amount', 2000),
             'max_topup_amount' => (float) $this->get('max_topup_amount', 10000000),
             'min_order_amount' => (float) $this->get('min_order_amount', 1000),
             'min_withdrawal_amount' => (float) $this->get('min_withdrawal_amount', 50000),
