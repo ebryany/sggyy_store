@@ -89,6 +89,9 @@ class CheckoutService
             // Process payment based on method
             if ($paymentMethod === 'wallet') {
                 $this->processWalletPayment($order, $payment);
+            } elseif ($paymentMethod === 'veripay_qris') {
+                // Veripay QRIS - create payment immediately
+                $this->createVeripayPayment($order, $payment);
             } elseif (in_array($paymentMethod, ['xendit_va', 'xendit_qris'])) {
                 // Xendit payment methods - create invoice immediately
                 $this->createXenditInvoice($order, $payment, $paymentMethod);
@@ -213,8 +216,10 @@ class CheckoutService
                 'order_id' => $order->id,
                 'payment_id' => $payment->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
-            // Don't throw - payment can still be processed manually
+            // Re-throw exception so user can see the error
+            throw new \Exception('Gagal membuat pembayaran Veripay: ' . $e->getMessage());
         }
     }
 

@@ -104,6 +104,17 @@ class VeripayService
                 }
             }
 
+            // Load relationships if not already loaded
+            if (!$order->relationLoaded('user')) {
+                $order->load('user');
+            }
+            if ($order->type === 'product' && !$order->relationLoaded('product')) {
+                $order->load('product');
+            }
+            if ($order->type === 'service' && !$order->relationLoaded('service')) {
+                $order->load('service');
+            }
+
             // Prepare payment data
             $paymentData = [
                 'order_id' => $order->order_number,
@@ -113,18 +124,23 @@ class VeripayService
                 'product_detail' => [
                     [
                         'name' => $order->type === 'product' 
-                            ? $order->product->title 
-                            : $order->service->title,
+                            ? ($order->product?->title ?? 'Product')
+                            : ($order->service?->title ?? 'Service'),
                         'price' => (int) $order->total,
                         'qty' => 1,
                     ],
                 ],
                 'customer_detail' => [
-                    'name' => $order->user->name,
-                    'email' => $order->user->email,
-                    'phone' => $order->user->phone ?? '',
+                    'name' => $order->user?->name ?? 'Customer',
+                    'email' => $order->user?->email ?? '',
+                    'phone' => $order->user?->phone ?? '',
                 ],
             ];
+
+            // Validate API credentials before making request
+            if (empty($this->apiKey) || empty($this->secretKey)) {
+                throw new \Exception('Veripay API credentials belum dikonfigurasi. Silakan hubungi administrator.');
+            }
 
             // Make API request
             $response = Http::withHeaders($this->prepareHeaders())
@@ -137,11 +153,21 @@ class VeripayService
                     'order_id' => $order->id,
                     'status' => $response->status(),
                     'error' => $error,
+                    'response_body' => $response->body(),
                 ]);
 
-                throw new \Exception(
-                    $error['message'] ?? 'Gagal membuat pembayaran Veripay: ' . $response->body()
-                );
+                $errorMessage = $error['message'] ?? 'Gagal membuat pembayaran Veripay';
+                if (isset($error['errors'])) {
+                    $errorMessage .= ': ' . json_encode($error['errors']);
+                } elseif ($response->body() && $response->status() !== 200) {
+                    // Include response body if available
+                    $body = $response->body();
+                    if (strlen($body) < 500) { // Only include if not too long
+                        $errorMessage .= ' (' . $body . ')';
+                    }
+                }
+
+                throw new \Exception($errorMessage);
             }
 
             $responseData = $response->json();

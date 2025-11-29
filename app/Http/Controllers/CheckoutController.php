@@ -121,8 +121,14 @@ class CheckoutController extends Controller
                     ]);
                 }
                 
-                // Redirect to Xendit invoice URL
-                return redirect($xenditInvoiceUrl)
+                // Redirect to Veripay payment URL or order page
+                if ($veripayPaymentUrl) {
+                    return redirect($veripayPaymentUrl)
+                        ->with('success', $message);
+                }
+                
+                return redirect()
+                    ->route('orders.show', $order)
                     ->with('success', $message);
             }
             
@@ -193,10 +199,18 @@ class CheckoutController extends Controller
             'Product out of stock',
             'Service is not active',
             'Insufficient wallet balance',
+            'Gagal membuat pembayaran Veripay',
+            'Metode pembayaran Veripay tidak tersedia saat ini',
         ];
         
         // If message is in safe list, return as is
         if (in_array($message, $safeMessages)) {
+            return $message;
+        }
+        
+        // Check if message starts with safe prefixes
+        if (str_starts_with($message, 'Gagal membuat pembayaran Veripay') || 
+            str_starts_with($message, 'Veripay API credentials')) {
             return $message;
         }
         
